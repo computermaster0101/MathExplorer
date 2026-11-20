@@ -1,0 +1,8 @@
+/* Fractal explorer: rules on top of css/app.css */
+.app[data-explorer="fractal"] #gl, .app[data-explorer="fractal"] #ov{position:absolute;inset:0;width:100%;height:100%;display:block}
+.app[data-explorer="fractal"] #gl{touch-action:none;cursor:grab}
+.app[data-explorer="fractal"] #gl:active{cursor:grabbing}
+.app[data-explorer="fractal"] #ov{pointer-events:none}
+/* light backgrounds: darker stage text */
+.app.light[data-explorer="fractal"] .hud h1{color:#2b303b}
+.app.light[data-explorer="fractal"] .hud .sub, .app.light[data-explorer="fractal"] .legend, .app.light[data-explorer="fractal"] .hint{color:#5b6170}

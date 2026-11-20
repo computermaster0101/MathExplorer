@@ -1,0 +1,14 @@
+/* 4D polytope explorer: rules on top of css/app.css */
+.app[data-explorer="polytope"] #c{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.app[data-explorer="polytope"] #c:active{cursor:grabbing}
+.app[data-explorer="polytope"] .legend .bar{background:linear-gradient(90deg,#3b6cff,#a35cff,#ff6fa8,#ffb35c)}
+/* the shape's name with its Schläfli symbol beside it */
+.app[data-explorer="polytope"] h1#title{display:inline-block;margin-right:8px}
+.app[data-explorer="polytope"] .sym{display:inline-block;vertical-align:3px;margin:0;padding:1px 8px;border:1px solid var(--line);border-radius:6px;font:500 12px ui-monospace,Menlo,monospace;color:#cfd6e6;background:rgba(255,255,255,.04)}
+.app[data-explorer="polytope"] .sym:empty{display:none}
+/* the Learn text sits under a rule when it is not inside a group */
+.app[data-explorer="polytope"] .explain{border-top:1px solid var(--line);padding-top:14px}
+.app[data-explorer="polytope"] details.grp .explain{border-top:0;padding-top:0}
+/* full screen: hide the pointer until it moves */
+.app.zen[data-explorer="polytope"] #c{cursor:none}
+.app.zen.awake[data-explorer="polytope"] #c{cursor:grab}

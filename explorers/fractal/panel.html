@@ -1,0 +1,281 @@
+<div class="sec">
+  <div class="lbl">Mode</div>
+  <div class="seg" id="modes">
+    <button data-m="explore" class="on">Explore</button>
+    <button data-m="grow">Grow</button>
+    <button data-m="link">Julia link</button>
+    <button data-m="orbit">Orbit</button>
+    <button data-m="d3">3D · 4D</button>
+  </div>
+</div>
+
+<details class="grp" id="g-ctl" open><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+  <div class="sec" data-show="explore">
+    <div class="lbl">Famous places</div>
+    <div class="seg g2" id="places"></div>
+    <div id="budRow" hidden style="margin-top:12px">
+      <div class="lbl">Style</div>
+      <div class="seg" id="budMode"><button data-bm="buddha" class="on">Buddhabrot</button><button data-bm="nebula">Nebulabrot</button><button data-bm="anti">Anti</button></div>
+      <p class="note" id="budNote">It keeps sharpening the longer you watch. Moving or zooming starts the count again.</p>
+    </div>
+    <div class="btns" style="margin-top:10px"><button class="btn" id="diveBtn">Dive in</button><button class="btn" id="resetView">Reset view</button></div>
+    <label class="check" style="margin-top:4px"><input type="checkbox" id="endlessChk" checked> Endless: never stops. When the digits run out it flies back out and dives somewhere new</label>
+    <label class="check"><input type="checkbox" id="steerChk" checked> Steer toward detail while diving</label>
+    <p class="note" style="margin-top:6px">While diving, tap or click anywhere to steer toward that spot. Reset view starts a new trip.</p>
+    <div class="row"><span style="width:74px">Dive speed</span><input type="range" id="diveSpd" min="0.1" max="2" step="0.05" value="0.5"><output id="diveo">0.5×</output></div>
+    <p class="note">Drag to move, scroll or pinch to zoom, double-click to zoom in on a spot (Shift + double-click zooms out). Dive keeps zooming into the middle of the screen.</p>
+    <label class="check" id="juliaRow"><input type="checkbox" id="juliaChk"> Show the Julia set instead</label>
+    <div id="jcBox" hidden>
+      <div class="lbl" style="margin-top:12px">Julia constant c <b id="jco"></b></div>
+      <div class="seg g3" id="jPresets"></div>
+      <p class="note">Or pick c by dragging on the map in Julia link mode.</p>
+    </div>
+  </div>
+  <div class="sec" data-show="grow">
+    <div class="lbl">Generation</div>
+    <div class="seg" id="genChips"></div>
+    <div class="btns" style="margin-top:10px"><button class="btn" id="growPlay">Pause</button><button class="btn" id="growReplay">Replay</button></div>
+    <label class="check" id="gzRow"><input type="checkbox" id="growZoom"> Endless zoom (it looks the same at every scale)</label>
+    <div id="angRow" class="row"><span style="width:74px">Angle</span><input type="range" id="ang" min="10" max="80" step="1" value="45"><output id="ango">45°</output></div>
+  </div>
+  <div class="sec" data-show="link">
+    <div class="lbl">Julia constant c <b id="jco2"></b></div>
+    <label class="check" style="margin-top:0"><input type="checkbox" id="linkAuto" checked> Move c automatically</label>
+    <div class="seg" id="linkPath" style="margin-top:8px"><button data-p="circle" class="on">Big circle</button><button data-p="edge">Along the edge</button></div>
+    <div class="lbl" style="margin-top:12px">Presets</div>
+    <div class="seg g3" id="jPresets2"></div>
+    <p class="note">Drag on the map to choose c. Scroll over either side to zoom it; drag the Julia side to move around it.</p>
+  </div>
+  <div class="sec" data-show="orbit">
+    <div class="lbl">Step speed <b id="orbo">0.40 s per step</b></div>
+    <input type="range" id="orbSpd" min="0.1" max="1.2" step="0.05" value="0.4" style="width:100%">
+    <div class="btns" style="margin-top:10px"><button class="btn" id="orbNew">Try a new point</button><button class="btn" id="orbPlay">Pause</button></div>
+    <label class="check"><input type="checkbox" id="orbAuto" checked> Pick new points automatically</label>
+    <div class="seg" id="orbStyle" style="margin-top:10px"><button data-s="stay" class="on">Trail stays</button><button data-s="echo">Trail fades</button></div>
+    <label class="check"><input type="checkbox" id="orbCircle" checked> Show the escape circle (radius 2)</label>
+    <p class="note">Tap anywhere on the picture to follow that point. Drag to move, scroll to zoom.</p>
+  </div>
+  <div class="sec" data-show="d3">
+    <div id="pwRow">
+      <div class="row"><span style="width:74px">Power</span><input type="range" id="pw3" min="2" max="32" step="0.05" value="8"><output id="pw3o">8.0</output></div>
+      <label class="check" style="margin-top:2px"><input type="checkbox" id="breathe"> Breathe (sweep the power from 2 to 24)</label>
+    </div>
+    <div id="bsRow">
+      <div class="row"><span style="width:74px">Box scale</span><input type="range" id="bs3" min="-3" max="-1.3" step="0.01" value="-1.8"><output id="bs3o">−1.80</output></div>
+      <label class="check" style="margin-top:2px"><input type="checkbox" id="bsBreathe"> Breathe (sweep the scale from −2.6 to −1.4)</label>
+    </div>
+    <div class="lbl" style="margin-top:12px">Turn the shape</div>
+    <div class="row"><span style="width:40px">XY</span><input type="range" id="t3xy" min="-180" max="180" step="1" value="0"><output id="t3xyo">0°</output></div>
+    <div class="row"><span style="width:40px">XZ</span><input type="range" id="t3xz" min="-180" max="180" step="1" value="0"><output id="t3xzo">0°</output></div>
+    <div class="row"><span style="width:40px">YZ</span><input type="range" id="t3yz" min="-180" max="180" step="1" value="0"><output id="t3yzo">0°</output></div>
+    <label class="check"><input type="checkbox" id="spin3"> Keep turning</label>
+    <div class="row" style="margin-top:10px"><span style="width:74px">Twist</span><input type="range" id="tw3" min="0" max="180" step="0.5" value="0"><output id="tw3o">0°</output></div>
+    <label class="check" style="margin-top:2px"><input type="checkbox" id="twAnim"> Keep twisting</label>
+    <div id="wRow" style="margin-top:12px">
+      <label class="check" id="cutRow" style="margin-top:0"><input type="checkbox" id="cut3"> Cut with the knife (shows the inside)</label>
+      <div class="lbl" style="margin-top:8px"><span id="knifeLbl">Knife position (W)</span> <b id="w3o">0.00</b></div>
+      <input type="range" id="w3" min="-100" max="100" value="0" step="1" style="width:100%">
+      <label class="check"><input type="checkbox" id="sweep3"> <span id="sweepLbl">Sweep the knife through 4D</span></label>
+      <div class="lbl" style="margin-top:12px" id="turnKLbl">Turn the knife in 4D</div>
+      <div class="row"><span style="width:40px" id="k1l">XW</span><input type="range" id="rxw" min="-180" max="180" step="1" value="0"><output id="rxwo">0°</output></div>
+      <div class="row"><span style="width:40px" id="k2l">YW</span><input type="range" id="ryw" min="-180" max="180" step="1" value="0"><output id="rywo">0°</output></div>
+      <div class="row"><span style="width:40px" id="k3l">ZW</span><input type="range" id="rzw" min="-180" max="180" step="1" value="0"><output id="rzwo">0°</output></div>
+      <label class="check"><input type="checkbox" id="spin4"> Keep turning the knife</label>
+      <div class="btns" style="margin-top:8px"><button class="btn" id="r4reset">Straighten the knife</button><button class="btn" id="t3reset">Straighten the shape</button></div>
+      <p class="note" id="knifeNote"></p>
+    </div>
+    <div class="btns" style="margin:4px 0 6px"><button class="btn" id="dive3Btn">Dive in</button><button class="btn" id="reset3">Reset view</button></div>
+    <div class="lbl" style="margin-top:6px">One-finger drag</div>
+    <div class="seg" id="drag3"><button data-dm="turn" class="on">Turn around</button><button data-dm="move">Move</button></div>
+    <p class="note" style="margin:6px 0 8px">Two fingers always move (on a computer: Shift-drag or right-drag). Tap any spot on the shape to fly over and dive toward it.</p>
+    <label class="check" style="margin-top:0"><input type="checkbox" id="endless3Chk" checked> Endless: when it runs out of precision, fly back out and dive somewhere new</label>
+    <div class="row"><span style="width:74px">Dive speed</span><input type="range" id="dive3Spd" min="0.1" max="2" step="0.05" value="0.5"><output id="dive3o">0.5×</output></div>
+    <div class="row"><span style="width:74px">Detail</span><input type="range" id="lvl3" min="1" max="8" step="1" value="5"><output id="lvl3o">5</output></div>
+    <div class="row"><span style="width:74px">Turntable</span><input type="range" id="turn3" min="0" max="2" step="0.05" value="0"><output id="turn3o">off</output></div>
+    <p class="note">Scroll or pinch to move closer. Dive flies toward whatever surface is in the middle of the screen, adding detail as it goes. The picture sharpens and gains shadows when you stop moving.</p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-shapes" open><summary><span class="gt">Fractals</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+  <div class="sec" data-show="explore link orbit">
+    <div class="lbl">Escape-time sets</div>
+    <div class="seg g2" id="types">
+      <button data-t="0" class="on">Mandelbrot</button><button data-t="1">Burning Ship</button>
+      <button data-t="2">Tricorn</button><button data-t="3">Multibrot</button>
+      <button data-t="4">Celtic</button><button data-t="5">Phoenix</button>
+      <button data-t="6">Newton</button><button data-t="7">Magnet</button>
+      <button data-t="8">Nova</button><button data-t="9">Lyapunov</button>
+      <button data-t="10">Buddhabrot</button><button data-t="11">Custom formula…</button>
+    </div>
+    <div id="customBox" hidden style="margin-top:12px">
+      <div class="lbl">Each step: z →</div>
+      <input id="cfInput" spellcheck="false" autocomplete="off" autocapitalize="off" value="z^3 + sin(z) + c" style="width:100%;background:#0e1118;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 9px;font:13px 'JetBrains Mono',monospace">
+      <div class="row" style="margin-top:8px"><span style="width:84px">z starts at</span><input id="cfZ0" spellcheck="false" autocomplete="off" value="0" style="flex:1;min-width:0;background:#0e1118;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px 8px;font:12px 'JetBrains Mono',monospace"></div>
+      <div class="lbl" style="margin-top:8px">Escape radius</div>
+      <div class="seg" id="cfBail"><button data-b="2">2</button><button data-b="10">10</button><button data-b="100" class="on">100</button><button data-b="1000">1000</button></div>
+      <div class="btns" style="margin-top:8px"><button class="btn" id="cfApply">Draw it</button></div>
+      <p class="note" id="cfMsg"></p>
+      <div class="lbl" style="margin-top:10px">Try one</div>
+      <div class="seg g2" id="cfPresets"></div>
+      <p class="note">Use z, c, i, pi, e, numbers, + − * / ^ and brackets. Functions: sin cos tan sinh cosh tanh exp log sqrt abs conj re im arg, and pow(a, b). Writing 2z or z(z + 1) multiplies, and |z| is the size of z. "z starts at" can use c, for example pi/2 or c.</p>
+    </div>
+    <div id="powRow" hidden class="row" style="margin-top:8px"><span style="width:74px">Power d</span><input type="range" id="pow" min="2" max="8" step="0.05" value="3"><output id="powo">3.00</output></div>
+  </div>
+  <div class="sec" data-show="grow">
+    <div class="lbl">Built by a rule</div>
+    <div class="seg g2" id="growShapes">
+      <button data-g="koch" class="on">Koch snowflake</button><button data-g="sier">Sierpinski triangle</button>
+      <button data-g="carpet">Sierpinski carpet</button><button data-g="cantor">Cantor set</button>
+      <button data-g="dragon">Dragon curve</button><button data-g="levy">Lévy C curve</button>
+      <button data-g="hilbert">Hilbert curve</button><button data-g="pyth">Pythagoras tree</button>
+      <button data-g="tree">Branching tree</button><button data-g="fern">Barnsley fern</button>
+      <button data-g="apollo">Apollonian gasket</button><button data-g="vicsek">Vicsek fractal</button>
+      <button data-g="gosper">Gosper curve</button><button data-g="htree">H-tree</button>
+    </div>
+  </div>
+  <div class="sec" data-show="d3">
+    <div class="lbl">In 3D</div>
+    <div class="seg g2 sh3" id="shapes3">
+      <button data-s3="bulb" class="on">Mandelbulb</button><button data-s3="box">Mandelbox</button>
+      <button data-s3="menger">Menger sponge</button><button data-s3="tet">Sierpinski tetrahedron</button>
+      <button data-s3="apo">Apollonian spheres</button><button data-s3="kifs">Kaleidoscopic IFS</button>
+    </div>
+    <div class="lbl" style="margin-top:12px">Spheres in spheres, halls and sponges</div>
+    <div class="seg g2 sh3" id="shapes3b">
+      <button data-s3="nest">Nested spheres</button><button data-s3="klein">Kleinian pearls</button>
+      <button data-s3="pk">Pseudo-Kleinian</button><button data-s3="flake">Sphereflake</button>
+      <button data-s3="jcube">Jerusalem cube</button><button data-s3="mosely">Mosely snowflake</button>
+    </div>
+    <div class="lbl" style="margin-top:12px">In 4D (seen as 3D slices)</div>
+    <div class="seg g2 sh3" id="shapes4">
+      <button data-s3="qj">Quaternion Julia</button><button data-s3="mj">Mandelbrot–Julia</button>
+      <button data-s3="tetra">Tetrabrot</button><button data-s3="sier5">Sierpinski 5-cell</button>
+      <button data-s3="menger4">4D Menger sponge</button><button data-s3="kifs4">4D kaleidoscope</button>
+    </div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-view"><summary><span class="gt">View &amp; detail</span><span class="gv" id="gv-view"></span></summary><div class="gb">
+  <div class="sec" data-show="explore link orbit">
+    <div class="lbl">Iterations <b id="itero">auto</b></div>
+    <input type="range" id="iter" min="50" max="100000" step="10" value="300" style="width:100%">
+    <label class="check"><input type="checkbox" id="iterAuto" checked> Automatic (more as you zoom in)</label>
+    <div class="lbl" style="margin-top:12px">Smoothing</div>
+    <div class="seg" id="aa"><button data-a="1">Off</button><button data-a="2" class="on">2 × 2</button><button data-a="3">3 × 3</button></div>
+    <p class="note">Smoothing kicks in when you stop moving. Very deep zooms with thousands of iterations use less, so the picture doesn't freeze.</p>
+  </div>
+  <div class="sec" data-show="explore">
+    <div class="lbl">Precision (Mandelbrot and Julia dives)</div>
+    <div class="seg" id="prec"><button data-pr="standard" class="on">Standard</button><button data-pr="extreme">Extreme (desktop)</button></div>
+    <label class="check"><input type="checkbox" id="blaChk" checked> Skip ahead when deep (BLA)</label>
+    <p class="note">Standard goes to about ×10²⁸ and runs well on phones. Extreme carries about 125 digits and rescales every pixel's numbers so they never get too small for the graphics card, reaching about ×10¹⁰⁰. Each step deeper needs more steps per pixel (up to 100,000), so past about ×10⁴⁰ expect a second or more per frame even on a desktop. When you stop moving, the sharp picture is drawn a strip at a time.</p>
+  </div>
+  <div class="sec" data-show="explore">
+    <div class="row"><span style="width:74px">Rotate</span><input type="range" id="rot" min="-180" max="180" step="1" value="0"><output id="roto">0°</output></div>
+    <label class="check"><input type="checkbox" id="mapChk" checked> Show the map (top right)</label>
+    <label class="check"><input type="checkbox" id="prevChk" checked> Show the Julia preview (top right)</label>
+    <p class="note">The map shows where you are on the whole set. The preview shows the Julia set for the point marked + in the middle of the screen (or under your mouse pointer on a computer): every point of the map has one. Drag the map to move the + and watch the Julia set change.</p>
+  </div>
+  <div class="sec" data-show="orbit">
+    <label class="check" style="margin-top:0"><input type="checkbox" id="chartChk" checked> Show the step-by-step chart (top right)</label>
+  </div>
+  <div class="sec" data-show="d3">
+    <label class="check" style="margin-top:0"><input type="checkbox" id="cousinChk" checked> Show the 2D cousin (top right)</label>
+    <p class="note">The same idea one dimension down, the way the polytope explorer shows a 3D cousin next to each 4D shape.</p>
+  </div>
+  <div class="sec" data-show="grow"><p class="note" style="margin-top:0">Drag to move and scroll to zoom here too. Reset view puts it back.</p></div>
+</div></details>
+
+<details class="grp" id="g-style"><summary><span class="gt">Colour &amp; style</span><span class="gv" id="gv-style"></span></summary><div class="gb">
+  <div class="sec">
+    <div data-show="explore link orbit">
+      <div class="lbl">Colour by</div>
+      <div class="seg g3" id="cmode">
+        <button data-c="0" class="on">Smooth</button><button data-c="1">Bands</button><button data-c="2">Stripes</button>
+        <button data-c="3">Orbit trap</button><button data-c="4">Edge glow</button>
+      </div>
+      <p class="note" id="cmodeNote">Smooth: how fast each point escapes, blended so there are no steps.</p>
+    </div>
+    <div class="lbl" style="margin-top:12px">Palette</div>
+    <div class="swatches" id="palettes"></div>
+    <p class="note" id="palName" style="margin-top:6px"></p>
+    <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+    <div class="row" style="margin-top:10px"><span style="width:74px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
+    <div class="row"><span style="width:74px">Density</span><input type="range" id="dens" min="0.2" max="4" step="0.05" value="1"><output id="denso">1.0×</output></div>
+    <div data-show="explore link orbit">
+      <div class="lbl" style="margin-top:12px">Inside the set</div>
+      <div class="seg" id="inside"><button data-i="0" class="on">Dark</button><button data-i="1">Show structure</button></div>
+    </div>
+    <div class="lbl" style="margin-top:12px">Background</div>
+    <div class="seg" id="bg"><button data-b="#0b0d12" class="on">Midnight</button><button data-b="#000000">Black</button><button data-b="#f3efe6">Paper</button></div>
+    <div data-show="grow orbit"><div class="row" style="margin-top:10px"><span style="width:74px">Lines</span><input type="range" id="lw" min="0.4" max="3" step="0.05" value="1.2"><output id="lwo">1.2×</output></div></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-share"><summary><span class="gt">Save, share &amp; record</span><span class="gv" id="gv-share"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="btns"><button class="btn" id="snap">Save image (PNG)</button></div>
+    <p class="note" id="dlnote">Checking how saving works in this view…</p>
+  </div>
+  <div class="sec">
+    <div class="lbl">Share this view</div>
+    <p class="note" id="linkNote" style="margin:0 0 8px">The link records the fractal, mode, place and zoom (to the last digit), colours and settings, so it opens on exactly this picture.</p>
+    <input type="text" id="linkBox" readonly class="txt" spellcheck="false">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="copyLink">Copy link</button></div>
+    <div class="lbl" style="margin-top:12px">Load a view</div>
+    <input type="text" id="viewIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Paste a view link or code">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+    <p class="note" id="shareNote"></p>
+  </div>
+  <div class="sec">
+    <div class="lbl">Record video <b id="recTime"></b></div>
+    <div class="seg" id="recLen"><button data-s="0" class="on">Until I stop</button><button data-s="10">10 s</button><button data-s="30">30 s</button></div>
+    <div class="seg" id="recRes" style="margin-top:6px"><button data-r="0" class="on">Screen size</button><button data-r="720">720p</button><button data-r="1080">1080p</button></div>
+    <div class="btns" style="margin-top:8px"><button class="btn" id="recBtn">● Record</button></div>
+    <p class="note" id="recNote">Records whatever is moving (an endless dive, a 3D breathe, a growing fractal) as a video file, with the music if it's playing.</p>
+  </div>
+  <div class="sec">
+    <div class="lbl">Music <b id="audName"></b></div>
+    <div class="btns"><label class="btn" for="audFile" style="text-align:center">Choose a music file</label><button class="btn" id="micBtn">Use microphone</button></div>
+    <input type="file" id="audFile" accept="audio/*" hidden>
+    <div class="btns" style="margin-top:8px"><button class="btn" id="audPlay" disabled>Play</button><button class="btn" id="audStop" disabled>Stop</button></div>
+    <div style="height:6px;border-radius:3px;background:#0e1118;border:1px solid var(--line);margin-top:10px;overflow:hidden"><div id="audBar" style="height:100%;width:0;background:var(--accent);transition:width .08s"></div></div>
+    <label class="check"><input type="checkbox" id="audReact" checked> Make the fractal react to the sound</label>
+    <div class="row"><span style="width:74px">Strength</span><input type="range" id="audAmt" min="0" max="2" step="0.05" value="1"><output id="audAmto">1.0×</output></div>
+    <p class="note" id="audNote">Bass pulses the colours (and the 3D shapes), louder passages speed up dives and growth, and treble sparkles the colour cycle. Inside Claude the microphone is blocked, so choose a file there.</p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-info"><summary><span class="gt">Numbers</span><span class="gv" id="gv-info"></span></summary><div class="gb">
+  <div class="sec"><div class="stats">
+    <div class="stat"><b id="s1">–</b><small id="s1l"></small></div>
+    <div class="stat"><b id="s2">–</b><small id="s2l"></small></div>
+    <div class="stat"><b id="s3">–</b><small id="s3l"></small></div>
+  </div></div>
+</div></details>
+
+<details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv"></span></summary><div class="gb">
+  <div class="explain"><p id="about"></p><div id="aboutMore"></div></div>
+</div></details>
+
+<details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><table class="keys">
+    <tr><td><kbd>Space</kbd></td><td>Pause / resume whatever is moving</td></tr>
+    <tr><td><kbd>1 – 5</kbd></td><td>Explore, Grow, Julia link, Orbit, 3D · 4D</td></tr>
+    <tr><td><kbd>← →</kbd></td><td>Previous / next fractal</td></tr>
+    <tr><td><kbd>+ −</kbd></td><td>Zoom in / out</td></tr>
+    <tr><td><kbd>D</kbd></td><td>Dive in (Explore)</td></tr>
+    <tr><td><kbd>P</kbd></td><td>Fly to the next famous place</td></tr>
+    <tr><td><kbd>J</kbd></td><td>Julia set on / off</td></tr>
+    <tr><td><kbd>[ ]</kbd></td><td>Fewer / more iterations</td></tr>
+    <tr><td><kbd>C</kbd></td><td>Next colour mode</td></tr>
+    <tr><td><kbd>V</kbd></td><td>Next palette (Shift+V back)</td></tr>
+    <tr><td><kbd>K</kbd></td><td>Colour cycling on / off</td></tr>
+    <tr><td><kbd>R</kbd></td><td>Reset view</td></tr>
+    <tr><td><kbd>N</kbd></td><td>New orbit point / replay growth</td></tr>
+    <tr><td><kbd>H</kbd></td><td>Hide / show panel</td></tr>
+    <tr><td><kbd>F</kbd></td><td>Full screen (Esc to leave)</td></tr>
+    <tr><td><kbd>E / Q</kbd></td><td>Expand / collapse all sections</td></tr>
+    <tr><td><kbd>?</kbd></td><td>Open this list</td></tr>
+  </table></div>
+</div></details>

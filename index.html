@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Math Explorer</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="explorers/fractal/style.css">
+<link rel="stylesheet" href="explorers/polytope/style.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js" } }</script>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="stage" id="stage">
+    <!-- each explorer's canvases, title and legend are mounted here (explorers/<name>/stage.html) -->
+    <div class="loading" id="loading">Loading…</div>
+    <div id="stageBtns"><button class="sbtn" id="panelBtn">Hide panel</button><button class="sbtn" id="zenBtn">Full screen</button><button class="sbtn" id="resetBtn">Reset view</button></div>
+    <button class="sbtn" id="zenExit">Exit full screen ✕</button>
+  </div>
+
+  <aside id="panel">
+    <div class="brand"><b>Math Explorer</b><small>pick an explorer</small></div>
+    <nav class="seg switcher" id="switcher">
+      <a href="#/fractal" data-explorer="fractal">Fractals</a>
+      <a href="#/polytope" data-explorer="polytope">4D Polytopes</a>
+    </nav>
+    <!-- each explorer's controls are mounted here (explorers/<name>/panel.html) -->
+  </aside>
+</div>
+<noscript><p style="padding:20px">Math Explorer needs JavaScript.</p></noscript>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

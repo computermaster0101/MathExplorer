@@ -4,32 +4,49 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Two standalone, single-file interactive math visualizers. Each `.html` file has all of its CSS, markup and JavaScript inline. There is no build step, package manager, test suite or linter.
+Math Explorer is a single-page static site made of plain HTML, CSS and native ES modules. It has **no build step, no package.json and no bundler**, and must stay that way: it is deployed by copying the folder to nginx. Third-party code is kept in the repo (`vendor/three/three.module.js`, three.js r128, mapped to the bare specifier `three` by the import map in `index.html`). Do not switch to a CDN or add npm dependencies.
 
-- `Fractal Explorer.html` (title `Fractal Explorer v12`): escape-time fractals (Mandelbrot/Julia families, Newton, custom formulas), deep zoom, Buddhabrot, 3D fractals, "Grow" (L-system-style rule fractals), orbit tracing, audio-reactive mode and a video recorder. Raw WebGL2 (`#version 300 es` shaders), no libraries.
-- `4D Polytope Explorer.html` (title `4D Polytope Explorer v7`): 4D polytopes (regular, star, compounds, round shapes, n-D hypercube/simplex/cross-polytope, prisms/pyramids, Wythoff construction) projected to 3D. Uses three.js r128 from cdnjs.
+## Running and checking
 
-Both load Google Fonts (Inter, JetBrains Mono). The version number in `<title>` is bumped by hand when a file changes.
+Serve the folder over HTTP (modules don't load from `file://`), for example `python -m http.server 8000`, then open `http://localhost:8000/`. There are no tests or linters. To check a change, load the page, use the affected explorer and mode, and watch the browser console. A missing import or a load-order problem shows up as an error the moment the explorer loads.
 
-## Running
+## Layout
 
-Open the file in a browser (double-click, or `start "" "Fractal Explorer.html"` in PowerShell). No server is needed. To check that a change works, open the page and look at the browser console.
+```
+index.html                 shell markup: stage, side panel, explorer switcher, import map
+css/app.css                shared theme, layout and panel controls
+js/main.js                 explorer registry, routing, mount/start/stop lifecycle
+js/shell/route.js          #/<explorer>/<view-code> parsing, setViewCode, shareLink, activeExplorer
+js/shell/layout.js         hide panel / full screen (zen)
+js/shell/keys.js           shared keys (h f Esc e q ?) and dispatch to the active explorer's onKey
+explorers/<name>/          one folder per explorer: stage.html, panel.html, style.css, index.js + modules
+vendor/three/              three.js r128 ES module build
+```
 
-## Code layout (applies to both files)
+## How the shell drives an explorer
 
-- One IIFE inside one `<script>`, split into sections by banner comments like `// ---------- state ----------`. Grep for `// ----------` to get a table of contents.
-- One global mutable state object `st` holds every UI setting and mode. `$ = id => document.getElementById(id)`.
-- The UI is the markup at the top of the file. Event handlers are wired up in the `// ---------- UI wiring ----------` section, and a single `requestAnimationFrame(loop)` drives rendering. A change to an `st` field usually needs: the markup control, the wiring, the code that reads it while rendering, and the share-link encoding.
-- Shareable views live in the URL `#hash`, handled by `applyView`/`viewCode` (Fractal also has `encodeState`/`decodeState`). The Fractal Explorer still accepts old link formats (`f3-…`, `f4-…`), so keep backward compatibility when you change the link format.
-- The "Learn" section holds user-facing explanations. The text is plain English with no jargon, and comments are written in the same style.
-- Code is dense, with many statements per line and short names. Match that style when you edit.
+- On first visit, `main.js` fetches `stage.html` and `panel.html`, attaches them, and then dynamically imports `index.js`. Importing that module **boots** the explorer, because its modules look up their DOM elements as they load. So the markup must be attached before the import.
+- `index.js` exports the lifecycle: `start`, `stop`, `reset`, `onKey(e) → used`, `layoutChanged`, `showView(code)`. The full contract is in the header comment of `js/main.js`. To add an explorer, create a folder with those files, add it to `EXPLORERS` in `main.js`, add a switcher link in `index.html`, and link its `style.css`.
+- Only the active explorer is attached. Switching away calls `stop()` (which ends its `requestAnimationFrame` loop) and detaches its DOM, keeping the nodes. That is why explorers can use bare ids and `document.querySelector` freely. Never leave two explorers' DOM attached at once.
+- Explorer CSS must be scoped as `.app[data-explorer="<name>"] …`. Both explorer stylesheets are always loaded.
+- Explorers never touch `location.hash` or `history` directly. They use `setViewCode(name, code)` (ignored unless that explorer is active), `shareLink`, `codeFromText` (accepts pasted links or bare codes) and `parseRoute().code` at boot. Old fractal codes (`f3-…`, `f4-…`) still load through `codeFromText`.
+- Shell-owned controls (`#panelBtn`, `#zenBtn`, `#zenExit`, `#resetBtn`) and the shared keys are not bound by explorers. Each panel's keyboard group must keep the id `g-keys`, which `?` opens.
 
-### Fractal Explorer specifics
-- `TYPES` defines the fractal families. `PALETTES` holds the color ramps, kept in sync with the shader palette uniforms (`setPal`).
-- Deep zoom uses three precision tiers: plain doubles, double-double (`dd*`, about 32 digits), and 416-bit BigInt fixed point (`strToFix`/`dblToFix`/`fixToNum`, about 125 digits). It uses perturbation: a reference orbit is computed on the CPU (`computeRefBig`, run in a Blob-URL `new Worker` for Extreme precision), uploaded as a texture (`refSlots`, `upRef`), and sped up with BLA (`buildBLA`).
-- Custom formulas: `parseFormula` builds an AST, which is compiled twice, by `toGLSL` (shader) and by `toJS` (CPU paths such as orbits and the escape probe). Both must give the same results.
-- `window.__fx` exposes the internals (state, renderers, encode/decode) for debugging from the console.
+## Module conventions inside an explorer
 
-### 4D Polytope Explorer specifics
-- Each shape is built as vertices on the unit 3-sphere plus edges. `SHAPES`, `STARS`, `makeCompound`, `makeRound`, `HD_MAKE` and `wythoff` all produce `{verts, edges, ...}`, and many are built lazily and cached. `INFO` holds the per-shape descriptions.
-- The modes (`st.mode`: explore, slice, build, unfold, ping, …) each have their own section that decides what to draw. The extra canvases (`#sliceview`, `#flat2d`, `#inset` for the "3D cousin", `#shadow2d`) are drawn in the "extra panels" and "3D cousin" sections.
+These modules came from splitting large single-file apps, and they keep that code's dense style (many statements per line, short names). Match it when editing.
+
+- **Load order is the import order in `index.js`, and it matters.** Modules are layered so that every import points to a module listed earlier in `index.js` (for example util → state → geometry/maths → render → modes → ui → io → input → loop). Top-level code runs at import time (building shape tables, wiring DOM listeners), so a module must not import from a later one. If a lower module needs to call something higher up, move the function down to the lowest module it fits in, rather than adding an upward import.
+- ES imports are read-only. A top-level variable that several modules reassign lives on the `shared` object in `<explorer>/shared.js` (`shared.dirty = true`). A variable that only its own module reassigns can be a plain exported `let`.
+- `st` in `state.js` is the explorer's single settings object. Changing a setting usually touches the panel markup (`panel.html`), its wiring (`ui/controls.js` or `ui/learn.js`), the code that reads it while drawing, and the view-code encoder/decoder in `io/share.js`. Keep old view codes loading.
+- The "Learn" sections are user-facing explanations written in plain English with no jargon; comments follow the same style.
+
+### Fractal explorer specifics
+- `fractals/types.js` (`TYPES`) defines the families. `render/webgl.js` holds the GLSL shaders as strings, plus context setup.
+- Deep zoom uses three precision tiers: doubles, double-double (`math/double-double.js`, about 32 digits) and 416-bit BigInt fixed point (`math/big-fixed.js`, about 125 digits). It uses perturbation: a reference orbit is computed on the CPU (in a Blob-URL worker for Extreme precision), uploaded as a texture, and sped up with BLA (`render/bla.js`).
+- Custom formulas (`formula/formula.js`) are compiled twice, by `toGLSL` and by `toJS`. Both must give the same results.
+- `window.__fx` exposes internals for console debugging.
+
+### Polytope explorer specifics
+- `geometry/` builds every shape as vertices on the unit 3-sphere plus edges, registered in `SHAPES` (`geometry/polytopes.js`). Several sections add more shapes at load time (stars, compounds, round, higher-dim, prisms, wythoff), many built lazily and cached.
+- The modes (`modes/build.js`, `modes/unfold.js`, `modes/ping.js`, plus slice and explore) decide what to draw. `render/scene.js` owns the three.js scene, and `loop.js` holds the per-frame update. The inset canvases are drawn by `panels/`.

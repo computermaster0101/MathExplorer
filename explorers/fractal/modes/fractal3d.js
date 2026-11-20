@@ -1,0 +1,239 @@
+import { shared } from '../shared.js';
+import { $, clamp } from '../util.js';
+import { aud, audOn, effDensity, st } from '../state.js';
+import { hexRGB } from '../color/palettes.js';
+import { FS3, gl, glc, main, setPal } from '../render/webgl.js';
+import { cssH, cssW, touch } from '../view.js';
+import { showNA } from '../ui/notice.js';
+
+// ---------- 3D ----------
+export const S3 = {
+  bulb:{ name:'Mandelbulb', alt:'a 3D power of the Mandelbrot recipe, in spherical coordinates', bound:1.25, dim:'≈ 3 (surface ≈ 2.x)',
+    info:'There\'s no true 3D version of the Mandelbrot set, because 3D numbers don\'t multiply the way complex numbers do. In 2009 Daniel White and Paul Nylander faked it: write the point in spherical coordinates, raise the distance to a power and multiply both angles by that power. Power 8 gives the famous cauliflower-and-temple look.' },
+  box:{ name:'Mandelbox', alt:'fold space in a box, then in a ball, then scale', bound:3.6, dim:'—',
+    info:'Found by Tom Lowe in 2010. Each step folds space back into a cube, turns it inside out through a sphere, then scales it and adds the starting point. The scale slider changes everything: values near −1.5 give cities of chambers and corridors.' },
+  menger:{ name:'Menger sponge', alt:'cut every cube into 27 and remove the middle cross', bound:1.75, dim:'log 20 ÷ log 3 ≈ 2.727',
+    info:'Karl Menger, 1926. Cut a cube into 27 smaller cubes and pull out the middle one and the six in the middle of each face, leaving 20. Repeat forever. Its volume shrinks to zero while its surface area grows without limit. Each face of the sponge is a Sierpinski carpet.' },
+  tet:{ name:'Sierpinski tetrahedron', alt:'four half-size copies of itself, corner to corner', bound:1.8, dim:'log 4 ÷ log 2 = 2',
+    info:'Four half-size copies at the four corners of a tetrahedron, repeated forever. Surprisingly its dimension is exactly 2, like a flat sheet, even though it\'s spread through 3D: every step keeps the total surface area the same while the volume vanishes.' },
+  qj:{ name:'Quaternion Julia set', alt:'a 4D Julia set, seen one 3D slice at a time', bound:1.6, dim:'4D object, 3D slice', four:true, wR:0.9, rg:[0.47,1.12],
+    info:'Quaternions are 4-part numbers (1, i, j, k) that do multiply properly, so z → z² + c works in 4D. The full Julia set lives in 4D, so we see a 3D slice of it at one value of W, just like the knife in the polytope explorer\'s Slice mode. Sweep the knife and watch the slice swell, split and merge.' },
+};
+S3.apo={ name:'Apollonian spheres', alt:'a sphere in every gap: a round slab of endless foam', bound:1.5, dim:'≈ 2.47',
+  info:'The 3D Apollonian gasket: spheres packed so that every gap between touching spheres holds the biggest sphere that fits, forever. It\'s drawn by folding space into a repeating box and turning it inside out through a sphere, over and over (Inigo Quilez\'s method), and cutting a round slab out of the endless foam. Dive into the rim: the bubbles never stop.' };
+S3.kifs={ name:'Kaleidoscopic IFS', alt:'fold space like a kaleidoscope, twist, scale, repeat', bound:2.1, dim:'—',
+  info:'Knighty\'s kaleidoscopic iterated function systems (2010): fold space into a single wedge with mirrors, the way a kaleidoscope does, turn it a little, scale it up and shift it, and repeat. With no twist it\'s a crisp Sierpinski octahedron; any twist grows crystal spires and cathedral tracery. Keep twisting to watch it morph.' };
+Object.assign(S3, {
+  mj:{ name:'Mandelbrot–Julia object', alt:'every c and every starting z of z → z² + c at once: a 4D shape', bound:2.85, dim:'4D solid, 3D slice', four:true, wR:1.6, rg:[0.2,0.9],
+    info:'Every pair of a c and a starting z either stays bounded under z → z² + c or runs away. All the pairs that stay bounded make one shape in 4D: across and up are c, depth and the hidden W direction are the starting z. Cut it at the starting z = 0 and you get the Mandelbrot set; cut it at a fixed c and you get that c\'s Julia set. The 3D slices in between show how one turns into the other. The thin dust that floats out past |c| = 2 (the Julia sets of points outside the Mandelbrot set) is trimmed off.' },
+  tetra:{ name:'Tetrabrot', alt:'z → z² + c with bicomplex numbers, which split it into two Mandelbrot sets', bound:2.1, dim:'4D solid, 3D slice', four:true, wR:1.4, rg:[0.06,0.32],
+    info:'Bicomplex numbers have two imaginary units, i and j, that multiply happily with each other, so z → z² + c works in 4D. Dominic Rochon (2000) noticed that they quietly split into two ordinary complex numbers, so the bicomplex Mandelbrot set is two Mandelbrot sets "multiplied" together, which gives it straight edges and boxy terraces. The classic Tetrabrot is the slice with the knife at W = 0.' },
+  sier5:{ name:'Sierpinski 5-cell', alt:'five half-size copies at the corners of a 4D simplex', bound:2.0, dim:'log 5 ÷ log 2 ≈ 2.32 (slice ≈ 1.32)', four:true, wR:1.2, rg:[0.5,0.95],
+    info:'The next step after the Sierpinski triangle (3 copies) and tetrahedron (4): five half-size copies at the five corners of a 5-cell, the simplest 4D polytope. Its dimension is log 5 ÷ log 2 ≈ 2.32. A 3D slice of it is roughly one dimension less, about 1.32, so what you see is lacy and broken into floating pieces. That isn\'t a drawing fault: there is very little of it in any one slice. Keep the detail low for chunky pieces, or turn the knife and watch them join and part.' },
+  menger4:{ name:'4D Menger sponge', alt:'cut a tesseract into 81 and keep the 48 that have at most one middle coordinate', bound:2.05, dim:'log 48 ÷ log 3 ≈ 3.52 (slice ≈ 2.52)', four:true, wR:1.0, rg:[0,1],
+    info:'Cut a tesseract (a 4D cube) into 3 × 3 × 3 × 3 = 81 smaller ones and remove every one that sits in the middle third along two or more directions, leaving 48. Repeat. The 3D Menger sponge follows the same rule (keep 20 of 27). Slide the knife: in the middle third, a slice looks like a frame of hollow bars; near the edges it looks like an ordinary Menger sponge. Tilt the knife and you get patterns neither one has.' },
+  kifs4:{ name:'4D kaleidoscope', alt:'mirror-fold 4D space into one wedge, twist, scale, repeat', bound:2.4, dim:'—', four:true, wR:1.5, rg:[1.1,1.45],
+    info:'The kaleidoscopic IFS with a fourth mirror direction: fold 4D space into a single wedge (all 384 symmetries of the tesseract), twist in the XY and ZW planes, scale by 2 and repeat. The twist slider still works. Slices of it look like crystals that rearrange themselves as the knife moves.' },
+});
+Object.assign(S3, {
+  nest:{ name:'Nested spheres', alt:'a hollow sphere with windows, and inside it a smaller copy, forever', bound:1.05, dim:'2 (every layer is a surface)', rg:[0,1],
+    info:'A hollow sphere with six round windows. Inside sits a copy half the size, turned 45°, with its own windows and its own copy inside, and so on forever. The vertical windows line up all the way down, so a dive flies through window after window. Because every layer is an exact copy of the one outside it, the app can swap in the next layer as you pass through, so this dive never runs out of digits.' },
+  klein:{ name:'Kleinian pearls', alt:'spheres made of spheres made of spheres, by turning space inside out', bound:1.75, dim:'less than 1 (a dust of pearls)', rg:[0,1],
+    info:'Seven separate spheres: six around the middle and one small one in the centre. Each sphere turns space inside out (an inversion), so everything outside it lands inside it, shrunk. Repeat, and every sphere fills up with smaller copies of the other six, each filled with smaller copies again. It\'s the 3D version of the pictures in <em>Indra\'s Pearls</em> (Mumford, Series and Wright, 2002). More detail shows deeper pearls.' },
+  pk:{ name:'Pseudo-Kleinian', alt:'fold into a box, invert through a ball, repeat: endless halls and arches', bound:2.0, dim:'—', rg:[0.25,0.95],
+    info:'Knighty\'s pseudo-Kleinian fractal (2011): fold space back into a box, turn it inside out through a ball, repeat. It looks like the limit set of a Kleinian group but is far quicker to draw. The full shape goes on forever in every direction, a cathedral with no walls at the edge, so what you see is a round chunk of it. Dive in and fly through the halls.' },
+  flake:{ name:'Sphereflake', alt:'nine spheres a third the size on every sphere, forever', bound:2.05, dim:'log 9 ÷ log 3 = 2', rg:[0,1],
+    info:'Eric Haines, 1987, made as a test scene for ray tracers. Every sphere sprouts nine spheres a third its size: six around its middle and three on top, leaving the side facing its parent clear. Each new sphere does the same. The whole thing never grows past twice the first sphere\'s size, and with nine copies at a third the size its dimension is exactly 2.' },
+  jcube:{ name:'Jerusalem cube', alt:'a cube carved by cross-shaped tunnels, made of smaller Jerusalem cubes', bound:1.75, dim:'≈ 2.529', rg:[0,1],
+    info:'Eric Baird, 2011. Keep eight corner cubes, each √2 − 1 ≈ 0.414 times the size, and twelve smaller cubes along the edges, each (√2 − 1)² ≈ 0.172 times the size, and each piece is a Jerusalem cube again. The gaps between them form cross-shaped tunnels through every face. Using √2 − 1 makes the corner and edge cubes fit edge to edge exactly.' },
+  mosely:{ name:'Mosely snowflake', alt:'cut a cube into 27, keep 18: drop the 8 corners and the middle', bound:1.75, dim:'log 18 ÷ log 3 ≈ 2.631', rg:[0,1],
+    info:'Jeannine Mosely, 2006, who also built a Menger sponge out of 66,048 business cards. Like the Menger sponge, cut a cube into 27 and keep some: here the 12 edge cubes and 6 face cubes, dropping the 8 corners and the centre. Repeat in each of the 18. The Menger sponge does the opposite (it keeps the corners and drops the face middles), so here the faces stay solid in the middle while the corners erode, and from along a diagonal the outline looks like a snowflake. Keeping 18 instead of 20 also makes its dimension a little lower: log 18 ÷ log 3 ≈ 2.631, against the sponge\'s 2.727.' },
+});
+export const QC=[-0.2,0.6,0.2,0.2], SH3=['bulb','box','menger','tet','qj','apo','kifs','mj','tetra','sier5','menger4','kifs4','nest','klein','pk','flake','jcube','mosely'];
+// nested spheres: how many layers we've swapped in (each one: ×2 bigger, turned 45° back), and up to 3 outer layers kept in view
+const NEST_S=0.5, NEST_TH=Math.PI/4, nestOuter=()=>Math.min(st.d3.nestM||0,3);
+const rotY=(p,a)=>{ const c=Math.cos(a), s=Math.sin(a); return [c*p[0]+s*p[2], p[1], -s*p[0]+c*p[2]]; };
+export function nestIn(){ const D=st.d3; D.target=rotY(D.target,-NEST_TH).map(x=>x/NEST_S); D.dist/=NEST_S; D.yaw-=NEST_TH; D.nestM=(D.nestM||0)+1; }
+export function nestOut(){ const D=st.d3; D.target=rotY(D.target.map(x=>x*NEST_S),NEST_TH); D.dist*=NEST_S; D.yaw+=NEST_TH; D.nestM--; }
+export function nestReset(){ const D=st.d3; if (D.target) while ((D.nestM||0)>0) nestOut(); D.nestM=0; }
+// the knife's 4D turn: R = turn in XW, then YW, then ZW (degrees)
+function rot4(axw, ayw, azw){
+  const M=(i,a)=>{ const c=Math.cos(a*Math.PI/180), s=Math.sin(a*Math.PI/180), R=[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]; R[i][i]=c; R[i][3]=-s; R[3][i]=s; R[3][3]=c; return R; };
+  const mul=(A,B)=>A.map((r,i)=>B[0].map((_,j)=>A[i].reduce((sm,_,k)=>sm+A[i][k]*B[k][j],0)));
+  return mul(mul(M(0,axw),M(1,ayw)),M(2,azw)); }
+export let r4c={key:'', R:null};
+function getR4(){ const D=st.d3, k=D.axw+'|'+D.ayw+'|'+D.azw; if (r4c.key!==k){ r4c={key:k, R:rot4(D.axw,D.ayw,D.azw)}; } return r4c.R; }
+export const is4=()=>!!S3[st.d3.shape].four;
+export const isKifs=()=>st.d3.shape==='kifs'||st.d3.shape==='kifs4';
+// the shape's own turn (object → world), built from the XY, XZ and YZ sliders
+let r3c={key:'', R:null};
+function getR3(){ const D=st.d3, k=D.rxy+'|'+D.rxz+'|'+D.ryz; if (r3c.key!==k){ const R=[[1,0,0],[0,1,0],[0,0,1]], rot=(a,b,deg)=>{ const t=deg*Math.PI/180, c=Math.cos(t), s=Math.sin(t);
+    for (let r=0;r<3;r++){ const x=R[r][a], y=R[r][b]; R[r][a]=c*x-s*y; R[r][b]=s*x+c*y; } }; rot(1,2,D.ryz); rot(0,2,D.rxz); rot(0,1,D.rxy); r3c={key:k, R}; } return r3c.R; }
+// for 3D shapes the knife is a flat cut: its tilt comes from the same three sliders as the 4D knife
+function cutPlane(){ const D=st.d3, t=a=>a*Math.PI/180; let n=[0,0,1];
+  const rp=(v,a,b,deg)=>{ const c=Math.cos(t(deg)), s=Math.sin(t(deg)), o=v.slice(); o[a]=c*v[a]-s*v[b]; o[b]=s*v[a]+c*v[b]; return o; };
+  n=rp(n,0,2,D.axw); n=rp(n,1,2,D.ayw); n=rp(n,0,1,D.azw); return {n, o:D.w*d3Bound()*0.95}; }
+export const knifeVal=()=> is4() ? wAct() : st.d3.w*d3Bound()*0.95;
+function d3Tf(){ const D=st.d3, b=d3Bound(), tw=isKifs()?0:D.twist*Math.PI/180/b; return {R:getR3(), tw, twS:1/Math.sqrt(1+(tw*b)*(tw*b)), cut:!is4()&&D.cut ? cutPlane() : null}; }
+export const wAct=()=>st.d3.w*(S3[st.d3.shape].wR||0.9);
+// 4D distance estimates, in double precision (the shader's twins), for aiming dives
+const S5=1/Math.sqrt(5), V5=[[1,1,1,-S5],[1,-1,-1,-S5],[-1,1,-1,-S5],[-1,-1,1,-S5],[0,0,0,4*S5]];
+function mDE2(cr,ci,it){ let zr=0,zi=0,dr=0,di=0;
+  for (let i=0;i<it;i++){ const t=2*(zr*dr-zi*di)+1; di=2*(zr*di+zi*dr); dr=t; const a=zr*zr-zi*zi+cr; zi=2*zr*zi+ci; zr=a; const m=zr*zr+zi*zi; if (m>1e4){ const r=Math.sqrt(m); return 0.5*r*Math.log(r)/Math.max(Math.hypot(dr,di),1e-300); } }
+  return 0; }
+function de4(q, sh, it){ const D=st.d3, [x,y,z,w]=q;
+  if (sh==='mj'){ let zr=z, zi=w, ar=1,ai=0, br=0,bi=0; const cut=Math.hypot(x,y)-2;
+    for (let i=0;i<it;i++){ let t=2*(zr*ar-zi*ai); ai=2*(zr*ai+zi*ar); ar=t; t=2*(zr*br-zi*bi)+1; bi=2*(zr*bi+zi*br); br=t; t=zr*zr-zi*zi+x; zi=2*zr*zi+y; zr=t; const m=zr*zr+zi*zi;
+      if (m>1e4){ const r=Math.sqrt(m); return Math.max(0.5*r*Math.log(r)/Math.max(Math.sqrt(ar*ar+ai*ai+br*br+bi*bi),1e-300), cut); } }
+    return Math.max(0,cut); }
+  if (sh==='tetra') return Math.max(mDE2(x+w,y-z,it), mDE2(x-w,y+z,it))*Math.SQRT1_2;
+  if (sh==='sier5'){ let p=q.slice(), n=0;
+    for (let i=0;i<it;i++){ let v=V5[0], bd=Infinity; for (const u of V5){ const d=(p[0]-u[0])**2+(p[1]-u[1])**2+(p[2]-u[2])**2+(p[3]-u[3])**2; if (d<bd){ bd=d; v=u; } } p=p.map((a,j)=>2*a-v[j]); n++; }
+    return (Math.hypot(...p)-1.8)*Math.pow(2,-n); }
+  if (sh==='menger4'){ const a0=q.map(v=>Math.abs(v)-1); let d=Math.hypot(...a0.map(v=>Math.max(v,0)))+Math.min(Math.max(...a0),0), s=1;
+    for (let m=0;m<it;m++){ const r=q.map(v=>Math.abs(1-3*Math.abs(mod2(v*s)-1))); s*=3; const mn=r.slice().sort((u,v)=>v-u)[1]; const c=(mn-1)/s; if (c>d) d=c; }
+    return d; }
+  if (sh==='kifs4'){ const a=D.twist*Math.PI/180, ca=Math.cos(a), sa=Math.sin(a), cb=Math.cos(a*0.7), sb=Math.sin(a*0.7); let p=q.slice(), n=0;
+    for (let i=0;i<it;i++){ p=p.map(Math.abs).sort((u,v)=>v-u); let t=ca*p[0]-sa*p[1]; p[1]=sa*p[0]+ca*p[1]; p[0]=t; t=cb*p[2]-sb*p[3]; p[3]=sb*p[2]+cb*p[3]; p[2]=t; p=p.map(v=>2*v-1); n++; }
+    return (Math.hypot(...p)-1)*Math.pow(2,-n); }
+  // quaternion Julia
+  const qm=(a,b)=>[a[0]*b[0]-(a[1]*b[1]+a[2]*b[2]+a[3]*b[3]), a[0]*b[1]+b[0]*a[1]+(a[2]*b[3]-a[3]*b[2]), a[0]*b[2]+b[0]*a[2]+(a[3]*b[1]-a[1]*b[3]), a[0]*b[3]+b[0]*a[3]+(a[1]*b[2]-a[2]*b[1])];
+  let Z=q.slice(), dz=[1,0,0,0], m=Z.reduce((sm,v)=>sm+v*v,0);
+  for (let i=0;i<it;i++){ dz=qm(Z,dz).map(v=>2*v); Z=qm(Z,Z).map((v,k)=>v+QC[k]); m=Z.reduce((sm,v)=>sm+v*v,0); if (m>16) break; }
+  return 0.25*Math.log(Math.max(m,1e-12))*Math.sqrt(m)/Math.hypot(...dz); }
+export function d3Extra(){ const D=st.d3; if (D.shape==='nest') return 0; return D.target ? Math.max(0, Math.floor(Math.log2(d3Bound()*3.4/D.dist)*0.7)) : 0; }
+export function d3Iter(){ const l=st.d3.lvl, s=st.d3.shape, x=d3Extra(); return Math.min({bulb:16,box:20,menger:12,tet:20,qj:16,apo:20,kifs:20,mj:48,tetra:48,sier5:12,menger4:7,kifs4:20,nest:1,klein:24,pk:20,flake:10,jcube:12,mosely:10}[s],
+  {bulb:3+l, box:7+l, menger:Math.min(l,6), tet:4+l, qj:4+l, apo:3+l, kifs:6+l, mj:10+3*l, tetra:10+3*l, sier5:Math.max(2,l-1), menger4:Math.min(l,5), kifs4:6+l, nest:1, klein:l>>1, pk:5+l, flake:1+l, jcube:1+l, mosely:l}[s]+x); }
+export const d3MinDist=()=>d3Bound()*2e-4;
+export const d3Mag=()=>{ const D=st.d3; return D.shape==='nest' ? 1.05*3.4/D.dist*Math.pow(2,(D.nestM||0)) : d3Bound()*3.4/D.dist; };
+function cam3(){ const D=st.d3, T=D.target||[0,0,0], cp=Math.cos(D.pitch), bz=[cp*Math.sin(D.yaw), Math.sin(D.pitch), cp*Math.cos(D.yaw)];
+  let r=[bz[2],0,-bz[0]]; const rl=Math.hypot(...r)||1; r=r.map(x=>x/rl); const u=[bz[1]*r[2]-bz[2]*r[1], bz[2]*r[0]-bz[0]*r[2], bz[0]*r[1]-bz[1]*r[0]];
+  return {pos:[T[0]+D.dist*bz[0], T[1]+D.dist*bz[1], T[2]+D.dist*bz[2]], r, u, b:bz}; }
+// the same distance estimates as the shader, in double precision, to aim the dive
+const fract=x=>x-Math.floor(x), mod2=x=>x-2*Math.floor(x/2);
+const KCJ=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1],[0,0,0]], KRJ=[0.68,0.68,0.68,0.68,0.68,0.68,0.3];
+const FDJ=[...Array(9)].map((_,j)=> j<6 ? [Math.cos(j*Math.PI/3),0,Math.sin(j*Math.PI/3)] : (b=>[0.5*Math.cos(b),0.8660254,0.5*Math.sin(b)])(Math.PI/6+(j-6)*2*Math.PI/3));
+const len3=v=>Math.hypot(v[0],v[1],v[2]), sub3=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const sdBox3=(p,h)=>{ const q=p.map(x=>Math.abs(x)-h); return Math.hypot(Math.max(q[0],0),Math.max(q[1],0),Math.max(q[2],0))+Math.min(Math.max(q[0],q[1],q[2]),0); };
+const sortDesc=p=>{ const a=p.map(Math.abs); return a.sort((u,v)=>v-u); };
+function deNew(p, sh, it){
+  if (sh==='nest'){ const r=Math.max(len3(p),1e-300), kf=Math.floor(-Math.log2(r)); let d=Infinity;
+    for (let j=0;j<2;j++){ const k=Math.max(kf,-nestOuter())+j, sc=Math.pow(2,-k), q=rotY(p,-k*NEST_TH).map(x=>x/sc);
+      const sh2=Math.abs(len3(q)-1)-0.035, h=Math.min(Math.hypot(q[1],q[2]),Math.hypot(q[0],q[2]),Math.hypot(q[0],q[1]))-0.55; d=Math.min(d, Math.max(sh2,-h)*sc); }
+    return d; }
+  if (sh==='klein'){ let q=p.slice(), ds=1, last=-1;
+    for (let n=0;n<it;n++){ let hit=-1; for (let i=0;i<7;i++){ if (i===last) continue; const v=sub3(q,KCJ[i]); if (v[0]*v[0]+v[1]*v[1]+v[2]*v[2]<KRJ[i]*KRJ[i]){ hit=i; break; } }
+      if (hit<0){ let m=Infinity; for (let a=0;a<7;a++){ if (a===last) continue; for (let b=0;b<7;b++){ if (b===a) continue; const e=sub3(KCJ[b],KCJ[a]), qq=KRJ[a]*KRJ[a]/(e[0]*e[0]+e[1]*e[1]+e[2]*e[2]-KRJ[b]*KRJ[b]);
+          m=Math.min(m, len3(sub3(q,KCJ[a].map((c,k)=>c+e[k]*qq)))-Math.abs(qq)*KRJ[b]); } } return m/ds; }
+      const v=sub3(q,KCJ[hit]), f=KRJ[hit]*KRJ[hit]/Math.max(v[0]*v[0]+v[1]*v[1]+v[2]*v[2],1e-300); q=KCJ[hit].map((c,i)=>c+v[i]*f); ds*=f; last=hit; }
+    let m=Infinity; for (let i=0;i<7;i++) if (i!==last) m=Math.min(m, len3(sub3(q,KCJ[i]))-KRJ[i]); return m/ds; }
+  if (sh==='pk'){ const CS=[0.92436,0.90756,0.92436]; let q=p.map(x=>x*1.6), df=1;
+    for (let i=0;i<it;i++){ q=q.map((x,k)=>2*clamp(x,-CS[k],CS[k])-x); const r2=q[0]*q[0]+q[1]*q[1]+q[2]*q[2], k=Math.max(1/Math.max(r2,1e-12),1); q=q.map(x=>x*k); df*=k; }
+    const rxy=Math.hypot(q[0],q[1]); return Math.max(Math.max(rxy-0.92784, Math.abs(rxy*q[2])/Math.max(len3(q),1e-12))/(df*1.6), len3(p)-1.9); }
+  if (sh==='flake'){ let q=p.slice(), sc=1, d=len3(q)-1;
+    for (let n=0;n<it;n++){ let bj=0, bb=Infinity; const b=FDJ.map((u,j)=>{ const x=len3(sub3(q,u.map(c=>c*4/3)))-2/3; if (x<bb){ bb=x; bj=j; } return x; });
+      b.forEach((x,j)=>{ if (j!==bj) d=Math.min(d,x/sc); }); if (bb/sc>d) break;
+      const u=FDJ[bj], a=Math.abs(u[1])<0.9?[0,1,0]:[1,0,0], cx=[a[1]*u[2]-a[2]*u[1], a[2]*u[0]-a[0]*u[2], a[0]*u[1]-a[1]*u[0]], xl=len3(cx), x=cx.map(c=>c/xl),
+        z=[u[1]*x[2]-u[2]*x[1], u[2]*x[0]-u[0]*x[2], u[0]*x[1]-u[1]*x[0]], v=sub3(q,u.map(c=>c*4/3)), dt=(A,B)=>A[0]*B[0]+A[1]*B[1]+A[2]*B[2];
+      q=[dt(v,x)*3, dt(v,u)*3, dt(v,z)*3]; sc*=3; d=Math.min(d,(len3(q)-1)/sc); }
+    return d; }
+  if (sh==='jcube'){ const K=Math.SQRT2-1, K2=K*K; let q=p.slice(), sc=1, d=Infinity;
+    for (let n=0;n<it;n++){ q=sortDesc(q); const ca=[1-K,1-K,1-K], cb=[1-K2,1-K2,0], ba=sdBox3(sub3(q,ca),K), bb=sdBox3(sub3(q,cb),K2);
+      if (Math.min(ba,bb)/sc>d) return d;
+      if (ba<=bb){ d=Math.min(d,bb/sc); q=sub3(q,ca).map(x=>x/K); sc/=K; } else { d=Math.min(d,ba/sc); q=sub3(q,cb).map(x=>x/K2); sc/=K2; } }
+    return Math.min(d, sdBox3(q,1)/sc); }
+  if (sh==='mosely'){ let q=p.slice(), sc=1, d=Infinity;
+    for (let n=0;n<it;n++){ q=sortDesc(q); const cf=[2/3,0,0], ce=[2/3,2/3,0], bf=sdBox3(sub3(q,cf),1/3), be=sdBox3(sub3(q,ce),1/3);
+      if (Math.min(bf,be)/sc>d) return d;
+      if (bf<=be){ d=Math.min(d,be/sc); q=sub3(q,cf).map(x=>x*3); } else { d=Math.min(d,bf/sc); q=sub3(q,ce).map(x=>x*3); } sc*=3; }
+    return Math.min(d, sdBox3(q,1)/sc); }
+  return null; }
+function de3(p){ const T=d3Tf(), R=T.R, q=[0,1,2].map(i=>R[0][i]*p[0]+R[1][i]*p[1]+R[2][i]*p[2]);
+  let d = T.tw ? de3raw(rotY(q,T.tw*q[1]))*T.twS : de3raw(q); if (T.cut) d=Math.max(d, q[0]*T.cut.n[0]+q[1]*T.cut.n[1]+q[2]*T.cut.n[2]-T.cut.o); return d; }
+function de3raw(p){ const D=st.d3, it=d3Iter(), sh=D.shape;
+  { const n=deNew(p, sh, it); if (n!==null) return n; }
+  if (S3[sh].four){ const R=getR4(), w=wAct(), q=[0,1,2,3].map(i=>R[i][0]*p[0]+R[i][1]*p[1]+R[i][2]*p[2]+R[i][3]*w); return de4(q, sh, it); }
+  if (sh==='bulb'){ const P=[p[0],p[2],p[1]]; let z=P.slice(), dr=1, r=0;
+    for (let i=0;i<it;i++){ r=Math.hypot(z[0],z[1],z[2]); if (r>2) break; const th=Math.acos(clamp(z[2]/Math.max(r,1e-9),-1,1))*D.power, ph=Math.atan2(z[1],z[0]+1e-12)*D.power;
+      dr=Math.pow(r,D.power-1)*D.power*dr+1; const zr=Math.pow(r,D.power); z=[zr*Math.sin(th)*Math.cos(ph)+P[0], zr*Math.sin(th)*Math.sin(ph)+P[1], zr*Math.cos(th)+P[2]]; }
+    r=Math.max(r,1e-9); return 0.5*Math.log(r)*r/dr; }
+  if (sh==='box'){ let z=p.slice(), dr=1; const S=D.boxS;
+    for (let i=0;i<it;i++){ z=z.map(x=>clamp(x,-1,1)*2-x); const r2=z[0]*z[0]+z[1]*z[1]+z[2]*z[2]; if (r2<0.25){ z=z.map(x=>x*4); dr*=4; } else if (r2<1){ z=z.map(x=>x/r2); dr/=r2; } z=z.map((x,k)=>x*S+p[k]); dr=dr*Math.abs(S)+1; }
+    return Math.hypot(...z)/Math.abs(dr); }
+  if (sh==='menger'){ const q=p.map(x=>Math.abs(x)-1); let d=Math.hypot(...q.map(x=>Math.max(x,0)))+Math.min(Math.max(...q),0), s=1;
+    for (let m=0;m<it;m++){ const a=p.map(x=>mod2(x*s)-1); s*=3; const r=a.map(x=>Math.abs(1-3*Math.abs(x))); const c=(Math.min(Math.max(r[0],r[1]),Math.max(r[1],r[2]),Math.max(r[2],r[0]))-1)/s; if (c>d) d=c; }
+    return d; }
+  if (sh==='tet'){ let [x,y,z]=p, n=0;
+    for (let i=0;i<it;i++){ if (x+y<0){ const t=-y; y=-x; x=t; } if (x+z<0){ const t=-z; z=-x; x=t; } if (y+z<0){ const t=-y; y=-z; z=t; } x=2*x-1; y=2*y-1; z=2*z-1; n++; }
+    return (Math.hypot(x,y,z)-1.2)*Math.pow(2,-n); }
+  if (sh==='qj'){ const qm=(a,b)=>[a[0]*b[0]-(a[1]*b[1]+a[2]*b[2]+a[3]*b[3]), a[0]*b[1]+b[0]*a[1]+(a[2]*b[3]-a[3]*b[2]), a[0]*b[2]+b[0]*a[2]+(a[3]*b[1]-a[1]*b[3]), a[0]*b[3]+b[0]*a[3]+(a[1]*b[2]-a[2]*b[1])];
+    let z=[p[0],p[1],p[2],D.w], dz=[1,0,0,0], m=z.reduce((s,x)=>s+x*x,0);
+    for (let i=0;i<it;i++){ dz=qm(z,dz).map(x=>2*x); z=qm(z,z).map((x,k)=>x+QC[k]); m=z.reduce((s,x)=>s+x*x,0); if (m>16) break; }
+    return 0.25*Math.log(Math.max(m,1e-12))*Math.sqrt(m)/Math.hypot(...dz); }
+  if (sh==='apo'){ let q=p.slice(), s=1; for (let i=0;i<it;i++){ q=q.map(x=>-1+2*fract(0.5*x+0.5)); const r2=q[0]*q[0]+q[1]*q[1]+q[2]*q[2], k=1.2/Math.max(r2,1e-9); q=q.map(x=>x*k); s*=k; }
+    return Math.max(0.25*Math.abs(q[1])/s, Math.hypot(...p)-1.45); }
+  const a=D.twist*Math.PI/180, ca=Math.cos(a), sa=Math.sin(a), cb=Math.cos(a*0.7), sb=Math.sin(a*0.7); let [x,y,z]=p, n=0;
+  for (let i=0;i<it;i++){ x=Math.abs(x); y=Math.abs(y); z=Math.abs(z); if (x<y){ const t=x; x=y; y=t; } if (x<z){ const t=x; x=z; z=t; } if (y<z){ const t=y; y=z; z=t; }
+    let t=ca*x-sa*y; y=sa*x+ca*y; x=t; t=cb*y-sb*z; z=sb*y+cb*z; y=t; x=2*x-1; y=2*y-1; z=2*z-1; n++; }
+  return (Math.hypot(x,y,z)-1)*Math.pow(2,-n); }
+function raycast3(){ const C=cam3(); return raycastRay(C.pos, C.b.map(x=>-x)); }
+function raycastRay(ro, rd){ const R=d3Bound(), bb=ro[0]*rd[0]+ro[1]*rd[1]+ro[2]*rd[2], c=ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]-R*R, h=bb*bb-c;
+  if (h<0) return null; const sq=Math.sqrt(h), tmax=-bb+sq, k=0.8; let t=Math.max(0,-bb-sq), hit=false;
+  for (let i=0;i<900;i++){ const d=de3([ro[0]+rd[0]*t, ro[1]+rd[1]*t, ro[2]+rd[2]*t]); if (d<Math.max(1e-9,t*1e-4)){ hit=true; break; } t+=d*k; if (t>tmax) return null; }
+  if (!hit) return null;
+  for (let i=0;i<300;i++){ const d=de3([ro[0]+rd[0]*t, ro[1]+rd[1]*t, ro[2]+rd[2]*t]); if (d<1e-9) break; t+=d*k; }
+  return {p:[ro[0]+rd[0]*t, ro[1]+rd[1]*t, ro[2]+rd[2]*t], t}; }
+export function retarget3(){ const h=raycast3(); if (!h) return false; const D=st.d3; D.target=h.p; D.dist=Math.max(d3MinDist(), h.t); D.floating=false; return true; }
+// slide the camera sideways (and the point it looks at) by a screen drag, then re-aim at whatever surface is straight ahead
+export function pan3(dx, dy){ const D=st.d3, C=cam3(), k=D.dist/(cssH*1.6); if (!D.target) D.target=[0,0,0]; D.aim=null;
+  D.target=[0,1,2].map(i=>D.target[i]-C.r[i]*dx*k+C.u[i]*dy*k); D.needAim=true; shared.vel3={x:0,y:0}; touch(); }
+// tap a spot: swing round to face it and dive toward it
+export let tap3Miss=-1e9;
+export function tap3(x, y){ const D=st.d3, C=cam3(), ux=(x-cssW/2)/cssH, uy=(cssH/2-y)/cssH;
+  let rd=[0,1,2].map(i=>C.r[i]*ux+C.u[i]*uy-C.b[i]*1.6); const l=Math.hypot(...rd); rd=rd.map(v=>v/l);
+  const h=raycastRay(C.pos, rd); if (!h){ tap3Miss=performance.now(); return; } hold4();
+  const v=[0,1,2].map(i=>C.pos[i]-h.p[i]), dist=Math.max(d3MinDist(), Math.hypot(...v)), bz=v.map(q=>q/Math.hypot(...v));
+  let y1=Math.atan2(bz[0],bz[2]); while (y1-D.yaw>Math.PI) y1-=2*Math.PI; while (y1-D.yaw<-Math.PI) y1+=2*Math.PI;
+  D.aim={t:0, T0:(D.target||[0,0,0]).slice(), T1:h.p, y0:D.yaw, y1, p0:D.pitch, p1:clamp(Math.asin(clamp(bz[1],-1,1)),-1.45,1.45), l0:Math.log(D.dist), l1:Math.log(dist)};
+  if (!D.target) D.target=[0,0,0]; D.floating=false; shared.vel3={x:0,y:0}; shared.tapMark={x,y,t:performance.now()}; touch(); }
+export let dive3Msg=-1e9;
+export function dive3UI(){ const D=st.d3, on=D.dive||!!D.warp; $('dive3Btn').classList.toggle('on',on); $('dive3Btn').textContent=on?'Stop diving':'Dive in'; }
+export function start3Warp(why){ const D=st.d3; D.dive=false; D.warpWhy=why; D.warpMag=d3Mag(); if (D.shape==='nest') nestReset();
+  D.warp={t:0, dur:why==='reset'?2.2:3.2, ls0:Math.log(D.dist), ls1:Math.log(d3Bound()*3.4), T0:(D.target||[0,0,0]).slice(), y0:D.yaw, y1:D.yaw+0.9+Math.random()*1.6, p0:D.pitch, p1:-0.25+Math.random()*1.0};
+  if (!D.target) D.target=[0,0,0]; dive3UI(); touch(); }
+function hold4(){ const D=st.d3; for (const [k,id] of [['sweep','sweep3'],['spin4','spin4'],['spin3','spin3'],['twAnim','twAnim'],['breathe','breathe'],['bsBreathe','bsBreathe']]){ D[k]=false; $(id).checked=false; }
+  if (D.shape==='nest'){ Object.assign(D,{rxy:0,rxz:0,ryz:0,twist:0,cut:false}); $('cut3').checked=false; $('tw3').value=0; $('tw3o').textContent='0°'; syncT3(); } }
+export const nestStraight=()=>{ const D=st.d3; return !D.rxy && !D.rxz && !D.ryz && !D.twist && !D.cut; };
+export function nestDive(){ const D=st.d3; hold4(); D.aim={t:0, T0:(D.target||[0,0,0]).slice(), T1:[0,0,0], y0:D.yaw, y1:D.yaw, p0:D.pitch, p1:1.25, l0:Math.log(D.dist), l1:Math.log(Math.min(D.dist,2.5))};
+  if (!D.target) D.target=[0,0,0]; D.floating=false; D.dive=true; shared.vel3={x:0,y:0}; }
+export function setDive3(on){ const D=st.d3; if (!on) D.warp=null; if (on) hold4();
+  if (on && D.shape==='nest'){ nestDive(); dive3UI(); touch(); return; }
+  if (on && !retarget3()){ const C=cam3(); let found=null;
+    for (let r=0.03; r<=0.4 && !found; r+=0.03) for (let k=0;k<12 && !found;k++){ const a=k*Math.PI/6+r*7, ux=Math.cos(a)*r, uy=Math.sin(a)*r;
+      let rd=[0,1,2].map(i=>C.r[i]*ux+C.u[i]*uy-C.b[i]*1.6); const l=Math.hypot(...rd); rd=rd.map(v=>v/l); if (raycastRay(C.pos, rd)) found=[cssW/2+ux*cssH, cssH/2-uy*cssH]; }
+    if (found){ D.dive=true; tap3(found[0], found[1]); dive3UI(); return; } }
+  if (on){ if (!retarget3()){ dive3Msg=performance.now(); D.dive=false; } else { D.dive=true; D.extra=d3Extra(); } } else D.dive=false;
+  dive3UI(); touch(); }
+export function d3Bound(){ const s=st.d3.shape; if (s==='nest') return 1.05*Math.pow(2,nestOuter()); if (s==='box'){ const S=Math.abs(st.d3.boxS); return clamp((S+1)/(S-1)*1.05,2.2,7.5); } return S3[s].bound; }
+export let f3Ready=false; shared.f3Err = '';
+export function render3D(hq){
+  if (shared.f3Err) return false;
+  let P; try { P=main.progAsync('f3',FS3); } catch(e){ shared.f3Err=String(e.message||e).slice(0,240); showNA(); return false; }
+  if (!P){ const b=hexRGB(st.bg); gl.viewport(0,0,glc.width,glc.height); gl.clearColor(b[0],b[1],b[2],1); gl.clear(gl.COLOR_BUFFER_BIT); shared.dirty=true; return false; }   // still being built: try again next frame
+  if (!f3Ready){ f3Ready=true; shared.lastCap=''; touch(); }
+  const g=gl, D=st.d3; g.useProgram(P.p); g.viewport(0,0,glc.width,glc.height);
+  const C=cam3(), pos=C.pos, r=C.r, u=C.u, bz=C.b;
+  g.uniform2f(P.u('u_res'),glc.width,glc.height); g.uniform3fv(P.u('u_cam'),pos);
+  g.uniformMatrix3fv(P.u('u_rotM'),false,new Float32Array([...r,...u,...bz])); g.uniform1f(P.u('u_fov'),1.6);
+  g.uniform1i(P.u('u_s3'),SH3.indexOf(D.shape));
+  { const R=getR4(), cm=new Float32Array(16); for (let j=0;j<4;j++) for (let i=0;i<4;i++) cm[j*4+i]=R[i][j]; g.uniformMatrix4fv(P.u('u_r4'),false,cm); const rg=S3[D.shape].rg||[0,1]; g.uniform2f(P.u('u_rg'),rg[0],rg[1]); g.uniform1i(P.u('u_nest0'),-nestOuter()); g.uniform1i(P.u('u_nestM'),st.d3.nestM||0);
+    const T=d3Tf(), M=T.R; g.uniformMatrix3fv(P.u('u_rot3'),false,new Float32Array([M[0][0],M[0][1],M[0][2],M[1][0],M[1][1],M[1][2],M[2][0],M[2][1],M[2][2]]));
+    g.uniform1f(P.u('u_tw'),T.tw); g.uniform1f(P.u('u_twS'),T.twS); g.uniform1i(P.u('u_cut'),T.cut?1:0); if (T.cut) g.uniform4f(P.u('u_cutP'),T.cut.n[0],T.cut.n[1],T.cut.n[2],T.cut.o); } g.uniform1f(P.u('u_twist'),(D.twist+(audOn()&&!D.target?Math.min(1,aud.pulse+aud.bass*0.5)*aud.amt*6:0))*Math.PI/180); g.uniform1i(P.u('u_it3'),d3Iter()); g.uniform1i(P.u('u_hq'),hq?1:0);
+  const ab=audOn()&&!D.target ? Math.min(1,aud.pulse+aud.bass*0.5)*aud.amt : 0;
+  g.uniform1f(P.u('u_power'),D.power+ab*1.6); g.uniform1f(P.u('u_boxS'),D.boxS-ab*0.12); g.uniform1f(P.u('u_w'),(is4()?wAct():0)+ab*0.08);
+  g.uniform1f(P.u('u_density'),effDensity()); g.uniform1f(P.u('u_cycle'),st.cycle); g.uniform1f(P.u('u_bound'),d3Bound()); g.uniform1f(P.u('u_view'),D.dist);
+  g.uniform4fv(P.u('u_qc'),QC); setPal(g,P); g.uniform3fv(P.u('u_bg'),hexRGB(st.bg));
+  g.drawArrays(g.TRIANGLES,0,3);
+}
+
+export function syncT3(){ const D=st.d3; for (const k of ['rxy','rxz','ryz']){ const id='t3'+k.slice(1); $(id).value=Math.round(D[k]); $(id+'o').textContent=Math.round(D[k])+'°'; } }

@@ -1,0 +1,24 @@
+import { dblToFix } from './math/big-fixed.js';
+import { TYPES } from './fractals/types.js';
+
+// ---------- state ----------
+export const st = { bla:true, custom:{src:'z^3 + sin(z) + c', z0:'0', bail:100, js:(z,c)=>{ const r=Math.hypot(z[0],z[1]), t=Math.atan2(z[1],z[0])*3, r3=r*r*r; return [r3*Math.cos(t)+Math.sin(z[0])*Math.cosh(z[1])+c[0], r3*Math.sin(t)+Math.cos(z[0])*Math.sinh(z[1])+c[1]]; }, z0js:c=>[0,0]}, precision:'standard', prog:null, vel:[0,0], endless:true, endlessRun:false, trip:0, manualT:0, insideT:0, iterNeed:0, probeT:0, steer:true, steerT:0, steerTo:null, q:1, qMove:1, lyaSeq:'AB', budMode:'buddha', mode:'explore', type:0, julia:false, jc:[-0.123,0.745], power:3,
+  vE:null, vL:null, vR:null, vO:null, rotDeg:0,
+  iterAuto:true, iter:300, aa:2, cmode:0, palette:'aurora', cycle:0, cycleSpeed:0, density:1, inside:0, bg:'#0b0d12', lw:1.2,
+  dive:false, diveSpeed:0.5, fly:null, hover:null, placeIdx:0, mapInset:true, prevInset:true, chartInset:true, cousinInset:true,
+  grow:{shape:'koch', t:0, playing:true, zoom:false, zph:0, angle:{pyth:45, tree:28}, gv:{ox:0,oy:0,z:1}, fit:null},
+  link:{auto:true, path:'circle', t:0.9},
+  orbit:{data:null, t:0, playing:true, auto:true, step:0.4, style:'stay', circle:true},
+  d3:{axw:0, ayw:0, azw:0, spin4:false, spT:0, shape:'bulb', power:8, breathe:false, boxS:-1.8, w:0, sweep:false, lvl:5, yaw:0.7, pitch:0.32, dist:4.25, dragMode:'turn', floating:false, needAim:false, aimT:0, aim:null, target:null, dive:false, extra:0, twist:0, twAnim:false, rxy:0, rxz:0, ryz:0, spin3:false, cut:false, bsBreathe:false, bsT:0, twT:0, turn:0, t:0, q:0.6, wt:0} };
+export const view = (a,extraRot=0) => ({cx:a[0], cy:a[1], lx:0, ly:0, bx:dblToFix(a[0]), by:dblToFix(a[1]), scale:a[2], rot:a[3]+extraRot, def:a[2]});
+export function juliaView(){ const T=TYPES[st.type], j=T.jview||[0,0,1.5]; return view([j[0],j[1],j[2],T.view[3]]); }
+export function fitV(v, a){ v.scale=Math.max(v.scale, v.scale*1.18/a); v.def=v.scale; return v; }
+
+export const toMath=(type,p)=> type===1 ? [p[0],-p[1]] : p;       // the Burning Ship is drawn upside down (that's how it's always shown)
+export const toDisp=toMath;
+
+export const isExt=()=>st.precision==='extreme';
+export const aud={ctx:null, an:null, data:null, dest:null, el:null, src:null, mic:null, playing:false, react:true, amt:1, level:0, bass:0, mid:0, treb:0, bassAvg:0, pulse:0};
+export const audOn=()=>aud.react && aud.playing;
+export const effDensity=()=> st.density*(audOn() ? 1+0.35*Math.min(1,aud.pulse+aud.bass*0.4)*aud.amt : 1);
+export const ptrs=new Map();

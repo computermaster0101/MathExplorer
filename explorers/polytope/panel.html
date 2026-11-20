@@ -1,0 +1,419 @@
+<div class="sec">
+  <div class="lbl">Mode</div>
+  <div class="seg" id="modes">
+    <button data-m="explore" class="on">Explore</button>
+    <button data-m="build">Build up</button>
+    <button data-m="slice">Slice</button>
+    <button data-m="unfold">Unfold</button>
+    <button data-m="ping">Ping</button>
+  </div>
+</div>
+
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+<div class="sec" data-show="build">
+  <div class="lbl">Steps</div>
+  <div class="seg" id="buildStages" style="grid-auto-columns:1fr">
+
+  </div>
+  <div class="btns" style="margin-top:10px">
+    <button class="btn" id="buildPlay">Pause</button>
+    <button class="btn" id="buildReplay">Replay</button>
+  </div>
+</div>
+<div class="sec" data-show="unfold">
+  <div class="lbl">Unfold <b id="unfo">4D → 3D: 0%</b></div>
+  <input type="range" id="unf" min="0" max="200" value="0" step="1" style="width:100%">
+  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mute);margin-top:2px"><span>4D</span><span>3D net</span><span>flat 2D</span></div>
+  <div class="btns" style="margin-top:10px"><button class="btn" id="unfPlay">Pause</button><button class="btn" id="netNext">Try another net</button><button class="btn" id="netStd">Standard net</button></div>
+  <p class="note" id="netNote">Net 1: the standard one, grown outward from the biggest cell.</p>
+</div>
+<div class="sec" data-show="slice">
+  <div class="lbl">Slice view</div>
+  <label class="check" style="margin-top:0"><input type="checkbox" id="slicechk" checked> Show the slice on its own (top right)</label>
+  <p class="note">The 3D solid the knife is cutting out right now, by itself and enlarged so you can always see its shape, turned to the same angle as the big view. It names the shape when it can, and lists the polygons its faces are made of.</p>
+</div>
+<div class="sec" data-show="unfold">
+  <div class="lbl">Cousin's net (2D)</div>
+  <label class="check" style="margin-top:0"><input type="checkbox" id="flatchk" checked> Show the 3D cousin's flat net (top right)</label>
+  <p class="note">One dimension down, for comparison: the 3D cousin opens into a flat 2D net of polygons in step with the big 4D → 3D unfold. While the tesseract opens into a cross of 8 cubes, the cube opens into a cross of 6 squares. The big view's second stage (3D → 2D) then takes the 4D shape itself all the way flat.</p>
+</div>
+<div class="sec" data-show="ping">
+  <div class="lbl">Ping <b id="pingo">0.6 s per step</b></div>
+  <input type="range" id="pingSpd" min="0.2" max="1.5" value="0.6" step="0.05" style="width:100%">
+  <div class="btns" style="margin-top:10px">
+    <button class="btn" id="pingNew">Ping a new corner</button>
+    <button class="btn" id="pingPlay">Pause</button>
+  </div>
+  <label class="check"><input type="checkbox" id="pingAuto" checked> Ping again automatically</label>
+  <div class="seg" id="pingstyle" style="margin-top:10px">
+    <button data-ps="stay" class="on">Stay lit</button>
+    <button data-ps="echo">Echo</button>
+  </div>
+  <label class="check" id="pingBackRow"><input type="checkbox" id="pingBack" checked> Then unlight from the start, the same way it lit</label>
+  <p class="note" id="pingnote">Stay lit: every corner the pulse reaches stays on, so the lit region grows until the whole shape glows. With unlighting on, a wave of darkness then starts from the same corner and follows the light outward along the same paths.</p>
+</div>
+<div class="sec" data-show="slice">
+  <div class="lbl">Knife position: slide it through the shape <b id="knifeo">0.00</b></div>
+  <input type="range" id="knife" min="-100" max="100" value="0" step="1" style="width:100%">
+  <label class="check"><input type="checkbox" id="sweep" checked> Sweep the knife back and forth</label>
+  <label class="check"><input type="checkbox" id="sliceSpin"> Keep spinning in 4D while slicing</label>
+  <label class="check"><input type="checkbox" id="sliceFillChk" checked> Fill the slice's faces, so it reads as one solid</label>
+  <div class="lbl" style="margin-top:12px">Which part of the shape faces the knife</div>
+  <div class="seg g5" id="knifeDir">
+    <button data-k="free" class="on">Free</button>
+    <button data-k="vert">Corner</button>
+    <button data-k="edge">Edge</button>
+    <button data-k="face">Face</button>
+    <button data-k="cell">Cell</button>
+  </div>
+  <div class="btns" style="margin-top:8px"><button class="btn" id="vfBtn">Show the vertex figure</button></div>
+  <p class="note" id="vfNote">One click: a corner faces the knife and the knife stops just inside it.</p>
+  <p class="note" id="knifeNote">Free: the shape sits square to the knife, the way it first appears. Picking an option turns the shape once to face the knife that way. After that the shape stays still and only the knife moves, sliding through it from one side to the other.</p>
+</div>
+</div></details>
+<details class="grp" id="g-shapes"><summary><span class="gt">Shapes</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+<div class="sec" data-show="explore slice build unfold ping">
+  <div class="lbl">Regular shapes</div>
+  <div class="seg shapes g3">
+    <button data-s="5">5-cell</button>
+    <button data-s="8" class="on">Tesseract</button>
+    <button data-s="16">16-cell</button>
+    <button data-s="24">24-cell</button>
+    <button data-s="120">120-cell</button>
+    <button data-s="600">600-cell</button>
+  </div>
+  <div class="lbl" style="margin-top:12px">Morph</div>
+  <div class="seg shapes"><button data-s="morph">Morph through a family</button></div>
+  <div id="morphRow" hidden style="margin-top:8px">
+    <div class="seg g2" id="morphFam">
+      <button data-f="b4" class="on">Tesseract → 16-cell</button>
+      <button data-f="a4">5-cell</button>
+      <button data-f="f4">24-cell</button>
+      <button data-f="h4">120-cell → 600-cell</button>
+    </div>
+    <div class="row" style="margin-top:8px"><span style="width:44px">Cut</span><input type="range" id="morphS" min="0" max="3" step="0.005" value="0" list="morphTicks"><output id="morphO">0.0</output></div>
+    <datalist id="morphTicks"><option value="0"></option><option value="0.5"></option><option value="1"></option><option value="1.5"></option><option value="2"></option><option value="2.5"></option><option value="3"></option></datalist>
+    <div class="btns" style="margin-top:6px"><button class="btn" id="morphPrev">◀ Stop</button><button class="btn" id="morphPlay">Animate</button><button class="btn" id="morphNext">Stop ▶</button></div>
+    <p class="note" id="morphNote"></p>
+  </div>
+  <div class="lbl" style="margin-top:12px">Tesseract family</div>
+  <div class="seg shapes g2">
+    <button data-s="rt">Rectified</button>
+    <button data-s="tt">Truncated</button>
+    <button data-s="bt">Bitruncated</button>
+    <button data-s="ot">Omnitruncated</button>
+    <button data-s="ru8">Runcinated</button>
+    <button data-s="ca8">Cantellated</button>
+    <button data-s="t16">Truncated 16-cell</button>
+  </div>
+  <div class="lbl" style="margin-top:12px">5-cell family</div>
+  <div class="seg shapes g3">
+    <button data-s="r5">Rectified</button>
+    <button data-s="ru5">Runcinated</button>
+    <button data-s="o5">Omnitruncated</button>
+    <button data-s="t5">Truncated</button>
+    <button data-s="bt5">Bitruncated</button>
+    <button data-s="ca5">Cantellated</button>
+  </div>
+  <div class="lbl" style="margin-top:12px">Prisms &amp; pyramids</div>
+  <div class="seg shapes g2">
+    <button data-s="ptet">Tetrahedral prism</button>
+    <button data-s="poct">Octahedral prism</button>
+    <button data-s="pdod">Dodecahedral prism</button>
+    <button data-s="pico">Icosahedral prism</button>
+    <button data-s="ycube">Cubic pyramid</button>
+    <button data-s="yoct">Octahedral pyramid</button>
+    <button data-s="ydod">Dodecahedral pyramid</button>
+    <button data-s="yico">Icosahedral pyramid</button>
+  </div>
+  <div class="lbl" style="margin-top:12px">24-cell family</div>
+  <div class="seg shapes g2">
+    <button data-s="r24">Rectified 24-cell</button>
+    <button data-s="t24">Truncated 24-cell</button>
+    <button data-s="bt24">Bitruncated 24-cell</button>
+  </div>
+  <div class="lbl" style="margin-top:12px">600-cell family (giants)</div>
+  <div class="seg shapes g2">
+    <button data-s="r600">Rectified 600-cell</button>
+    <button data-s="r120">Rectified 120-cell</button>
+    <button data-s="t600">Truncated 600-cell</button>
+    <button data-s="t120">Truncated 120-cell</button>
+    <button data-s="bt120">Bitruncated 120-cell</button>
+  </div>
+  <div>
+    <div class="lbl" style="margin-top:12px">Higher dimensions</div>
+    <div class="seg shapes g3"><button data-s="hcube">Hypercube</button><button data-s="hsimp">Simplex</button><button data-s="hcross">Cross-polytope</button></div>
+    <div id="hdRow" hidden style="margin-top:8px">
+      <div class="row"><span style="width:74px">Dimensions</span><input type="range" id="hd" min="4" max="16" value="6" step="1"><output id="hdo">6D</output></div>
+      <p class="note" id="hdnote">64 corners, 6 connections each, any corner at most 6 steps from any other.</p>
+    </div>
+  </div>
+  <div>
+    <div class="lbl" style="margin-top:12px">Round shapes</div>
+    <div class="seg shapes g3">
+      <button data-s="sph4">Hypersphere</button>
+      <button data-s="duocyl">Duocylinder</button>
+      <button data-s="hopf">Hopf fibration</button>
+      <button data-s="spherinder">Spherinder</button>
+      <button data-s="cubinder">Cubinder</button>
+      <button data-s="tiger">Tiger (4D torus)</button>
+    </div>
+    <div id="roundRow" hidden style="margin-top:8px">
+      <div class="row"><span style="width:44px">Detail</span><input type="range" id="rdet" min="1" max="5" value="3" step="1"><output id="rdeto">3</output></div>
+      <p class="note" id="rdetNote"></p>
+    </div>
+  </div>
+  <div class="lbl" style="margin-top:12px">Star polytopes</div>
+  <div class="seg shapes g2">
+    <button data-s="ico120">Icosahedral 120-cell</button>
+    <button data-s="sst120">Small stellated 120-cell</button>
+    <button data-s="gr120">Great 120-cell</button>
+    <button data-s="grand120">Grand 120-cell</button>
+    <button data-s="gst120">Great stellated 120-cell</button>
+    <button data-s="gs120">Grand stellated 120-cell</button>
+    <button data-s="gg120">Great grand 120-cell</button>
+    <button data-s="gi120">Great icosahedral 120-cell</button>
+    <button data-s="g600">Grand 600-cell</button>
+    <button data-s="ggs120">Great grand stellated 120-cell</button>
+  </div>
+  <p class="note">All ten star polytopes. Several share exactly the same corners and edges; turn on <b>Fill faces</b> (in View &amp; panels) to see which also share faces.</p>
+  <div class="lbl" style="margin-top:12px">Compounds</div>
+  <div class="seg shapes g2">
+    <button data-s="c3x16">Three 16-cells</button>
+    <button data-s="c3x8">Three tesseracts</button>
+    <button data-s="c5x24">Five 24-cells</button>
+    <button data-s="c8and16">Tesseract + 16-cell</button>
+    <button data-s="c2x8">Two tesseracts</button>
+  </div>
+  <div class="lbl" style="margin-top:12px">Exotic</div>
+  <div class="seg shapes g3">
+    <button data-s="s24">Snub 24-cell</button>
+    <button data-s="ga">Grand antiprism</button>
+    <button data-s="d">Duoprism</button>
+  </div>
+  <div id="duo" hidden style="margin-top:8px">
+    <div class="row"><span>P</span><input type="range" id="dp" min="3" max="16" value="8" step="1"><output id="dpo">8</output></div>
+    <div class="row"><span>Q</span><input type="range" id="dq" min="3" max="16" value="8" step="1"><output id="dqo">8</output></div>
+  </div>
+</div>
+</div></details>
+<details class="grp" id="g-rot"><summary><span class="gt">Rotation &amp; motion</span><span class="gv" id="gv-rot"></span></summary><div class="gb">
+<div class="sec" data-show="explore slice ping">
+  <div class="lbl">Rotate through the 4th dimension</div>
+  <div class="seg" id="spinstyle" style="margin-bottom:8px">
+    <button data-y="tumble" class="on">Tumble</button>
+    <button data-y="double">Double rotation</button>
+  </div>
+  <p class="note" id="spinnote" style="margin:0 0 6px">Tumble turns the shape through the XW and ZW planes at different speeds.</p>
+  <div class="row"><span>XY</span><input type="range" id="xy" min="-180" max="180" value="0" step="0.5"><output id="xyo">0°</output></div>
+  <div class="row"><span>XW</span><input type="range" id="xw" min="-180" max="180" value="0" step="0.5"><output id="xwo">0°</output></div>
+  <div class="row"><span>YW</span><input type="range" id="yw" min="-180" max="180" value="0" step="0.5"><output id="ywo">0°</output></div>
+  <div class="row"><span>ZW</span><input type="range" id="zw" min="-180" max="180" value="0" step="0.5"><output id="zwo">0°</output></div>
+  <div class="btns" style="margin-top:10px">
+    <button class="btn" id="play">Pause spin</button>
+    <button class="btn" id="reset">Reset view</button>
+  </div>
+</div>
+<div class="sec">
+  <div class="lbl">Motion &amp; camera</div>
+  <div class="row" data-show="explore slice ping"><span style="width:74px">4D spin</span><input type="range" id="speed" min="0" max="3" value="0.6" step="0.05"><output id="speedo">0.6×</output></div>
+  <div class="row"><span style="width:74px">Turntable</span><input type="range" id="turn" min="0" max="3" value="0" step="0.05"><output id="turno">off</output></div>
+  <div class="row"><span style="width:74px">Zoom</span><input type="range" id="zoom" min="0.4" max="2.1" value="0.4" step="0.01"><output id="zoomo">0.4×</output></div>
+  <p class="note">Turntable slowly turns the 3D view, like a display stand. Zoom also works with pinch or the scroll wheel.</p>
+</div>
+</div></details>
+<details class="grp" id="g-view"><summary><span class="gt">View &amp; panels</span><span class="gv" id="gv-view"></span></summary><div class="gb">
+<div class="sec" data-show="explore ping">
+  <div class="lbl">Edges</div>
+  <div class="seg" id="edgemode" style="margin-bottom:12px">
+    <button data-e="straight" class="on">Straight</button>
+    <button data-e="curved">Rounded</button>
+  </div>
+  <div class="lbl">Projection 4D → 3D</div>
+  <div class="seg" id="proj">
+    <button data-p="persp" class="on">Perspective</button>
+    <button data-p="ortho">Orthographic</button>
+    <button data-p="stereo">Stereographic</button>
+  </div>
+</div>
+<div class="sec">
+  <div class="lbl">Stereo 3D</div>
+  <div class="seg" id="stereo"><button data-st="off" class="on">Off</button><button data-st="anaglyph">Red/cyan</button><button data-st="sbs">Side by side</button><button data-st="cross">Cross-eyed</button></div>
+  <div class="row" id="eyeRow" hidden style="margin-top:8px"><span style="width:74px">Eye gap</span><input type="range" id="eye" min="0.02" max="0.25" step="0.005" value="0.08"><output id="eyeo">0.08</output></div>
+  <p class="note" id="stereoNote">Ordinary single view.</p>
+</div>
+<div class="sec" data-show="explore ping">
+  <div class="lbl">Faces</div>
+  <label class="check" style="margin-top:0"><input type="checkbox" id="faceFillChk"> Fill faces (see-through)</label>
+  <p class="note" id="faceNote">Tints every flat face so you can see the surfaces, not just the edges. It's the way to tell apart star polytopes that share the same edges: some have triangles, some pentagons, some pentagrams.</p>
+</div>
+<div class="sec" data-show="explore">
+  <div class="lbl">Cells</div>
+  <label class="check" style="margin-top:0"><input type="checkbox" id="hl"> Highlight one cell</label>
+  <div id="cellNav" hidden>
+    <div class="btns" style="margin-top:8px;align-items:center">
+      <button class="btn" id="cellPrev" style="flex:0 0 44px">◀</button>
+      <div id="cellLbl" style="flex:1;text-align:center;font-size:13px">–</div>
+      <button class="btn" id="cellNext" style="flex:0 0 44px">▶</button>
+    </div>
+    <p class="note">Every 4D shape is built from 3D cells glued face to face, the way a cube is built from squares. Step through them and watch one get stretched and squashed as the shape turns.</p>
+  </div>
+</div>
+<div class="sec" data-show="explore slice">
+  <div class="lbl">3D cousin</div>
+  <label class="check" style="margin-top:0"><input type="checkbox" id="cousin" checked> Show the matching 3D shape (top right)</label>
+  <p class="note">The matching 3D shape, doing the same 4D turns one dimension down. Dragging and the turntable turn it together with the big view, at the same angle.</p>
+</div>
+<div class="sec" data-show="explore slice">
+  <div class="lbl">2D shadow</div>
+  <label class="check" style="margin-top:0"><input type="checkbox" id="shadowchk" checked> Show the 3D cousin's shadow (top right)</label>
+  <p class="note">The shadow the 3D cousin casts on a wall, in a single shadow colour. The lamp and the wall stay put, facing you; when you drag or use the turntable, the cousin turns between them and its shadow turns across the wall. It's the same kind of picture as the big view, one dimension down: a 3D shape flattened to 2D, just as the big view is a 4D shape flattened to 3D. It follows the projection (a lamp for perspective, sunlight for orthographic, a light on a sphere for stereographic) and the straight or rounded edges. In Slice mode it shows the flat world itself: the sheet stays put facing you, the cousin turns through it as you drag, and you see only the flat lines where its faces cross the sheet, the 2D version of the slice in the big view.</p>
+</div>
+</div></details>
+<details class="grp" id="g-style"><summary><span class="gt">Colour &amp; style</span><span class="gv" id="gv-style"></span></summary><div class="gb">
+<div class="sec">
+  <div class="lbl">Colour by</div>
+  <div class="seg g3" id="cmode">
+    <button data-c="rgb4">4D rainbow</button>
+    <button data-c="body" class="on">Painted on</button>
+    <button data-c="w">4D depth</button>
+    <button data-c="dir">Edge axis</button>
+    <button data-c="solid">Solid</button>
+  </div>
+  <p class="note" data-show="build unfold ping">In this mode the colours are fixed: edges show the step or order that made them, each cell gets its own colour while unfolding, and in Ping the colour shows how many steps a corner is from the start. The palette still changes these colours.</p>
+  <div class="lbl" style="margin-top:12px">Palette</div>
+  <div class="swatches" id="palettes"></div>
+  <p class="note" id="palName" style="margin-top:6px"></p>
+  <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+  <div class="row" style="margin-top:10px"><span style="width:74px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
+  <div class="row"><span style="width:74px">Density</span><input type="range" id="dens" min="0.2" max="4" step="0.05" value="1"><output id="denso">1.0×</output></div>
+  <div class="lbl" style="margin-top:12px">Finish</div>
+  <div class="seg" id="finish">
+    <button data-f="satin" class="on">Satin</button>
+    <button data-f="gloss">Glossy</button>
+    <button data-f="metal">Metal</button>
+    <button data-f="flat">Neon</button>
+  </div>
+  <div class="lbl" style="margin-top:12px">Background</div>
+  <div class="seg" id="bg">
+    <button data-b="#0b0d12" class="on">Midnight</button>
+    <button data-b="#000000">Black</button>
+    <button data-b="#f3efe6">Paper</button>
+  </div>
+  <div class="btns" style="margin-top:10px"><button class="btn" id="snap" disabled>Save image (PNG)</button></div>
+</div>
+<div class="sec">
+  <div class="lbl">Tube thickness <b id="thko">0.4×</b></div>
+  <input type="range" id="thk" min="0.4" max="2.2" value="0.4" step="0.05" style="width:100%">
+  <label class="check"><input type="checkbox" id="conf" checked> Thickness shows 4D depth</label>
+</div>
+</div></details>
+<details class="grp" id="g-info"><summary><span class="gt">Structure</span><span class="gv" id="gv-info"></span></summary><div class="gb">
+<div class="sec">
+  <div class="lbl">Structure</div>
+  <div class="stats">
+    <div class="stat"><b id="nv">16</b><small id="nvl">vertices</small></div>
+    <div class="stat"><b id="ne">32</b><small id="nel">edges</small></div>
+    <div class="stat"><b id="nc">8</b><small id="ncl">cells</small></div>
+  </div>
+</div>
+</div></details>
+<details class="grp" id="g-share"><summary><span class="gt">Share this view</span><span class="gv"></span></summary><div class="gb">
+<div class="sec">
+  <p class="note" style="margin-top:0">The link records the shape, mode, camera angle, zoom, 4D turn, colours and knife, so it opens on exactly this picture.</p>
+  <input type="text" id="viewLink" readonly class="txt">
+  <div class="btns" style="margin-top:6px"><button class="btn" id="copyView">Copy link</button></div>
+  <div class="lbl" style="margin-top:12px">Load a view</div>
+  <input type="text" id="viewIn" class="txt" placeholder="Paste a view link or code">
+  <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+  <p class="note" id="shareNote"></p>
+</div>
+</div></details>
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv" id="gv-print"></span></summary><div class="gb">
+<div class="sec" data-show="explore slice unfold">
+  <div class="lbl">3D print this</div>
+  <div class="seg" id="sizes">
+    <button data-mm="60">60 mm</button>
+    <button data-mm="80" class="on">80 mm</button>
+    <button data-mm="120">120 mm</button>
+  </div>
+  <p class="note" id="printnote">Thinnest tube: –</p>
+  <div class="btns" style="margin-top:8px">
+    <button class="btn primary" id="export" disabled>Download STL (.zip)</button>
+  </div>
+  <p class="note" id="dlnote">Checking whether downloads work in this view…</p>
+</div>
+</div></details>
+<details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv" id="gv-learn"></span></summary><div class="gb">
+<div class="explain">
+  <p id="about"></p>
+  <details class="topic" open><summary>What you're seeing</summary>
+  <p><strong>What you're seeing.</strong> A 4D shape can't fit in our space, so we look at its 3D "shadow", the way a globe gets flattened into a map.</p>
+  <p><strong>Perspective</strong> is like a camera sitting out along the 4th axis: corners nearer it (high W) look bigger, which gives the classic cube inside a cube. <strong>Orthographic</strong> just drops the W coordinate, like a shadow under the midday sun. <strong>Stereographic</strong> wraps the shape onto a 4D sphere and flattens it like a world map.</p>
+  <p><strong>Straight vs rounded.</strong> Straight joins the projected corners with bars, which print with fewer overhangs. Rounded lets each edge follow its arc around the 4D sphere. Rounded + stereographic is the most faithful view, since every cell comes out as a curved bubble. Thicker tubes are nearer along W.</p>
+  <p><strong>Rotating in XW / YW / ZW</strong> turns the shape through the 4th axis. Cubes look like they turn inside out because they pass "through" each other, the way a 3D cube's shadow seems to flip on a wall. <strong>4D rainbow</strong> gives each dimension its own colour channel: X controls red, Y green, Z blue, and W lightness (pale toward W+, deep toward W−). <strong>Painted on</strong> colours the shape itself, as if you'd painted it before spinning, so you can watch the inner parts travel to the outside and back. <strong>4D depth</strong> colours by where each point is right now along W, like a heat map. <strong>Edge axis</strong> colours each edge by which of the four axes it mostly runs along, so parallel edges share a colour.</p>
+  </details>
+  <details class="topic" id="lt-euler"><summary>Counting check: Euler's rule</summary>
+    <p>Count a polyhedron's corners (V), edges (E) and faces (F) and you always get <strong>V − E + F = 2</strong>, for any shape without holes. One dimension up, add the cells (C) and the rule becomes <strong>V − E + F − C = 0</strong>.</p>
+    <p class="live" id="eulerLive">Open this on a shape to check it live.</p>
+    <p>The pattern keeps alternating: in every odd dimension the alternating sum is 2, in every even dimension it's 0. The n-D shapes show it too, using formulas for how many pieces of each size they have.</p>
+  </details>
+  <details class="topic"><summary>The dimension ladder</summary>
+    <p>Every step up works the same way. Drag a point and it traces a line. Drag the line sideways and it sweeps a square. Drag the square at right angles to itself and you get a cube. Drag the cube in a fourth direction, at right angles to all three, and you get a tesseract.</p>
+    <p>The counts follow a pattern you can predict: corners double each time (1, 2, 4, 8, 16), and edges go 0, 1, 4, 12, 32, because each step copies the old edges and adds one new edge per corner. Nothing about the 4th step is special: you just can't point in that direction.</p>
+    <div class="btns"><button class="btn try" data-try="8|build">Try it: build the tesseract</button><button class="btn try" data-try="hcube|build">Keep going past 4D</button></div>
+  </details>
+  <details class="topic"><summary>Flatland: how a slice shows the 4th dimension</summary>
+    <p>Imagine flat creatures living in a plane. If a ball passed through their world, they'd never see a ball: just a dot that grows into a circle, then shrinks and vanishes. That's all a 2D being can see of a 3D object: one slice at a time.</p>
+    <p>Slice mode does this one level up. A 3D knife slides through a still 4D shape, and you see the part the knife is passing through. A hypersphere shows up as a ball that grows and shrinks. A tesseract fed in corner first shows up as a tetrahedron that swells into an octahedron and back.</p>
+    <div class="btns"><button class="btn try" data-try="sph4|slice">Try it: slice the hypersphere</button><button class="btn try" data-try="8|slice|vert">Tesseract, corner first</button></div>
+  </details>
+  <details class="topic"><summary>Why there are only six regular 4D shapes</summary>
+    <p>In 3D, the faces around each corner have to add up to less than 360°, or they lie flat. Triangles fit 3, 4 or 5 around a corner, squares 3 and pentagons 3. That's why there are exactly five Platonic solids.</p>
+    <p>In 4D the same idea moves up a level: the cells around each <em>edge</em> must leave a gap. The angle between two faces of a tetrahedron is about 70.5°, so 3, 4 or 5 fit around an edge: the 5-cell, the 16-cell and the 600-cell. Cubes (90°) fit 3: the tesseract. Octahedra (109.5°) fit 3: the 24-cell. Dodecahedra (116.6°) fit 3: the 120-cell. Icosahedra (138.2°) can't, because 3 of them already pass 360°. That makes six.</p>
+    <p>In 5D and above, the angles get too tight for everything except three shapes: the simplex, the hypercube and the cross-polytope. 4D is the richest dimension of all.</p>
+    <div class="btns"><button class="btn try" data-try="600|explore">Try it: the 600-cell</button><button class="btn try" data-try="24|explore">The 24-cell, which has no 3D cousin</button></div>
+  </details>
+  <details class="topic"><summary>Duals: swapping corners and cells</summary>
+    <p>Put a corner in the middle of every cell of a shape, join corners whose cells touch, and you get its <strong>dual</strong>. The cube and octahedron are duals in 3D. In 4D, the tesseract (16 corners, 8 cells) pairs with the 16-cell (8 corners, 16 cells), and the 120-cell pairs with the 600-cell. The 5-cell and the 24-cell are their own duals.</p>
+    <p>The morph slides a shape all the way to its dual, through every halfway shape in between.</p>
+    <div class="btns"><button class="btn try" data-try="morph|explore|b4">Try it: tesseract → 16-cell</button><button class="btn try" data-try="morph|explore|h4">120-cell → 600-cell</button></div>
+  </details>
+  <details class="topic"><summary>Reading the names: truncated, rectified, and the rest</summary>
+    <p>Most shapes here are a regular shape with pieces cut away:</p>
+    <p><strong>Truncated</strong>: each corner sliced off. <strong>Rectified</strong>: cut so deep the cuts meet at the middle of every edge. <strong>Bitruncated</strong>: halfway between a shape and its dual. <strong>Cantellated</strong>: the edges shaved down too. <strong>Runcinated</strong>: the cells pushed apart and the gaps filled. <strong>Omnitruncated</strong>: every corner, edge and face cut at once.</p>
+    <p>All of these come from one trick, <strong>Wythoff's construction</strong>. Set up four mirrors, put a point between them, and let the mirrors copy it. Where the point sits decides which shape you get. That's exactly how the morph works.</p>
+    <div class="btns"><button class="btn try" data-try="morph|explore|f4">Try it: morph the 24-cell family</button></div>
+  </details>
+  <details class="topic"><summary>Schläfli symbols: {4,3,3} and friends</summary>
+    <p>A regular shape can be named with a short list of numbers. {4} is a square. {4,3} is a cube: squares, 3 around each corner. {4,3,3} is the tesseract: cubes, 3 around each edge. The 600-cell is {3,3,5}: tetrahedra, 5 around each edge.</p>
+    <p>Flip the list and you get the dual: {3,3,4} is the 16-cell, the tesseract's dual. A fraction like 5/2 means a pentagram, a star drawn without lifting your pen. That's how the star polytopes get names like {5/2,5,3}.</p>
+  </details>
+  <details class="topic"><summary>Turning in 4D: planes, not axes</summary>
+    <p>In 3D we say things spin "around an axis", but really they turn <em>in a plane</em>: a spinning top turns in the horizontal plane, and the axis is just the one direction left over. In 4D there are two directions left over, so a 4D rotation has a whole fixed plane instead of an axis.</p>
+    <p>Stranger still, 4D has room for two separate planes at right angles to each other, XY and ZW, so a shape can turn in both at once. In a <strong>double rotation</strong> at equal speeds, nothing stays still at all: every point travels in a circle. 3D has no equivalent.</p>
+    <div class="btns"><button class="btn try" data-try="8|explore|double">Try it: double rotation</button></div>
+  </details>
+  <details class="topic"><summary>High dimensions and networks</summary>
+    <p>Three families exist in every dimension, and they're three kinds of network: the <strong>hypercube</strong> (2ⁿ nodes, each linked to n others), the <strong>simplex</strong> (n+1 nodes, all linked) and the <strong>cross-polytope</strong> (2n nodes, linked to all but their opposite).</p>
+    <p>Ping a hypercube and watch the ring sizes: 1, n, then the rest of Pascal's triangle. Most corners sit at the middle distance, n/2 steps from the start, and that crowding in the middle gets more extreme as n grows. Distances spread too: in a 16D cube with edges 1 unit long, the corners are 2 units from the centre. And a ball fitted inside a 10D cube fills only about 0.25% of it, so nearly all the volume is out in the corners.</p>
+    <p>Machine learning works in spaces with hundreds or thousands of dimensions, where these effects are normal. It's part of the "curse of dimensionality".</p>
+    <div class="btns"><button class="btn try" data-try="hcube|ping">Try it: ping the hypercube</button><button class="btn try" data-try="hsimp|ping">Ping a simplex</button></div>
+  </details>
+  <details class="topic"><summary>Round shapes: the 3-sphere and the Hopf fibration</summary>
+    <p>The 4D ball's surface, the <strong>3-sphere</strong>, is a 3D space that curves back on itself: travel straight in any direction and you come back to where you started. It can be split into two solid doughnuts glued along a flat torus, the <strong>Clifford torus</strong>. That's the duocylinder's ridge.</p>
+    <p>It can also be filled completely with circles, no two touching, every one linked through every other. That's the <strong>Hopf fibration</strong>. It turns up in physics too, in the maths of spin and of light.</p>
+    <div class="btns"><button class="btn try" data-try="hopf|explore">Try it: the Hopf fibration</button><button class="btn try" data-try="duocyl|explore">The duocylinder</button></div>
+  </details>
+  <details class="topic"><summary>A short history</summary>
+    <p><strong>Ludwig Schläfli</strong> found all six regular 4D shapes around 1852. His work wasn't published until 1901, after his death. <strong>Charles Howard Hinton</strong> coined the word "tesseract" in 1888 and wrote popular books on picturing the 4th dimension. <strong>Edmund Hess</strong> completed the list of ten star polytopes in 1883. <strong>Alicia Boole Stott</strong>, with no formal training, worked out the 3D slices of the regular 4D shapes by hand and built cardboard models of them; she also brought the word "polytope" into English. In <strong>1965</strong>, John Conway and Michael Guy used a computer to find the grand antiprism. In the 1970s, <strong>Thomas Banchoff</strong> made some of the first computer films of a tesseract turning in 4D.</p>
+  </details>
+  <details class="topic"><summary>Glossary</summary>
+    <div class="btns"><button class="btn try" data-try="600|slice|vfig">Try it: the 600-cell's vertex figure</button></div>
+    <p><strong>Cell</strong>: one of the 3D pieces that make up a 4D shape's surface, the way faces make up a polyhedron's. <strong>Facet</strong>: the biggest pieces of a shape's surface in any dimension (cells, in 4D). <strong>Vertex figure</strong>: the small shape you get by slicing off one corner. In 4D it's a polyhedron: a tetrahedron for the tesseract, an icosahedron for the 600-cell, a cube for the 24-cell. <strong>Projection</strong>: a lower-dimensional shadow. <strong>Slice</strong> or <strong>cross-section</strong>: where a hyperplane cuts through. <strong>Net</strong>: the cells unfolded and laid out flat in one dimension lower. <strong>Uniform</strong>: every corner looks the same and every cell is a regular or uniform shape. <strong>W</strong>: the name used here for the fourth direction.</p>
+  </details>
+</div>
+</div></details>
+<details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
+<div class="sec"><table class="keys"><tr><td><kbd>Space</kbd></td><td>Pause / resume rotation (play / pause in Build up and Unfold)</td></tr><tr><td><kbd>1 – 5</kbd></td><td>Explore, Build up, Slice, Unfold, Ping</td></tr><tr><td><kbd>← →</kbd></td><td>Previous / next shape</td></tr><tr><td><kbd>↑ ↓</kbd></td><td>More / fewer dimensions (n-D hypercube)</td></tr><tr><td><kbd>+ −</kbd></td><td>Zoom in / out</td></tr><tr><td><kbd>[ ]</kbd></td><td>Slower / faster 4D spin</td></tr><tr><td><kbd>T</kbd></td><td>Turntable on / off</td></tr><tr><td><kbd>C</kbd></td><td>Next colour mode</td></tr><tr><td><kbd>V</kbd></td><td>Next palette (Shift+V back)</td></tr><tr><td><kbd>R</kbd></td><td>Reset view</td></tr><tr><td><kbd>K</kbd></td><td>Colour cycling on / off</td></tr><tr><td><kbd>N</kbd></td><td>New ping / restart build or unfold</td></tr><tr><td><kbd>H</kbd></td><td>Hide / show panel</td></tr><tr><td><kbd>F</kbd></td><td>Full screen (Esc to leave)</td></tr><tr><td><kbd>E / Q</kbd></td><td>Expand / collapse all sections</td></tr><tr><td><kbd>?</kbd></td><td>Open this list</td></tr></table></div>
+</div></details>
