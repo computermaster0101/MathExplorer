@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fractal Explorer</title>
+<title>Fractal Explorer v12</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
@@ -34,6 +34,7 @@
   .row span{width:30px;font:500 12px 'JetBrains Mono',monospace;color:var(--mute)}
   .row output{width:48px;text-align:right;font:500 12px 'JetBrains Mono',monospace}
   input[type=range]{flex:1;accent-color:var(--accent)}
+  input.txt{width:100%;box-sizing:border-box;background:#0e1118;border:1px solid var(--line);border-radius:8px;color:var(--text);font:12px 'JetBrains Mono',monospace;padding:7px 8px}
   .btns{display:flex;gap:8px}
   .btn{flex:1;background:#1c2130;border:1px solid var(--line);color:var(--text);font:500 13px Inter,sans-serif;padding:9px 10px;border-radius:9px;cursor:pointer}
   .btn:hover{border-color:#36405a}
@@ -109,7 +110,7 @@
         <button data-m="grow">Grow</button>
         <button data-m="link">Julia link</button>
         <button data-m="orbit">Orbit</button>
-        <button data-m="d3">3D</button>
+        <button data-m="d3">3D · 4D</button>
       </div>
     </div>
 
@@ -164,15 +165,29 @@
           <div class="row"><span style="width:74px">Power</span><input type="range" id="pw3" min="2" max="32" step="0.05" value="8"><output id="pw3o">8.0</output></div>
           <label class="check" style="margin-top:2px"><input type="checkbox" id="breathe"> Breathe (sweep the power from 2 to 24)</label>
         </div>
-        <div id="bsRow" class="row"><span style="width:74px">Box scale</span><input type="range" id="bs3" min="-3" max="-1.3" step="0.01" value="-1.8"><output id="bs3o">−1.80</output></div>
-        <div id="twRow">
-          <div class="row"><span style="width:74px">Twist</span><input type="range" id="tw3" min="0" max="60" step="0.5" value="20"><output id="tw3o">20°</output></div>
-          <label class="check" style="margin-top:2px"><input type="checkbox" id="twAnim" checked> Keep twisting</label>
+        <div id="bsRow">
+          <div class="row"><span style="width:74px">Box scale</span><input type="range" id="bs3" min="-3" max="-1.3" step="0.01" value="-1.8"><output id="bs3o">−1.80</output></div>
+          <label class="check" style="margin-top:2px"><input type="checkbox" id="bsBreathe"> Breathe (sweep the scale from −2.6 to −1.4)</label>
         </div>
-        <div id="wRow">
-          <div class="lbl">Knife position (W) <b id="w3o">0.00</b></div>
+        <div class="lbl" style="margin-top:12px">Turn the shape</div>
+        <div class="row"><span style="width:40px">XY</span><input type="range" id="t3xy" min="-180" max="180" step="1" value="0"><output id="t3xyo">0°</output></div>
+        <div class="row"><span style="width:40px">XZ</span><input type="range" id="t3xz" min="-180" max="180" step="1" value="0"><output id="t3xzo">0°</output></div>
+        <div class="row"><span style="width:40px">YZ</span><input type="range" id="t3yz" min="-180" max="180" step="1" value="0"><output id="t3yzo">0°</output></div>
+        <label class="check"><input type="checkbox" id="spin3"> Keep turning</label>
+        <div class="row" style="margin-top:10px"><span style="width:74px">Twist</span><input type="range" id="tw3" min="0" max="180" step="0.5" value="0"><output id="tw3o">0°</output></div>
+        <label class="check" style="margin-top:2px"><input type="checkbox" id="twAnim"> Keep twisting</label>
+        <div id="wRow" style="margin-top:12px">
+          <label class="check" id="cutRow" style="margin-top:0"><input type="checkbox" id="cut3"> Cut with the knife (shows the inside)</label>
+          <div class="lbl" style="margin-top:8px"><span id="knifeLbl">Knife position (W)</span> <b id="w3o">0.00</b></div>
           <input type="range" id="w3" min="-100" max="100" value="0" step="1" style="width:100%">
-          <label class="check"><input type="checkbox" id="sweep3" checked> Sweep the knife through 4D</label>
+          <label class="check"><input type="checkbox" id="sweep3"> <span id="sweepLbl">Sweep the knife through 4D</span></label>
+          <div class="lbl" style="margin-top:12px" id="turnKLbl">Turn the knife in 4D</div>
+          <div class="row"><span style="width:40px" id="k1l">XW</span><input type="range" id="rxw" min="-180" max="180" step="1" value="0"><output id="rxwo">0°</output></div>
+          <div class="row"><span style="width:40px" id="k2l">YW</span><input type="range" id="ryw" min="-180" max="180" step="1" value="0"><output id="rywo">0°</output></div>
+          <div class="row"><span style="width:40px" id="k3l">ZW</span><input type="range" id="rzw" min="-180" max="180" step="1" value="0"><output id="rzwo">0°</output></div>
+          <label class="check"><input type="checkbox" id="spin4"> Keep turning the knife</label>
+          <div class="btns" style="margin-top:8px"><button class="btn" id="r4reset">Straighten the knife</button><button class="btn" id="t3reset">Straighten the shape</button></div>
+          <p class="note" id="knifeNote"></p>
         </div>
         <div class="btns" style="margin:4px 0 6px"><button class="btn" id="dive3Btn">Dive in</button><button class="btn" id="reset3">Reset view</button></div>
         <div class="lbl" style="margin-top:6px">One-finger drag</div>
@@ -181,7 +196,7 @@
         <label class="check" style="margin-top:0"><input type="checkbox" id="endless3Chk" checked> Endless: when it runs out of precision, fly back out and dive somewhere new</label>
         <div class="row"><span style="width:74px">Dive speed</span><input type="range" id="dive3Spd" min="0.1" max="2" step="0.05" value="0.5"><output id="dive3o">0.5×</output></div>
         <div class="row"><span style="width:74px">Detail</span><input type="range" id="lvl3" min="1" max="8" step="1" value="5"><output id="lvl3o">5</output></div>
-        <div class="row"><span style="width:74px">Turntable</span><input type="range" id="turn3" min="0" max="2" step="0.05" value="0.25"><output id="turn3o">0.3×</output></div>
+        <div class="row"><span style="width:74px">Turntable</span><input type="range" id="turn3" min="0" max="2" step="0.05" value="0"><output id="turn3o">off</output></div>
         <p class="note">Scroll or pinch to move closer. Dive flies toward whatever surface is in the middle of the screen, adding detail as it goes. The picture sharpens and gains shadows when you stop moving.</p>
       </div>
     </div></details>
@@ -224,12 +239,23 @@
         </div>
       </div>
       <div class="sec" data-show="d3">
-        <div class="lbl">In 3D (and 4D)</div>
-        <div class="seg g2" id="shapes3">
+        <div class="lbl">In 3D</div>
+        <div class="seg g2 sh3" id="shapes3">
           <button data-s3="bulb" class="on">Mandelbulb</button><button data-s3="box">Mandelbox</button>
           <button data-s3="menger">Menger sponge</button><button data-s3="tet">Sierpinski tetrahedron</button>
-          <button data-s3="qj">Quaternion Julia (4D)</button><button data-s3="apo">Apollonian spheres</button>
-          <button data-s3="kifs">Kaleidoscopic IFS</button>
+          <button data-s3="apo">Apollonian spheres</button><button data-s3="kifs">Kaleidoscopic IFS</button>
+        </div>
+        <div class="lbl" style="margin-top:12px">Spheres in spheres, halls and sponges</div>
+        <div class="seg g2 sh3" id="shapes3b">
+          <button data-s3="nest">Nested spheres</button><button data-s3="klein">Kleinian pearls</button>
+          <button data-s3="pk">Pseudo-Kleinian</button><button data-s3="flake">Sphereflake</button>
+          <button data-s3="jcube">Jerusalem cube</button><button data-s3="mosely">Mosely snowflake</button>
+        </div>
+        <div class="lbl" style="margin-top:12px">In 4D (seen as 3D slices)</div>
+        <div class="seg g2 sh3" id="shapes4">
+          <button data-s3="qj">Quaternion Julia</button><button data-s3="mj">Mandelbrot–Julia</button>
+          <button data-s3="tetra">Tetrabrot</button><button data-s3="sier5">Sierpinski 5-cell</button>
+          <button data-s3="menger4">4D Menger sponge</button><button data-s3="kifs4">4D kaleidoscope</button>
         </div>
       </div>
     </div></details>
@@ -278,7 +304,8 @@
         <div class="lbl" style="margin-top:12px">Palette</div>
         <div class="swatches" id="palettes"></div>
         <p class="note" id="palName" style="margin-top:6px"></p>
-        <div class="row" style="margin-top:10px"><span style="width:74px">Cycle</span><input type="range" id="cyc" min="0" max="3" step="0.05" value="0"><output id="cyco">off</output></div>
+        <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+        <div class="row" style="margin-top:10px"><span style="width:74px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
         <div class="row"><span style="width:74px">Density</span><input type="range" id="dens" min="0.2" max="4" step="0.05" value="1"><output id="denso">1.0×</output></div>
         <div data-show="explore link orbit">
           <div class="lbl" style="margin-top:12px">Inside the set</div>
@@ -292,10 +319,18 @@
 
     <details class="grp" id="g-share"><summary><span class="gt">Save, share &amp; record</span><span class="gv" id="gv-share"></span></summary><div class="gb">
       <div class="sec">
-        <div class="btns"><button class="btn" id="snap">Save image (PNG)</button><button class="btn" id="copyLink">Copy link to this view</button></div>
-        <input id="linkBox" readonly hidden style="width:100%;margin-top:8px;background:#0e1118;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:7px 8px;font:12px 'JetBrains Mono',monospace">
+        <div class="btns"><button class="btn" id="snap">Save image (PNG)</button></div>
         <p class="note" id="dlnote">Checking how saving works in this view…</p>
-        <p class="note" id="linkNote">The address of this page always carries the current view (place, zoom, colours, mode and settings), so you can bookmark it or send it to someone.</p>
+      </div>
+      <div class="sec">
+        <div class="lbl">Share this view</div>
+        <p class="note" id="linkNote" style="margin:0 0 8px">The link records the fractal, mode, place and zoom (to the last digit), colours and settings, so it opens on exactly this picture.</p>
+        <input type="text" id="linkBox" readonly class="txt" spellcheck="false">
+        <div class="btns" style="margin-top:6px"><button class="btn" id="copyLink">Copy link</button></div>
+        <div class="lbl" style="margin-top:12px">Load a view</div>
+        <input type="text" id="viewIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Paste a view link or code">
+        <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+        <p class="note" id="shareNote"></p>
       </div>
       <div class="sec">
         <div class="lbl">Record video <b id="recTime"></b></div>
@@ -331,7 +366,7 @@
     <details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
       <div class="sec"><table class="keys">
         <tr><td><kbd>Space</kbd></td><td>Pause / resume whatever is moving</td></tr>
-        <tr><td><kbd>1 – 5</kbd></td><td>Explore, Grow, Julia link, Orbit, 3D</td></tr>
+        <tr><td><kbd>1 – 5</kbd></td><td>Explore, Grow, Julia link, Orbit, 3D · 4D</td></tr>
         <tr><td><kbd>← →</kbd></td><td>Previous / next fractal</td></tr>
         <tr><td><kbd>+ −</kbd></td><td>Zoom in / out</td></tr>
         <tr><td><kbd>D</kbd></td><td>Dive in (Explore)</td></tr>
@@ -390,6 +425,8 @@ const PALETTES = {
   mono:[[0.25,0.25,0.25],[0.55,0.55,0.55],[0.8,0.8,0.8],[1,1,1]],
 };
 let RAMP = PALETTES.aurora;
+// the palette, optionally run backwards; everything that colours reads RAMP
+function setRamp(){ RAMP = st.palRev ? PALETTES[st.palette].slice().reverse() : PALETTES[st.palette]; }
 function palRamp(t){ t=clamp(t,0,0.99999)*(RAMP.length-1); const i=Math.floor(t), f=t-i; return [0,1,2].map(c=>RAMP[i][c]+(RAMP[i+1][c]-RAMP[i][c])*f); }
 function palM(t){ t=((t%1)+1)%1; return palRamp(1-Math.abs(2*t-1)); }     // mirrored, so it cycles seamlessly (same as the shader)
 const css=(c,a)=>{ const s=c.map(x=>Math.round(clamp(x,0,1)*255)).join(','); return a==null?`rgb(${s})`:`rgba(${s},${a})`; };
@@ -462,7 +499,7 @@ const TYPES = {
       info:'Newton\'s method with a twist: after each Newton step for z³ = 1, add c. Start every pixel\'s c from z = 1. Most points still settle down, but in some places the added c keeps knocking them off, and those regions (dark) contain tiny, perfect copies of the Mandelbrot set, a sign of how universal its shape is.',
       places:[['Whole set',-0.45,0,1.25],['A hidden Mandelbrot',-0.9,0.0,0.22]] },
   9:{ name:'Lyapunov fractal', jname:'Lyapunov fractal', alt:'population growth, x → r·x·(1 − x), with r switching between a and b', view:[3.4,3.4,0.62,0], noOrbit:true, noLink:true,
-      info:'Mario Markus, 1990. Model a population with x → r·x·(1 − x), but switch the growth rate r between two values, a (across) and b (up), following a pattern like AB or AABAB. Then measure the Lyapunov exponent: whether tiny differences shrink (order, coloured) or blow up (chaos, dark). Every pixel is a different pair of growth rates. The famous places each use a different pattern.',
+      info:'Mario Markus, 1990. Model a population with x → r·x·(1 − x), but switch the growth rate r between two values, a (across) and b (up), following a pattern like AB or AABAB. Then measure the Lyapunov exponent: whether tiny differences shrink (order, coloured) or blow up (chaos, dark). Every pixel is a different pair of growth rates. The famous places each use a different pattern. Growth rates above 4 make the population explode, so those parts of the map are left blank.',
       places:[['Swallow · AB',3.4,3.4,0.62,'AB'],['Jellyfish · AABAB',3.45,3.45,0.55,'AABAB'],['Zircon Zity · B⁶A⁶',3.7,2.95,0.45,'BBBBBBAAAAAA'],['Whole map · AB',2.6,2.6,1.6,'AB'],['Cracked · ABBAB',3.55,3.55,0.45,'ABBAB']] },
   10:{ name:'Buddhabrot', jname:'Buddhabrot', alt:'the Mandelbrot set\'s orbits, drawn as trails of light', view:[-0.45,0,1.35,Math.PI/2], cpu:true, noOrbit:true, noLink:true,
       info:'Melinda Green, 1993. Instead of colouring each c by how fast it escapes, follow the whole path of every escaping orbit and count how often each pixel gets visited. The counts pile up into a glowing seated figure. <strong>Nebulabrot</strong> puts orbits of different lengths in red, green and blue, like a Hubble photo. <strong>Anti</strong> traces the orbits that never escape instead, so you see where points inside the set end up.',
@@ -481,7 +518,7 @@ const st = { bla:true, custom:{src:'z^3 + sin(z) + c', z0:'0', bail:100, js:(z,c
   grow:{shape:'koch', t:0, playing:true, zoom:false, zph:0, angle:{pyth:45, tree:28}, gv:{ox:0,oy:0,z:1}, fit:null},
   link:{auto:true, path:'circle', t:0.9},
   orbit:{data:null, t:0, playing:true, auto:true, step:0.4, style:'stay', circle:true},
-  d3:{shape:'bulb', power:8, breathe:false, boxS:-1.8, w:0, sweep:true, lvl:5, yaw:0.7, pitch:0.32, dist:4.25, dragMode:'turn', floating:false, needAim:false, aimT:0, aim:null, target:null, dive:false, extra:0, twist:20, twAnim:true, twT:0, turn:0.25, t:0, q:0.6, wt:0} };
+  d3:{axw:0, ayw:0, azw:0, spin4:false, spT:0, shape:'bulb', power:8, breathe:false, boxS:-1.8, w:0, sweep:false, lvl:5, yaw:0.7, pitch:0.32, dist:4.25, dragMode:'turn', floating:false, needAim:false, aimT:0, aim:null, target:null, dive:false, extra:0, twist:0, twAnim:false, rxy:0, rxz:0, ryz:0, spin3:false, cut:false, bsBreathe:false, bsT:0, twT:0, turn:0, t:0, q:0.6, wt:0} };
 const view = (a,extraRot=0) => ({cx:a[0], cy:a[1], lx:0, ly:0, bx:dblToFix(a[0]), by:dblToFix(a[1]), scale:a[2], rot:a[3]+extraRot, def:a[2]});
 function juliaView(){ const T=TYPES[st.type], j=T.jview||[0,0,1.5]; return view([j[0],j[1],j[2],T.view[3]]); }
 function fitV(v, a){ v.scale=Math.max(v.scale, v.scale*1.18/a); v.def=v.scale; return v; }
@@ -576,6 +613,7 @@ vec3 sampleAt(vec2 px){
   }
   if (u_type==9){   // Lyapunov: a across, b up
     vec2 q=u_center+p; float x=0.5, lam=0.0; int N=clamp(u_iter,60,1500);
+    if (q.x<=0.0 || q.x>4.0 || q.y<=0.0 || q.y>4.0) return u_bg;   // growth rates outside 0–4: the population explodes, so there's no order or chaos to show
     for (int i=0;i<1600;i++){ if (i>=N+50) break; float r=((u_seq>>(i%u_seqLen))&1)==1 ? q.y : q.x;
       if (i>=50) lam+=log(abs(r*(1.0-2.0*x))+1e-12); x=r*x*(1.0-x); if (abs(x)>1e6){ lam=1e3*float(N); break; } }
     lam/=float(N);
@@ -699,7 +737,11 @@ precision highp float; precision highp int;
 uniform vec2 u_res; uniform vec3 u_cam; uniform mat3 u_rotM; uniform float u_fov;
 uniform int u_s3, u_it3, u_hq; uniform float u_power, u_boxS, u_w, u_density, u_cycle, u_bound, u_twist, u_view;
 uniform vec4 u_qc; uniform vec3 u_pal[8]; uniform int u_npal; uniform vec3 u_bg;
+uniform mat4 u_r4; uniform vec2 u_rg; uniform int u_nest0, u_nestM; uniform mat3 u_rot3; uniform float u_tw, u_twS; uniform int u_cut; uniform vec4 u_cutP;
 out vec4 outC;
+// a point of the 3D picture, placed in 4D: the knife sits at W = u_w, turned by u_r4
+vec4 to4(vec3 p){ return u_r4*vec4(p,u_w); }
+vec2 cm2(vec2 a, vec2 b){ return vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x); }
 vec3 pal(float t){ t=fract(t); float s=1.0-abs(2.0*t-1.0); float x=s*float(u_npal-1); int i=min(int(x),u_npal-2); return mix(u_pal[i],u_pal[i+1],x-float(i)); }
 float sdBox(vec3 p, vec3 b){ vec3 q=abs(p)-b; return length(max(q,0.0))+min(max(q.x,max(q.y,q.z)),0.0); }
 float deBulb(vec3 p, out float trap){
@@ -736,7 +778,7 @@ float deTet(vec3 z, out float trap){
 }
 vec4 qmul(vec4 a, vec4 b){ return vec4(a.x*b.x-dot(a.yzw,b.yzw), a.x*b.yzw+b.x*a.yzw+cross(a.yzw,b.yzw)); }
 float deQJ(vec3 p, out float trap){
-  vec4 z=vec4(p.x,p.y,p.z,u_w), dz=vec4(1.0,0.0,0.0,0.0); trap=1e9; float m=dot(z,z);
+  vec4 z=to4(p), dz=vec4(1.0,0.0,0.0,0.0); trap=1e9; float m=dot(z,z);
   for (int i=0;i<16;i++){ if (i>=u_it3) break; dz=2.0*qmul(z,dz); z=qmul(z,z)+u_qc; m=dot(z,z); trap=min(trap,m); if (m>16.0) break; }
   return 0.25*log(max(m,1e-12))*sqrt(m)/length(dz);
 }
@@ -753,11 +795,100 @@ float deKIFS(vec3 z, out float trap){
     z=z*2.0-vec3(1.0); trap=min(trap,dot(z,z)); n++; }
   return (length(z)-1.0)*pow(2.0,-float(n));
 }
-float map(vec3 p, out float tr){ if (u_s3==0) return deBulb(p,tr); if (u_s3==1) return deBox(p,tr); if (u_s3==2) return deMenger(p,tr); if (u_s3==3) return deTet(p,tr); if (u_s3==4) return deQJ(p,tr); if (u_s3==5) return deApo(p,tr); return deKIFS(p,tr); }
+// ---- 4D shapes: each works on the 4D point to4(p); a 4D distance is a safe step inside the 3D slice too ----
+float mDE2(vec2 c, out float tr){ vec2 z=vec2(0.0), dz=vec2(0.0); tr=1e9;
+  for (int i=0;i<48;i++){ if (i>=u_it3) break; dz=2.0*cm2(z,dz)+vec2(1.0,0.0); z=cm2(z,z)+c; float m=dot(z,z); tr=min(tr,m); if (m>1e4){ float r=sqrt(m); return 0.5*r*log(r)/max(length(dz),1e-30); } }
+  return 0.0; }
+float deMJ(vec3 p, out float trap){   // x, y = c and z, w = the starting z of z -> z^2 + c
+  vec4 q=to4(p); vec2 c=q.xy, z=q.zw, a=vec2(1.0,0.0), b=vec2(0.0); trap=1e9; float cut=length(c)-2.0;
+  for (int i=0;i<48;i++){ if (i>=u_it3) break; a=2.0*cm2(z,a); b=2.0*cm2(z,b)+vec2(1.0,0.0); z=cm2(z,z)+c; float m=dot(z,z); trap=min(trap,m);
+    if (m>1e4){ float r=sqrt(m); return max(0.5*r*log(r)/max(sqrt(dot(a,a)+dot(b,b)),1e-30), cut); } }
+  return max(0.0,cut); }
+float deTetra(vec3 p, out float trap){   // bicomplex z^2 + c splits into two ordinary Mandelbrot sets
+  vec4 q=to4(p); float t1, t2; float a=mDE2(vec2(q.x+q.w, q.y-q.z), t1), b=mDE2(vec2(q.x-q.w, q.y+q.z), t2); trap=min(t1,t2); return max(a,b)*0.70710678; }
+const vec4 V5_0=vec4(1.0,1.0,1.0,-0.4472136), V5_1=vec4(1.0,-1.0,-1.0,-0.4472136), V5_2=vec4(-1.0,1.0,-1.0,-0.4472136), V5_3=vec4(-1.0,-1.0,1.0,-0.4472136), V5_4=vec4(0.0,0.0,0.0,1.7888544);
+float deSier5(vec3 p, out float trap){
+  vec4 z=to4(p); int n=0; trap=1e9;
+  for (int i=0;i<12;i++){ if (i>=u_it3) break; vec4 v=V5_0; float bd=dot(z-V5_0,z-V5_0), d;
+    d=dot(z-V5_1,z-V5_1); if (d<bd){ bd=d; v=V5_1; } d=dot(z-V5_2,z-V5_2); if (d<bd){ bd=d; v=V5_2; } d=dot(z-V5_3,z-V5_3); if (d<bd){ bd=d; v=V5_3; } d=dot(z-V5_4,z-V5_4); if (d<bd){ bd=d; v=V5_4; }
+    z=2.0*z-v; trap=min(trap,dot(z,z)); n++; }
+  return (length(z)-1.8)*pow(2.0,-float(n)); }
+float sdBox4(vec4 q){ vec4 a=abs(q)-1.0; return length(max(a,0.0))+min(max(max(a.x,a.y),max(a.z,a.w)),0.0); }
+float deMenger4(vec3 p, out float trap){
+  vec4 q=to4(p); float d=sdBox4(q), s=1.0; trap=0.0;
+  for (int m=0;m<10;m++){ if (m>=u_it3) break; vec4 a=mod(q*s,2.0)-1.0; s*=3.0; vec4 r=abs(1.0-3.0*abs(a));
+    float mn=max(max(max(min(r.x,r.y),min(r.x,r.z)),max(min(r.x,r.w),min(r.y,r.z))),max(min(r.y,r.w),min(r.z,r.w))), c=(mn-1.0)/s;   // the second-biggest r: carve where two or more coordinates are in a middle third
+    if (c>d){ d=c; trap=float(m+1); } }
+  return d; }
+float deKIFS4(vec3 p, out float trap){
+  vec4 z=to4(p); float ca=cos(u_twist), sa=sin(u_twist), cb=cos(u_twist*0.7), sb=sin(u_twist*0.7); int n=0; trap=1e9;
+  for (int i=0;i<20;i++){ if (i>=u_it3) break; z=abs(z);
+    if (z.x<z.y) z.xy=z.yx; if (z.z<z.w) z.zw=z.wz; if (z.x<z.z) z.xz=z.zx; if (z.y<z.w) z.yw=z.wy; if (z.y<z.z) z.yz=z.zy;
+    z.xy=vec2(ca*z.x-sa*z.y, sa*z.x+ca*z.y); z.zw=vec2(cb*z.z-sb*z.w, sb*z.z+cb*z.w);
+    z=z*2.0-vec4(1.0); trap=min(trap,dot(z,z)); n++; }
+  return (length(z)-1.0)*pow(2.0,-float(n)); }
+// ---- spheres inside spheres, pearls, halls, flakes and sponges ----
+vec3 rotYv(vec3 p, float a){ float c=cos(a), s=sin(a); return vec3(c*p.x+s*p.z, p.y, -s*p.x+c*p.z); }
+// a hollow sphere with six round windows; layer k is half the size of layer k-1 and turned 45° about the vertical
+float nestShell(vec3 q){ float sh=abs(length(q)-1.0)-0.035, h=min(length(q.yz),min(length(q.xz),length(q.xy)))-0.55; return max(sh,-h); }
+float deNest(vec3 p, out float trap){
+  float r=max(length(p),1e-30), kf=floor(-log2(r)), d=1e9; trap=0.0;
+  for (int j=0;j<2;j++){ float k=max(kf,float(u_nest0))+float(j), sc=exp2(-k); float e=nestShell(rotYv(p,-k*0.78539816)/sc)*sc; if (e<d){ d=e; trap=fract((k+float(u_nestM))*0.23+0.5); } }
+  return d; }
+// Kleinian pearls: seven separate spheres (six round the middle, one small one in the centre); each turns space inside out
+const vec3 KC[7]=vec3[7](vec3(1.0,0.0,0.0),vec3(-1.0,0.0,0.0),vec3(0.0,1.0,0.0),vec3(0.0,-1.0,0.0),vec3(0.0,0.0,1.0),vec3(0.0,0.0,-1.0),vec3(0.0));
+const float KR[7]=float[7](0.68,0.68,0.68,0.68,0.68,0.68,0.3);
+float deKlein(vec3 p, out float trap){ float ds=1.0, w=1.0; trap=0.0; int last=-1;
+  for (int n=0;n<24;n++){ if (n>=u_it3) break; int hit=-1;
+    for (int i=0;i<7;i++){ if (i==last) continue; vec3 v=p-KC[i]; if (dot(v,v)<KR[i]*KR[i]){ hit=i; break; } }
+    if (hit<0){   // in a gap: everything deeper sits inside the child spheres (each sphere's inside-out copies of the others)
+      float m=1e9; for (int a=0;a<7;a++){ if (a==last) continue; for (int b=0;b<7;b++){ if (b==a) continue; vec3 e=KC[b]-KC[a]; float q=KR[a]*KR[a]/(dot(e,e)-KR[b]*KR[b]); m=min(m, length(p-KC[a]-e*q)-abs(q)*KR[b]); } }
+      trap=fract(trap); return m/ds; }
+    vec3 v=p-KC[hit]; float f=KR[hit]*KR[hit]/max(dot(v,v),1e-30); p=KC[hit]+v*f; ds*=f; last=hit; trap+=(float(hit)+0.5)/7.0*w; w*=0.45; }
+  float m=1e9; for (int i=0;i<7;i++) if (i!=last) m=min(m, length(p-KC[i])-KR[i]); trap=fract(trap); return m/ds; }   // the pearls at the deepest level
+// pseudo-Kleinian (Knighty, 2011): fold into a box, invert through a ball, repeat; a round chunk of its endless halls
+float dePK(vec3 p, out float trap){ const vec3 CS=vec3(0.92436,0.90756,0.92436); vec3 q=p*1.6; float df=1.0, mr=1e9;
+  for (int i=0;i<20;i++){ if (i>=u_it3) break; q=2.0*clamp(q,-CS,CS)-q; float r2=dot(q,q); mr=min(mr,r2); float k=max(1.0/max(r2,1e-12),1.0); q*=k; df*=k; }
+  float rxy=length(q.xy); trap=sqrt(mr); return max(max(rxy-0.92784, abs(rxy*q.z)/max(length(q),1e-12))/(df*1.6), length(p)-1.9); }
+// sphereflake (Eric Haines, 1987): nine spheres a third the size on every sphere, never touching the parent's own parent
+vec3 FD(int j){ if (j<6){ float a=float(j)*1.0471976; return vec3(cos(a),0.0,sin(a)); } float b=0.5235988+float(j-6)*2.0943951; return vec3(0.5*cos(b),0.8660254,0.5*sin(b)); }
+float deFlake(vec3 p, out float trap){ float sc=1.0, d=length(p)-1.0, w=1.0; trap=0.0;
+  for (int n=0;n<10;n++){ if (n>=u_it3) break; int bj=0; float bb=1e9, b[9];
+    for (int j=0;j<9;j++){ b[j]=length(p-FD(j)*1.3333333)-0.6666667; if (b[j]<bb){ bb=b[j]; bj=j; } }
+    for (int j=0;j<9;j++) if (j!=bj) d=min(d,b[j]/sc);
+    if (bb/sc>d) break;
+    vec3 u=FD(bj), a=abs(u.y)<0.9?vec3(0.0,1.0,0.0):vec3(1.0,0.0,0.0), x=normalize(cross(a,u)), z=cross(u,x), v=p-u*1.3333333;
+    p=vec3(dot(v,x),dot(v,u),dot(v,z))*3.0; sc*=3.0; d=min(d,(length(p)-1.0)/sc); trap+=(float(bj)+0.5)/9.0*w; w*=0.4; }
+  trap=fract(trap); return d; }
+// Jerusalem cube: 8 corner cubes (√2 − 1 the size) and 12 edge cubes ((√2 − 1)² the size), each a Jerusalem cube
+float deJcube(vec3 p, out float trap){ const float K=0.41421356, K2=0.17157288; float sc=1.0, d=1e9, w=0.5; trap=0.0;
+  for (int n=0;n<12;n++){ if (n>=u_it3) break;
+    p=abs(p); if (p.x<p.y) p.xy=p.yx; if (p.x<p.z) p.xz=p.zx; if (p.y<p.z) p.yz=p.zy;
+    vec3 ca=vec3(1.0-K), cb=vec3(1.0-K2,1.0-K2,0.0); float ba=sdBox(p-ca,vec3(K)), bb=sdBox(p-cb,vec3(K2));
+    if (min(ba,bb)/sc>d) return d;
+    if (ba<=bb){ d=min(d,bb/sc); p=(p-ca)/K; sc/=K; } else { d=min(d,ba/sc); p=(p-cb)/K2; sc/=K2; trap+=w; } w*=0.5; }
+  return min(d, sdBox(p,vec3(1.0))/sc); }
+// Mosely snowflake: cut a cube into 27, throw away the 8 corners and the middle, keep 18, repeat
+float deMosely(vec3 p, out float trap){ const float T=0.33333333; float sc=1.0, d=1e9, w=0.5; trap=0.0;
+  for (int n=0;n<10;n++){ if (n>=u_it3) break;
+    p=abs(p); if (p.x<p.y) p.xy=p.yx; if (p.x<p.z) p.xz=p.zx; if (p.y<p.z) p.yz=p.zy;
+    vec3 cf=vec3(2.0*T,0.0,0.0), ce=vec3(2.0*T,2.0*T,0.0); float bf=sdBox(p-cf,vec3(T)), be=sdBox(p-ce,vec3(T));
+    if (min(bf,be)/sc>d) return d;
+    if (bf<=be){ d=min(d,be/sc); p=(p-cf)*3.0; } else { d=min(d,bf/sc); p=(p-ce)*3.0; trap+=w; } sc*=3.0; w*=0.5; }
+  return min(d, sdBox(p,vec3(1.0))/sc); }
+float mapRaw(vec3 p, out float tr){ if (u_s3==0) return deBulb(p,tr); if (u_s3==1) return deBox(p,tr); if (u_s3==2) return deMenger(p,tr); if (u_s3==3) return deTet(p,tr); if (u_s3==4) return deQJ(p,tr); if (u_s3==5) return deApo(p,tr); if (u_s3==6) return deKIFS(p,tr);
+  if (u_s3==7) return deMJ(p,tr); if (u_s3==8) return deTetra(p,tr); if (u_s3==9) return deSier5(p,tr); if (u_s3==10) return deMenger4(p,tr); if (u_s3==11) return deKIFS4(p,tr);
+  if (u_s3==12) return deNest(p,tr); if (u_s3==13) return deKlein(p,tr); if (u_s3==14) return dePK(p,tr); if (u_s3==15) return deFlake(p,tr); if (u_s3==16) return deJcube(p,tr); return deMosely(p,tr); }
+// the same controls for every shape: turn it, twist it round its vertical axis, and (3D shapes) cut it with a flat knife
+float map(vec3 p, out float tr){ vec3 q=u_rot3*p; bool tw=u_tw!=0.0;
+  float d=mapRaw(tw ? rotYv(q,u_tw*q.y) : q, tr)*(tw ? u_twS : 1.0);   // one call: a twist stretches distances, so steps shrink to stay safe
+  if (u_cut==1) d=max(d, dot(q,u_cutP.xyz)-u_cutP.w);
+  return d; }
 float mapD(vec3 p){ float t; return map(p,t); }
-vec3 calcN(vec3 p, float e){ vec2 k=vec2(1.0,-1.0); return normalize(k.xyy*mapD(p+k.xyy*e)+k.yyx*mapD(p+k.yyx*e)+k.yxy*mapD(p+k.yxy*e)+k.xxx*mapD(p+k.xxx*e)); }
-float shadowRay(vec3 ro, vec3 rd){ float L=min(u_bound,u_view), res=1.0, t=0.002*L; for (int i=0;i<56;i++){ float h=mapD(ro+rd*t); res=min(res,10.0*h/t); t+=clamp(h,0.002*L,0.12*L); if (res<0.02 || t>2.5*L) break; } return clamp(res,0.0,1.0); }
-float calcAO(vec3 p, vec3 n){ float o=0.0, s=1.0, u=min(u_bound,u_view)*0.04; for (int i=1;i<=5;i++){ float h=u*float(i); o+=(h-mapD(p+n*h))*s; s*=0.6; } return clamp(1.0-1.6*o/u,0.0,1.0); }
+#define ZERO min(u_it3,0)
+vec3 calcN(vec3 p, float e){ vec3 n=vec3(0.0); for (int i=ZERO;i<4;i++){ vec3 k=2.0*vec3(float(((i+3)>>1)&1), float((i>>1)&1), float(i&1))-1.0; n+=k*mapD(p+k*e); } return normalize(n); }
+float shadowRay(vec3 ro, vec3 rd){ float L=min(u_bound,u_view), res=1.0, t=0.002*L; for (int i=ZERO;i<56;i++){ float h=mapD(ro+rd*t); res=min(res,10.0*h/t); t+=clamp(h,0.002*L,0.12*L); if (res<0.02 || t>2.5*L) break; } return clamp(res,0.0,1.0); }
+float calcAO(vec3 p, vec3 n){ float o=0.0, s=1.0, u=min(u_bound,u_view)*0.04; for (int i=ZERO+1;i<=5;i++){ float h=u*float(i); o+=(h-mapD(p+n*h))*s; s*=0.6; } return clamp(1.0-1.6*o/u,0.0,1.0); }
 void main(){
   vec2 uv=(gl_FragCoord.xy-0.5*u_res)/u_res.y;
   vec3 rd=normalize(u_rotM*vec3(uv,-u_fov)), ro=u_cam;
@@ -767,13 +898,16 @@ void main(){
   h=sqrt(h); float t=max(0.0,-b-h), tmax=-b+h;
   float pixA=1.0/(u_res.y*u_fov), tr=0.0; bool hit=false;
   float k=(u_s3==1)?0.7:(u_s3==0?clamp(5.0/u_power,0.3,0.8):(u_s3==5?0.8:(u_s3==4?0.7:0.92)));
+  if (u_s3>=7) k=(u_s3==7||u_s3==8)?0.7:0.9;
+  if (u_s3>=12) k=u_s3==13?0.6:(u_s3==14?0.8:(u_s3==15?0.85:0.9));
   for (int i=0;i<500;i++){ float d=map(ro+rd*t,tr); if (d<pixA*t*0.8){ hit=true; break; } t+=d*k; if (t>tmax) break; }
   if (!hit){ outC=vec4(bgc,1.0); return; }
   vec3 p=ro+rd*t, n=calcN(p,max(pixA*t*0.5,1e-6));
   // stretch each shape's orbit-trap value over the whole palette (ranges measured from typical views)
   float ct= u_s3==0 ? tr*0.75 : u_s3==1 ? sqrt(tr)*0.3 : u_s3==3 ? sqrt(tr)*0.16 : u_s3==4 ? sqrt(tr)*0.32 : u_s3==5 ? sqrt(tr)*0.45 : sqrt(tr)*0.14;
   vec2 rg = u_s3==0 ? vec2(0.76-0.37/u_power)+vec2(-0.5,0.5)*min(0.5,2.0/u_power) : u_s3==1 ? vec2(0.04,0.27) : u_s3==3 ? vec2(0.09,0.18) : u_s3==4 ? vec2(0.15,0.36) : u_s3==5 ? vec2(0.15,0.48) : vec2(0.199,0.24);
-  float tn = u_s3==2 ? 0.6*clamp(0.5+0.5*p.y/u_bound*1.4,0.0,1.0)+0.4*clamp(tr/max(1.0,float(u_it3)),0.0,1.0) : clamp((ct-rg.x)/(rg.y-rg.x),0.0,1.0);
+  if (u_s3>=7){ ct=u_s3>=12?tr:sqrt(tr); rg=u_rg; }
+  float tn = (u_s3==2||u_s3==10) ? 0.6*clamp(0.5+0.5*p.y/u_bound*1.4,0.0,1.0)+0.4*clamp(tr/max(1.0,float(u_it3)),0.0,1.0) : clamp((ct-rg.x)/(rg.y-rg.x),0.0,1.0);
   vec3 base=pal(tn*0.5*u_density+u_cycle);
   vec3 L=normalize(u_rotM*vec3(0.55,0.7,0.5));
   float dif=clamp(dot(n,L),0.0,1.0), sh=(u_hq==1 && dif>0.0)?shadowRay(p+n*pixA*t*3.0,L):1.0, ao=calcAO(p,n);
@@ -794,6 +928,15 @@ function mkCtx(cv){
       if (!g.getShaderParameter(sh,g.COMPILE_STATUS)) throw new Error(g.getShaderInfoLog(sh)); g.attachShader(p,sh); }
     g.bindAttribLocation(p,0,'a'); g.linkProgram(p); if (!g.getProgramParameter(p,g.LINK_STATUS)) throw new Error(g.getProgramInfoLog(p));
     const loc={}; return C.progs[name]={p, u:n=> n in loc ? loc[n] : (loc[n]=g.getUniformLocation(p,n))}; };
+  // build a program in the background where the browser can (KHR_parallel_shader_compile): returns null until it's ready
+  C.pcs=g.getExtension('KHR_parallel_shader_compile'); C.pend={};
+  C.progAsync=(name,fs)=>{ if (C.progs[name]) return C.progs[name]; let Q=C.pend[name];
+    if (!Q){ const p=g.createProgram(), shs=[]; for (const [t,src] of [[g.VERTEX_SHADER,VS],[g.FRAGMENT_SHADER,fs]]){ const sh=g.createShader(t); g.shaderSource(sh,src); g.compileShader(sh); g.attachShader(p,sh); shs.push(sh); }
+      g.bindAttribLocation(p,0,'a'); g.linkProgram(p); Q=C.pend[name]={p, shs, t0:performance.now()}; if (C.pcs) return null; }
+    if (C.pcs && !g.getProgramParameter(Q.p, C.pcs.COMPLETION_STATUS_KHR)) return null;
+    delete C.pend[name];
+    if (!g.getProgramParameter(Q.p, g.LINK_STATUS)){ const log=Q.shs.map(sh=>g.getShaderInfoLog(sh)).join(' ')+' '+g.getProgramInfoLog(Q.p); throw new Error(log.trim()||'the graphics driver gave up building it'); }
+    const loc={}; return C.progs[name]={p:Q.p, u:n=> n in loc ? loc[n] : (loc[n]=g.getUniformLocation(Q.p,n)), ms:Math.round(performance.now()-Q.t0)}; };
   C.newTex=()=>{ const t=g.createTexture(); g.bindTexture(g.TEXTURE_2D,t);
     for (const [k,v] of [[g.TEXTURE_MIN_FILTER,g.NEAREST],[g.TEXTURE_MAG_FILTER,g.NEAREST],[g.TEXTURE_WRAP_S,g.CLAMP_TO_EDGE],[g.TEXTURE_WRAP_T,g.CLAMP_TO_EDGE]]) g.texParameteri(g.TEXTURE_2D,k,v);
     g.texImage2D(g.TEXTURE_2D,0,g.RG32F,1,1,0,g.RG,g.FLOAT,new Float32Array(2)); return t; };
@@ -808,7 +951,7 @@ if (!main){ $('na').hidden=false; $('na').querySelector('.naT').textContent='Thi
   $('na').querySelector('.naB').textContent='Your browser or device didn\'t give this page a WebGL 2 context, which the fractals are drawn with. Try a recent Chrome, Edge, Firefox or Safari.'; return; }
 const gl=main.g;
 const F2SRC_BASE=FS2; let F2KEY='f2:default', F2SRC=FS2.replace('CUSTOM_EXPR','(cpowi_(z,3)+csin_(z)+c)').replace('CUSTOM_Z0','vec2(0.0,0.0)');
-try { main.prog(F2KEY,F2SRC); main.prog('f3',FS3); aux.prog(F2KEY,F2SRC); }
+try { main.prog(F2KEY,F2SRC); aux.prog(F2KEY,F2SRC); }
 catch(e){ $('na').hidden=false; $('na').querySelector('.naT').textContent='The graphics shader didn\'t compile'; $('na').querySelector('.naB').textContent=String(e.message||e).slice(0,300); return; }
 let ctxLost=false;
 glc.addEventListener('webglcontextlost', e=>{ e.preventDefault(); ctxLost=true; $('na').hidden=false; $('na').querySelector('.naT').textContent='The graphics card took a break';
@@ -1110,23 +1253,143 @@ const S3 = {
     info:'Karl Menger, 1926. Cut a cube into 27 smaller cubes and pull out the middle one and the six in the middle of each face, leaving 20. Repeat forever. Its volume shrinks to zero while its surface area grows without limit. Each face of the sponge is a Sierpinski carpet.' },
   tet:{ name:'Sierpinski tetrahedron', alt:'four half-size copies of itself, corner to corner', bound:1.8, dim:'log 4 ÷ log 2 = 2',
     info:'Four half-size copies at the four corners of a tetrahedron, repeated forever. Surprisingly its dimension is exactly 2, like a flat sheet, even though it\'s spread through 3D: every step keeps the total surface area the same while the volume vanishes.' },
-  qj:{ name:'Quaternion Julia set', alt:'a 4D Julia set, seen one 3D slice at a time', bound:1.6, dim:'4D object, 3D slice',
+  qj:{ name:'Quaternion Julia set', alt:'a 4D Julia set, seen one 3D slice at a time', bound:1.6, dim:'4D object, 3D slice', four:true, wR:0.9, rg:[0.47,1.12],
     info:'Quaternions are 4-part numbers (1, i, j, k) that do multiply properly, so z → z² + c works in 4D. The full Julia set lives in 4D, so we see a 3D slice of it at one value of W, just like the knife in the polytope explorer\'s Slice mode. Sweep the knife and watch the slice swell, split and merge.' },
 };
 S3.apo={ name:'Apollonian spheres', alt:'a sphere in every gap: a round slab of endless foam', bound:1.5, dim:'≈ 2.47',
   info:'The 3D Apollonian gasket: spheres packed so that every gap between touching spheres holds the biggest sphere that fits, forever. It\'s drawn by folding space into a repeating box and turning it inside out through a sphere, over and over (Inigo Quilez\'s method), and cutting a round slab out of the endless foam. Dive into the rim: the bubbles never stop.' };
 S3.kifs={ name:'Kaleidoscopic IFS', alt:'fold space like a kaleidoscope, twist, scale, repeat', bound:2.1, dim:'—',
   info:'Knighty\'s kaleidoscopic iterated function systems (2010): fold space into a single wedge with mirrors, the way a kaleidoscope does, turn it a little, scale it up and shift it, and repeat. With no twist it\'s a crisp Sierpinski octahedron; any twist grows crystal spires and cathedral tracery. Keep twisting to watch it morph.' };
-const QC=[-0.2,0.6,0.2,0.2];
-function d3Extra(){ const D=st.d3; return D.target ? Math.max(0, Math.floor(Math.log2(d3Bound()*3.4/D.dist)*0.7)) : 0; }
-function d3Iter(){ const l=st.d3.lvl, s=st.d3.shape, x=d3Extra(); return Math.min({bulb:16,box:20,menger:12,tet:20,qj:16,apo:20,kifs:20}[s], {bulb:3+l, box:7+l, menger:Math.min(l,6), tet:4+l, qj:4+l, apo:3+l, kifs:6+l}[s]+x); }
+Object.assign(S3, {
+  mj:{ name:'Mandelbrot–Julia object', alt:'every c and every starting z of z → z² + c at once: a 4D shape', bound:2.85, dim:'4D solid, 3D slice', four:true, wR:1.6, rg:[0.2,0.9],
+    info:'Every pair of a c and a starting z either stays bounded under z → z² + c or runs away. All the pairs that stay bounded make one shape in 4D: across and up are c, depth and the hidden W direction are the starting z. Cut it at the starting z = 0 and you get the Mandelbrot set; cut it at a fixed c and you get that c\'s Julia set. The 3D slices in between show how one turns into the other. The thin dust that floats out past |c| = 2 (the Julia sets of points outside the Mandelbrot set) is trimmed off.' },
+  tetra:{ name:'Tetrabrot', alt:'z → z² + c with bicomplex numbers, which split it into two Mandelbrot sets', bound:2.1, dim:'4D solid, 3D slice', four:true, wR:1.4, rg:[0.06,0.32],
+    info:'Bicomplex numbers have two imaginary units, i and j, that multiply happily with each other, so z → z² + c works in 4D. Dominic Rochon (2000) noticed that they quietly split into two ordinary complex numbers, so the bicomplex Mandelbrot set is two Mandelbrot sets "multiplied" together, which gives it straight edges and boxy terraces. The classic Tetrabrot is the slice with the knife at W = 0.' },
+  sier5:{ name:'Sierpinski 5-cell', alt:'five half-size copies at the corners of a 4D simplex', bound:2.0, dim:'log 5 ÷ log 2 ≈ 2.32 (slice ≈ 1.32)', four:true, wR:1.2, rg:[0.5,0.95],
+    info:'The next step after the Sierpinski triangle (3 copies) and tetrahedron (4): five half-size copies at the five corners of a 5-cell, the simplest 4D polytope. Its dimension is log 5 ÷ log 2 ≈ 2.32. A 3D slice of it is roughly one dimension less, about 1.32, so what you see is lacy and broken into floating pieces. That isn\'t a drawing fault: there is very little of it in any one slice. Keep the detail low for chunky pieces, or turn the knife and watch them join and part.' },
+  menger4:{ name:'4D Menger sponge', alt:'cut a tesseract into 81 and keep the 48 that have at most one middle coordinate', bound:2.05, dim:'log 48 ÷ log 3 ≈ 3.52 (slice ≈ 2.52)', four:true, wR:1.0, rg:[0,1],
+    info:'Cut a tesseract (a 4D cube) into 3 × 3 × 3 × 3 = 81 smaller ones and remove every one that sits in the middle third along two or more directions, leaving 48. Repeat. The 3D Menger sponge follows the same rule (keep 20 of 27). Slide the knife: in the middle third, a slice looks like a frame of hollow bars; near the edges it looks like an ordinary Menger sponge. Tilt the knife and you get patterns neither one has.' },
+  kifs4:{ name:'4D kaleidoscope', alt:'mirror-fold 4D space into one wedge, twist, scale, repeat', bound:2.4, dim:'—', four:true, wR:1.5, rg:[1.1,1.45],
+    info:'The kaleidoscopic IFS with a fourth mirror direction: fold 4D space into a single wedge (all 384 symmetries of the tesseract), twist in the XY and ZW planes, scale by 2 and repeat. The twist slider still works. Slices of it look like crystals that rearrange themselves as the knife moves.' },
+});
+Object.assign(S3, {
+  nest:{ name:'Nested spheres', alt:'a hollow sphere with windows, and inside it a smaller copy, forever', bound:1.05, dim:'2 (every layer is a surface)', rg:[0,1],
+    info:'A hollow sphere with six round windows. Inside sits a copy half the size, turned 45°, with its own windows and its own copy inside, and so on forever. The vertical windows line up all the way down, so a dive flies through window after window. Because every layer is an exact copy of the one outside it, the app can swap in the next layer as you pass through, so this dive never runs out of digits.' },
+  klein:{ name:'Kleinian pearls', alt:'spheres made of spheres made of spheres, by turning space inside out', bound:1.75, dim:'less than 1 (a dust of pearls)', rg:[0,1],
+    info:'Seven separate spheres: six around the middle and one small one in the centre. Each sphere turns space inside out (an inversion), so everything outside it lands inside it, shrunk. Repeat, and every sphere fills up with smaller copies of the other six, each filled with smaller copies again. It\'s the 3D version of the pictures in <em>Indra\'s Pearls</em> (Mumford, Series and Wright, 2002). More detail shows deeper pearls.' },
+  pk:{ name:'Pseudo-Kleinian', alt:'fold into a box, invert through a ball, repeat: endless halls and arches', bound:2.0, dim:'—', rg:[0.25,0.95],
+    info:'Knighty\'s pseudo-Kleinian fractal (2011): fold space back into a box, turn it inside out through a ball, repeat. It looks like the limit set of a Kleinian group but is far quicker to draw. The full shape goes on forever in every direction, a cathedral with no walls at the edge, so what you see is a round chunk of it. Dive in and fly through the halls.' },
+  flake:{ name:'Sphereflake', alt:'nine spheres a third the size on every sphere, forever', bound:2.05, dim:'log 9 ÷ log 3 = 2', rg:[0,1],
+    info:'Eric Haines, 1987, made as a test scene for ray tracers. Every sphere sprouts nine spheres a third its size: six around its middle and three on top, leaving the side facing its parent clear. Each new sphere does the same. The whole thing never grows past twice the first sphere\'s size, and with nine copies at a third the size its dimension is exactly 2.' },
+  jcube:{ name:'Jerusalem cube', alt:'a cube carved by cross-shaped tunnels, made of smaller Jerusalem cubes', bound:1.75, dim:'≈ 2.529', rg:[0,1],
+    info:'Eric Baird, 2011. Keep eight corner cubes, each √2 − 1 ≈ 0.414 times the size, and twelve smaller cubes along the edges, each (√2 − 1)² ≈ 0.172 times the size, and each piece is a Jerusalem cube again. The gaps between them form cross-shaped tunnels through every face. Using √2 − 1 makes the corner and edge cubes fit edge to edge exactly.' },
+  mosely:{ name:'Mosely snowflake', alt:'cut a cube into 27, keep 18: drop the 8 corners and the middle', bound:1.75, dim:'log 18 ÷ log 3 ≈ 2.631', rg:[0,1],
+    info:'Jeannine Mosely, 2006, who also built a Menger sponge out of 66,048 business cards. Like the Menger sponge, cut a cube into 27 and keep some: here the 12 edge cubes and 6 face cubes, dropping the 8 corners and the centre. Repeat in each of the 18. The Menger sponge does the opposite (it keeps the corners and drops the face middles), so here the faces stay solid in the middle while the corners erode, and from along a diagonal the outline looks like a snowflake. Keeping 18 instead of 20 also makes its dimension a little lower: log 18 ÷ log 3 ≈ 2.631, against the sponge\'s 2.727.' },
+});
+const QC=[-0.2,0.6,0.2,0.2], SH3=['bulb','box','menger','tet','qj','apo','kifs','mj','tetra','sier5','menger4','kifs4','nest','klein','pk','flake','jcube','mosely'];
+// nested spheres: how many layers we've swapped in (each one: ×2 bigger, turned 45° back), and up to 3 outer layers kept in view
+const NEST_S=0.5, NEST_TH=Math.PI/4, nestOuter=()=>Math.min(st.d3.nestM||0,3);
+const rotY=(p,a)=>{ const c=Math.cos(a), s=Math.sin(a); return [c*p[0]+s*p[2], p[1], -s*p[0]+c*p[2]]; };
+function nestIn(){ const D=st.d3; D.target=rotY(D.target,-NEST_TH).map(x=>x/NEST_S); D.dist/=NEST_S; D.yaw-=NEST_TH; D.nestM=(D.nestM||0)+1; }
+function nestOut(){ const D=st.d3; D.target=rotY(D.target.map(x=>x*NEST_S),NEST_TH); D.dist*=NEST_S; D.yaw+=NEST_TH; D.nestM--; }
+function nestReset(){ const D=st.d3; if (D.target) while ((D.nestM||0)>0) nestOut(); D.nestM=0; }
+// the knife's 4D turn: R = turn in XW, then YW, then ZW (degrees)
+function rot4(axw, ayw, azw){
+  const M=(i,a)=>{ const c=Math.cos(a*Math.PI/180), s=Math.sin(a*Math.PI/180), R=[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]; R[i][i]=c; R[i][3]=-s; R[3][i]=s; R[3][3]=c; return R; };
+  const mul=(A,B)=>A.map((r,i)=>B[0].map((_,j)=>A[i].reduce((sm,_,k)=>sm+A[i][k]*B[k][j],0)));
+  return mul(mul(M(0,axw),M(1,ayw)),M(2,azw)); }
+let r4c={key:'', R:null};
+function getR4(){ const D=st.d3, k=D.axw+'|'+D.ayw+'|'+D.azw; if (r4c.key!==k){ r4c={key:k, R:rot4(D.axw,D.ayw,D.azw)}; } return r4c.R; }
+const is4=()=>!!S3[st.d3.shape].four;
+const isKifs=()=>st.d3.shape==='kifs'||st.d3.shape==='kifs4';
+// the shape's own turn (object → world), built from the XY, XZ and YZ sliders
+let r3c={key:'', R:null};
+function getR3(){ const D=st.d3, k=D.rxy+'|'+D.rxz+'|'+D.ryz; if (r3c.key!==k){ const R=[[1,0,0],[0,1,0],[0,0,1]], rot=(a,b,deg)=>{ const t=deg*Math.PI/180, c=Math.cos(t), s=Math.sin(t);
+    for (let r=0;r<3;r++){ const x=R[r][a], y=R[r][b]; R[r][a]=c*x-s*y; R[r][b]=s*x+c*y; } }; rot(1,2,D.ryz); rot(0,2,D.rxz); rot(0,1,D.rxy); r3c={key:k, R}; } return r3c.R; }
+// for 3D shapes the knife is a flat cut: its tilt comes from the same three sliders as the 4D knife
+function cutPlane(){ const D=st.d3, t=a=>a*Math.PI/180; let n=[0,0,1];
+  const rp=(v,a,b,deg)=>{ const c=Math.cos(t(deg)), s=Math.sin(t(deg)), o=v.slice(); o[a]=c*v[a]-s*v[b]; o[b]=s*v[a]+c*v[b]; return o; };
+  n=rp(n,0,2,D.axw); n=rp(n,1,2,D.ayw); n=rp(n,0,1,D.azw); return {n, o:D.w*d3Bound()*0.95}; }
+const knifeVal=()=> is4() ? wAct() : st.d3.w*d3Bound()*0.95;
+function d3Tf(){ const D=st.d3, b=d3Bound(), tw=isKifs()?0:D.twist*Math.PI/180/b; return {R:getR3(), tw, twS:1/Math.sqrt(1+(tw*b)*(tw*b)), cut:!is4()&&D.cut ? cutPlane() : null}; }
+const wAct=()=>st.d3.w*(S3[st.d3.shape].wR||0.9);
+// 4D distance estimates, in double precision (the shader's twins), for aiming dives
+const S5=1/Math.sqrt(5), V5=[[1,1,1,-S5],[1,-1,-1,-S5],[-1,1,-1,-S5],[-1,-1,1,-S5],[0,0,0,4*S5]];
+function mDE2(cr,ci,it){ let zr=0,zi=0,dr=0,di=0;
+  for (let i=0;i<it;i++){ const t=2*(zr*dr-zi*di)+1; di=2*(zr*di+zi*dr); dr=t; const a=zr*zr-zi*zi+cr; zi=2*zr*zi+ci; zr=a; const m=zr*zr+zi*zi; if (m>1e4){ const r=Math.sqrt(m); return 0.5*r*Math.log(r)/Math.max(Math.hypot(dr,di),1e-300); } }
+  return 0; }
+function de4(q, sh, it){ const D=st.d3, [x,y,z,w]=q;
+  if (sh==='mj'){ let zr=z, zi=w, ar=1,ai=0, br=0,bi=0; const cut=Math.hypot(x,y)-2;
+    for (let i=0;i<it;i++){ let t=2*(zr*ar-zi*ai); ai=2*(zr*ai+zi*ar); ar=t; t=2*(zr*br-zi*bi)+1; bi=2*(zr*bi+zi*br); br=t; t=zr*zr-zi*zi+x; zi=2*zr*zi+y; zr=t; const m=zr*zr+zi*zi;
+      if (m>1e4){ const r=Math.sqrt(m); return Math.max(0.5*r*Math.log(r)/Math.max(Math.sqrt(ar*ar+ai*ai+br*br+bi*bi),1e-300), cut); } }
+    return Math.max(0,cut); }
+  if (sh==='tetra') return Math.max(mDE2(x+w,y-z,it), mDE2(x-w,y+z,it))*Math.SQRT1_2;
+  if (sh==='sier5'){ let p=q.slice(), n=0;
+    for (let i=0;i<it;i++){ let v=V5[0], bd=Infinity; for (const u of V5){ const d=(p[0]-u[0])**2+(p[1]-u[1])**2+(p[2]-u[2])**2+(p[3]-u[3])**2; if (d<bd){ bd=d; v=u; } } p=p.map((a,j)=>2*a-v[j]); n++; }
+    return (Math.hypot(...p)-1.8)*Math.pow(2,-n); }
+  if (sh==='menger4'){ const a0=q.map(v=>Math.abs(v)-1); let d=Math.hypot(...a0.map(v=>Math.max(v,0)))+Math.min(Math.max(...a0),0), s=1;
+    for (let m=0;m<it;m++){ const r=q.map(v=>Math.abs(1-3*Math.abs(mod2(v*s)-1))); s*=3; const mn=r.slice().sort((u,v)=>v-u)[1]; const c=(mn-1)/s; if (c>d) d=c; }
+    return d; }
+  if (sh==='kifs4'){ const a=D.twist*Math.PI/180, ca=Math.cos(a), sa=Math.sin(a), cb=Math.cos(a*0.7), sb=Math.sin(a*0.7); let p=q.slice(), n=0;
+    for (let i=0;i<it;i++){ p=p.map(Math.abs).sort((u,v)=>v-u); let t=ca*p[0]-sa*p[1]; p[1]=sa*p[0]+ca*p[1]; p[0]=t; t=cb*p[2]-sb*p[3]; p[3]=sb*p[2]+cb*p[3]; p[2]=t; p=p.map(v=>2*v-1); n++; }
+    return (Math.hypot(...p)-1)*Math.pow(2,-n); }
+  // quaternion Julia
+  const qm=(a,b)=>[a[0]*b[0]-(a[1]*b[1]+a[2]*b[2]+a[3]*b[3]), a[0]*b[1]+b[0]*a[1]+(a[2]*b[3]-a[3]*b[2]), a[0]*b[2]+b[0]*a[2]+(a[3]*b[1]-a[1]*b[3]), a[0]*b[3]+b[0]*a[3]+(a[1]*b[2]-a[2]*b[1])];
+  let Z=q.slice(), dz=[1,0,0,0], m=Z.reduce((sm,v)=>sm+v*v,0);
+  for (let i=0;i<it;i++){ dz=qm(Z,dz).map(v=>2*v); Z=qm(Z,Z).map((v,k)=>v+QC[k]); m=Z.reduce((sm,v)=>sm+v*v,0); if (m>16) break; }
+  return 0.25*Math.log(Math.max(m,1e-12))*Math.sqrt(m)/Math.hypot(...dz); }
+function d3Extra(){ const D=st.d3; if (D.shape==='nest') return 0; return D.target ? Math.max(0, Math.floor(Math.log2(d3Bound()*3.4/D.dist)*0.7)) : 0; }
+function d3Iter(){ const l=st.d3.lvl, s=st.d3.shape, x=d3Extra(); return Math.min({bulb:16,box:20,menger:12,tet:20,qj:16,apo:20,kifs:20,mj:48,tetra:48,sier5:12,menger4:7,kifs4:20,nest:1,klein:24,pk:20,flake:10,jcube:12,mosely:10}[s],
+  {bulb:3+l, box:7+l, menger:Math.min(l,6), tet:4+l, qj:4+l, apo:3+l, kifs:6+l, mj:10+3*l, tetra:10+3*l, sier5:Math.max(2,l-1), menger4:Math.min(l,5), kifs4:6+l, nest:1, klein:l>>1, pk:5+l, flake:1+l, jcube:1+l, mosely:l}[s]+x); }
 const d3MinDist=()=>d3Bound()*2e-4;
+const d3Mag=()=>{ const D=st.d3; return D.shape==='nest' ? 1.05*3.4/D.dist*Math.pow(2,(D.nestM||0)) : d3Bound()*3.4/D.dist; };
 function cam3(){ const D=st.d3, T=D.target||[0,0,0], cp=Math.cos(D.pitch), bz=[cp*Math.sin(D.yaw), Math.sin(D.pitch), cp*Math.cos(D.yaw)];
   let r=[bz[2],0,-bz[0]]; const rl=Math.hypot(...r)||1; r=r.map(x=>x/rl); const u=[bz[1]*r[2]-bz[2]*r[1], bz[2]*r[0]-bz[0]*r[2], bz[0]*r[1]-bz[1]*r[0]];
   return {pos:[T[0]+D.dist*bz[0], T[1]+D.dist*bz[1], T[2]+D.dist*bz[2]], r, u, b:bz}; }
 // the same distance estimates as the shader, in double precision, to aim the dive
 const fract=x=>x-Math.floor(x), mod2=x=>x-2*Math.floor(x/2);
-function de3(p){ const D=st.d3, it=d3Iter(), sh=D.shape;
+const KCJ=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1],[0,0,0]], KRJ=[0.68,0.68,0.68,0.68,0.68,0.68,0.3];
+const FDJ=[...Array(9)].map((_,j)=> j<6 ? [Math.cos(j*Math.PI/3),0,Math.sin(j*Math.PI/3)] : (b=>[0.5*Math.cos(b),0.8660254,0.5*Math.sin(b)])(Math.PI/6+(j-6)*2*Math.PI/3));
+const len3=v=>Math.hypot(v[0],v[1],v[2]), sub3=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const sdBox3=(p,h)=>{ const q=p.map(x=>Math.abs(x)-h); return Math.hypot(Math.max(q[0],0),Math.max(q[1],0),Math.max(q[2],0))+Math.min(Math.max(q[0],q[1],q[2]),0); };
+const sortDesc=p=>{ const a=p.map(Math.abs); return a.sort((u,v)=>v-u); };
+function deNew(p, sh, it){
+  if (sh==='nest'){ const r=Math.max(len3(p),1e-300), kf=Math.floor(-Math.log2(r)); let d=Infinity;
+    for (let j=0;j<2;j++){ const k=Math.max(kf,-nestOuter())+j, sc=Math.pow(2,-k), q=rotY(p,-k*NEST_TH).map(x=>x/sc);
+      const sh2=Math.abs(len3(q)-1)-0.035, h=Math.min(Math.hypot(q[1],q[2]),Math.hypot(q[0],q[2]),Math.hypot(q[0],q[1]))-0.55; d=Math.min(d, Math.max(sh2,-h)*sc); }
+    return d; }
+  if (sh==='klein'){ let q=p.slice(), ds=1, last=-1;
+    for (let n=0;n<it;n++){ let hit=-1; for (let i=0;i<7;i++){ if (i===last) continue; const v=sub3(q,KCJ[i]); if (v[0]*v[0]+v[1]*v[1]+v[2]*v[2]<KRJ[i]*KRJ[i]){ hit=i; break; } }
+      if (hit<0){ let m=Infinity; for (let a=0;a<7;a++){ if (a===last) continue; for (let b=0;b<7;b++){ if (b===a) continue; const e=sub3(KCJ[b],KCJ[a]), qq=KRJ[a]*KRJ[a]/(e[0]*e[0]+e[1]*e[1]+e[2]*e[2]-KRJ[b]*KRJ[b]);
+          m=Math.min(m, len3(sub3(q,KCJ[a].map((c,k)=>c+e[k]*qq)))-Math.abs(qq)*KRJ[b]); } } return m/ds; }
+      const v=sub3(q,KCJ[hit]), f=KRJ[hit]*KRJ[hit]/Math.max(v[0]*v[0]+v[1]*v[1]+v[2]*v[2],1e-300); q=KCJ[hit].map((c,i)=>c+v[i]*f); ds*=f; last=hit; }
+    let m=Infinity; for (let i=0;i<7;i++) if (i!==last) m=Math.min(m, len3(sub3(q,KCJ[i]))-KRJ[i]); return m/ds; }
+  if (sh==='pk'){ const CS=[0.92436,0.90756,0.92436]; let q=p.map(x=>x*1.6), df=1;
+    for (let i=0;i<it;i++){ q=q.map((x,k)=>2*clamp(x,-CS[k],CS[k])-x); const r2=q[0]*q[0]+q[1]*q[1]+q[2]*q[2], k=Math.max(1/Math.max(r2,1e-12),1); q=q.map(x=>x*k); df*=k; }
+    const rxy=Math.hypot(q[0],q[1]); return Math.max(Math.max(rxy-0.92784, Math.abs(rxy*q[2])/Math.max(len3(q),1e-12))/(df*1.6), len3(p)-1.9); }
+  if (sh==='flake'){ let q=p.slice(), sc=1, d=len3(q)-1;
+    for (let n=0;n<it;n++){ let bj=0, bb=Infinity; const b=FDJ.map((u,j)=>{ const x=len3(sub3(q,u.map(c=>c*4/3)))-2/3; if (x<bb){ bb=x; bj=j; } return x; });
+      b.forEach((x,j)=>{ if (j!==bj) d=Math.min(d,x/sc); }); if (bb/sc>d) break;
+      const u=FDJ[bj], a=Math.abs(u[1])<0.9?[0,1,0]:[1,0,0], cx=[a[1]*u[2]-a[2]*u[1], a[2]*u[0]-a[0]*u[2], a[0]*u[1]-a[1]*u[0]], xl=len3(cx), x=cx.map(c=>c/xl),
+        z=[u[1]*x[2]-u[2]*x[1], u[2]*x[0]-u[0]*x[2], u[0]*x[1]-u[1]*x[0]], v=sub3(q,u.map(c=>c*4/3)), dt=(A,B)=>A[0]*B[0]+A[1]*B[1]+A[2]*B[2];
+      q=[dt(v,x)*3, dt(v,u)*3, dt(v,z)*3]; sc*=3; d=Math.min(d,(len3(q)-1)/sc); }
+    return d; }
+  if (sh==='jcube'){ const K=Math.SQRT2-1, K2=K*K; let q=p.slice(), sc=1, d=Infinity;
+    for (let n=0;n<it;n++){ q=sortDesc(q); const ca=[1-K,1-K,1-K], cb=[1-K2,1-K2,0], ba=sdBox3(sub3(q,ca),K), bb=sdBox3(sub3(q,cb),K2);
+      if (Math.min(ba,bb)/sc>d) return d;
+      if (ba<=bb){ d=Math.min(d,bb/sc); q=sub3(q,ca).map(x=>x/K); sc/=K; } else { d=Math.min(d,ba/sc); q=sub3(q,cb).map(x=>x/K2); sc/=K2; } }
+    return Math.min(d, sdBox3(q,1)/sc); }
+  if (sh==='mosely'){ let q=p.slice(), sc=1, d=Infinity;
+    for (let n=0;n<it;n++){ q=sortDesc(q); const cf=[2/3,0,0], ce=[2/3,2/3,0], bf=sdBox3(sub3(q,cf),1/3), be=sdBox3(sub3(q,ce),1/3);
+      if (Math.min(bf,be)/sc>d) return d;
+      if (bf<=be){ d=Math.min(d,be/sc); q=sub3(q,cf).map(x=>x*3); } else { d=Math.min(d,bf/sc); q=sub3(q,ce).map(x=>x*3); } sc*=3; }
+    return Math.min(d, sdBox3(q,1)/sc); }
+  return null; }
+function de3(p){ const T=d3Tf(), R=T.R, q=[0,1,2].map(i=>R[0][i]*p[0]+R[1][i]*p[1]+R[2][i]*p[2]);
+  let d = T.tw ? de3raw(rotY(q,T.tw*q[1]))*T.twS : de3raw(q); if (T.cut) d=Math.max(d, q[0]*T.cut.n[0]+q[1]*T.cut.n[1]+q[2]*T.cut.n[2]-T.cut.o); return d; }
+function de3raw(p){ const D=st.d3, it=d3Iter(), sh=D.shape;
+  { const n=deNew(p, sh, it); if (n!==null) return n; }
+  if (S3[sh].four){ const R=getR4(), w=wAct(), q=[0,1,2,3].map(i=>R[i][0]*p[0]+R[i][1]*p[1]+R[i][2]*p[2]+R[i][3]*w); return de4(q, sh, it); }
   if (sh==='bulb'){ const P=[p[0],p[2],p[1]]; let z=P.slice(), dr=1, r=0;
     for (let i=0;i<it;i++){ r=Math.hypot(z[0],z[1],z[2]); if (r>2) break; const th=Math.acos(clamp(z[2]/Math.max(r,1e-9),-1,1))*D.power, ph=Math.atan2(z[1],z[0]+1e-12)*D.power;
       dr=Math.pow(r,D.power-1)*D.power*dr+1; const zr=Math.pow(r,D.power); z=[zr*Math.sin(th)*Math.cos(ph)+P[0], zr*Math.sin(th)*Math.sin(ph)+P[1], zr*Math.cos(th)+P[2]]; }
@@ -1162,31 +1425,49 @@ function retarget3(){ const h=raycast3(); if (!h) return false; const D=st.d3; D
 function pan3(dx, dy){ const D=st.d3, C=cam3(), k=D.dist/(cssH*1.6); if (!D.target) D.target=[0,0,0]; D.aim=null;
   D.target=[0,1,2].map(i=>D.target[i]-C.r[i]*dx*k+C.u[i]*dy*k); D.needAim=true; vel3={x:0,y:0}; touch(); }
 // tap a spot: swing round to face it and dive toward it
-let tap3Miss=0;
+let tap3Miss=-1e9;
 function tap3(x, y){ const D=st.d3, C=cam3(), ux=(x-cssW/2)/cssH, uy=(cssH/2-y)/cssH;
   let rd=[0,1,2].map(i=>C.r[i]*ux+C.u[i]*uy-C.b[i]*1.6); const l=Math.hypot(...rd); rd=rd.map(v=>v/l);
-  const h=raycastRay(C.pos, rd); if (!h){ tap3Miss=performance.now(); return; }
+  const h=raycastRay(C.pos, rd); if (!h){ tap3Miss=performance.now(); return; } hold4();
   const v=[0,1,2].map(i=>C.pos[i]-h.p[i]), dist=Math.max(d3MinDist(), Math.hypot(...v)), bz=v.map(q=>q/Math.hypot(...v));
   let y1=Math.atan2(bz[0],bz[2]); while (y1-D.yaw>Math.PI) y1-=2*Math.PI; while (y1-D.yaw<-Math.PI) y1+=2*Math.PI;
   D.aim={t:0, T0:(D.target||[0,0,0]).slice(), T1:h.p, y0:D.yaw, y1, p0:D.pitch, p1:clamp(Math.asin(clamp(bz[1],-1,1)),-1.45,1.45), l0:Math.log(D.dist), l1:Math.log(dist)};
   if (!D.target) D.target=[0,0,0]; D.floating=false; vel3={x:0,y:0}; tapMark={x,y,t:performance.now()}; touch(); }
-let dive3Msg=0;
+let dive3Msg=-1e9;
 function dive3UI(){ const D=st.d3, on=D.dive||!!D.warp; $('dive3Btn').classList.toggle('on',on); $('dive3Btn').textContent=on?'Stop diving':'Dive in'; }
-function start3Warp(why){ const D=st.d3; D.dive=false; D.warpWhy=why; D.warpMag=d3Bound()*3.4/D.dist;
+function start3Warp(why){ const D=st.d3; D.dive=false; D.warpWhy=why; D.warpMag=d3Mag(); if (D.shape==='nest') nestReset();
   D.warp={t:0, dur:why==='reset'?2.2:3.2, ls0:Math.log(D.dist), ls1:Math.log(d3Bound()*3.4), T0:(D.target||[0,0,0]).slice(), y0:D.yaw, y1:D.yaw+0.9+Math.random()*1.6, p0:D.pitch, p1:-0.25+Math.random()*1.0};
   if (!D.target) D.target=[0,0,0]; dive3UI(); touch(); }
-function setDive3(on){ const D=st.d3; if (!on) D.warp=null;
+function hold4(){ const D=st.d3; for (const [k,id] of [['sweep','sweep3'],['spin4','spin4'],['spin3','spin3'],['twAnim','twAnim'],['breathe','breathe'],['bsBreathe','bsBreathe']]){ D[k]=false; $(id).checked=false; }
+  if (D.shape==='nest'){ Object.assign(D,{rxy:0,rxz:0,ryz:0,twist:0,cut:false}); $('cut3').checked=false; $('tw3').value=0; $('tw3o').textContent='0°'; syncT3(); } }
+const nestStraight=()=>{ const D=st.d3; return !D.rxy && !D.rxz && !D.ryz && !D.twist && !D.cut; };
+function nestDive(){ const D=st.d3; hold4(); D.aim={t:0, T0:(D.target||[0,0,0]).slice(), T1:[0,0,0], y0:D.yaw, y1:D.yaw, p0:D.pitch, p1:1.25, l0:Math.log(D.dist), l1:Math.log(Math.min(D.dist,2.5))};
+  if (!D.target) D.target=[0,0,0]; D.floating=false; D.dive=true; vel3={x:0,y:0}; }
+function setDive3(on){ const D=st.d3; if (!on) D.warp=null; if (on) hold4();
+  if (on && D.shape==='nest'){ nestDive(); dive3UI(); touch(); return; }
+  if (on && !retarget3()){ const C=cam3(); let found=null;
+    for (let r=0.03; r<=0.4 && !found; r+=0.03) for (let k=0;k<12 && !found;k++){ const a=k*Math.PI/6+r*7, ux=Math.cos(a)*r, uy=Math.sin(a)*r;
+      let rd=[0,1,2].map(i=>C.r[i]*ux+C.u[i]*uy-C.b[i]*1.6); const l=Math.hypot(...rd); rd=rd.map(v=>v/l); if (raycastRay(C.pos, rd)) found=[cssW/2+ux*cssH, cssH/2-uy*cssH]; }
+    if (found){ D.dive=true; tap3(found[0], found[1]); dive3UI(); return; } }
   if (on){ if (!retarget3()){ dive3Msg=performance.now(); D.dive=false; } else { D.dive=true; D.extra=d3Extra(); } } else D.dive=false;
   dive3UI(); touch(); }
-function d3Bound(){ const s=st.d3.shape; if (s==='box'){ const S=Math.abs(st.d3.boxS); return clamp((S+1)/(S-1)*1.05,2.2,7.5); } return S3[s].bound; }
+function d3Bound(){ const s=st.d3.shape; if (s==='nest') return 1.05*Math.pow(2,nestOuter()); if (s==='box'){ const S=Math.abs(st.d3.boxS); return clamp((S+1)/(S-1)*1.05,2.2,7.5); } return S3[s].bound; }
+let f3Ready=false, f3Err='';
 function render3D(hq){
-  const g=gl, P=main.prog('f3',FS3), D=st.d3; g.useProgram(P.p); g.viewport(0,0,glc.width,glc.height);
+  if (f3Err) return false;
+  let P; try { P=main.progAsync('f3',FS3); } catch(e){ f3Err=String(e.message||e).slice(0,240); showNA(); return false; }
+  if (!P){ const b=hexRGB(st.bg); gl.viewport(0,0,glc.width,glc.height); gl.clearColor(b[0],b[1],b[2],1); gl.clear(gl.COLOR_BUFFER_BIT); dirty=true; return false; }   // still being built: try again next frame
+  if (!f3Ready){ f3Ready=true; lastCap=''; touch(); }
+  const g=gl, D=st.d3; g.useProgram(P.p); g.viewport(0,0,glc.width,glc.height);
   const C=cam3(), pos=C.pos, r=C.r, u=C.u, bz=C.b;
   g.uniform2f(P.u('u_res'),glc.width,glc.height); g.uniform3fv(P.u('u_cam'),pos);
   g.uniformMatrix3fv(P.u('u_rotM'),false,new Float32Array([...r,...u,...bz])); g.uniform1f(P.u('u_fov'),1.6);
-  g.uniform1i(P.u('u_s3'),['bulb','box','menger','tet','qj','apo','kifs'].indexOf(D.shape)); g.uniform1f(P.u('u_twist'),(D.twist+(audOn()&&!D.target?Math.min(1,aud.pulse+aud.bass*0.5)*aud.amt*6:0))*Math.PI/180); g.uniform1i(P.u('u_it3'),d3Iter()); g.uniform1i(P.u('u_hq'),hq?1:0);
+  g.uniform1i(P.u('u_s3'),SH3.indexOf(D.shape));
+  { const R=getR4(), cm=new Float32Array(16); for (let j=0;j<4;j++) for (let i=0;i<4;i++) cm[j*4+i]=R[i][j]; g.uniformMatrix4fv(P.u('u_r4'),false,cm); const rg=S3[D.shape].rg||[0,1]; g.uniform2f(P.u('u_rg'),rg[0],rg[1]); g.uniform1i(P.u('u_nest0'),-nestOuter()); g.uniform1i(P.u('u_nestM'),st.d3.nestM||0);
+    const T=d3Tf(), M=T.R; g.uniformMatrix3fv(P.u('u_rot3'),false,new Float32Array([M[0][0],M[0][1],M[0][2],M[1][0],M[1][1],M[1][2],M[2][0],M[2][1],M[2][2]]));
+    g.uniform1f(P.u('u_tw'),T.tw); g.uniform1f(P.u('u_twS'),T.twS); g.uniform1i(P.u('u_cut'),T.cut?1:0); if (T.cut) g.uniform4f(P.u('u_cutP'),T.cut.n[0],T.cut.n[1],T.cut.n[2],T.cut.o); } g.uniform1f(P.u('u_twist'),(D.twist+(audOn()&&!D.target?Math.min(1,aud.pulse+aud.bass*0.5)*aud.amt*6:0))*Math.PI/180); g.uniform1i(P.u('u_it3'),d3Iter()); g.uniform1i(P.u('u_hq'),hq?1:0);
   const ab=audOn()&&!D.target ? Math.min(1,aud.pulse+aud.bass*0.5)*aud.amt : 0;
-  g.uniform1f(P.u('u_power'),D.power+ab*1.6); g.uniform1f(P.u('u_boxS'),D.boxS-ab*0.12); g.uniform1f(P.u('u_w'),D.w+ab*0.08);
+  g.uniform1f(P.u('u_power'),D.power+ab*1.6); g.uniform1f(P.u('u_boxS'),D.boxS-ab*0.12); g.uniform1f(P.u('u_w'),(is4()?wAct():0)+ab*0.08);
   g.uniform1f(P.u('u_density'),effDensity()); g.uniform1f(P.u('u_cycle'),st.cycle); g.uniform1f(P.u('u_bound'),d3Bound()); g.uniform1f(P.u('u_view'),D.dist);
   g.uniform4fv(P.u('u_qc'),QC); setPal(g,P); g.uniform3fv(P.u('u_bg'),hexRGB(st.bg));
   g.drawArrays(g.TRIANGLES,0,3);
@@ -1217,7 +1498,7 @@ function hilbert(order){ if (HIL[order]) return HIL[order]; const n=1<<order, N=
 const fern={cv:document.createElement('canvas'), n:0, x:0, y:0, key:'', W:600, H:1224, img:null, buf:null, lut:null};
 function fernReset(){ const F=fern; F.cv.width=F.W; F.cv.height=F.H; F.img=F.cv.getContext('2d').createImageData(F.W,F.H); F.buf=new Uint32Array(F.img.data.buffer); F.n=0; F.x=0; F.y=0;
   F.lut=Array.from({length:64},(_,i)=>{ const c=palM(i/63*0.5); return (255<<24)|(Math.round(c[2]*255)<<16)|(Math.round(c[1]*255)<<8)|Math.round(c[0]*255); }); }
-function fernGrow(target){ const F=fern; const key=st.palette; if (F.key!==key || target<F.n){ F.key=key; fernReset(); }
+function fernGrow(target){ const F=fern; const key=st.palette+(st.palRev?'|r':''); if (F.key!==key || target<F.n){ F.key=key; fernReset(); }
   let todo=Math.min(target-F.n, 60000); if (todo<=0) return; let {x,y}=F;
   while (todo--){ const r=Math.random(); let nx,ny;
     if (r<0.01){ nx=0; ny=0.16*y; } else if (r<0.86){ nx=0.85*x+0.04*y; ny=-0.04*x+0.85*y+1.6; } else if (r<0.93){ nx=0.2*x-0.26*y; ny=0.23*x+0.22*y+1.6; } else { nx=-0.15*x+0.28*y; ny=0.26*x+0.24*y+0.44; }
@@ -1488,7 +1769,7 @@ function cachedAux(name, key, P, o){
   if (c.key!==key || c.cv.width!==w){ c.key=key; c.cv.width=w; c.cv.height=h; auxRender(o,w,h); c.cv.getContext('2d').drawImage(auxCv,0,0); }
   return c.cv;
 }
-const styleKey=()=>[st.palette,st.cmode,st.density.toFixed(2),st.inside,st.bg,Math.round(st.cycle*50),st.power.toFixed(2)].join('|');
+const styleKey=()=>[st.palette,st.palRev?1:0,st.cmode,st.density.toFixed(2),st.inside,st.bg,Math.round(st.cycle*50),st.power.toFixed(2)].join('|');
 function drawInsets(){
   const show=(cv,on)=>{ cv.style.display=on?'block':'none'; return on; }, T=TYPES[st.type], na=notAvail();
   if (na){ show(in1,false); show(in2,false); return; }
@@ -1533,11 +1814,31 @@ function drawChart(P){
   panelTitle(P, D.kind==='newton'?'Distance to nearest root':'|z| at each step', D.kind==='newton'?'shrinks to 0 when it lands':`escapes once it passes ${R}`);
 }
 function drawCousin(P){
-  const s=st.d3.shape, g=P.g;
+  let s=st.d3.shape; const g=P.g;
   if (s==='bulb'){ roundClip(P); const img=cachedAux('cb', ['cb',st.d3.power.toFixed(2),styleKey()].join('|'), P, {cx:0,cy:0,scale:1.4,type:3,julia:false,iter:120,power:st.d3.power});
     g.drawImage(img,0,0,P.W,P.H); g.restore(); panelTitle(P,'2D cousin: Multibrot', `zⁿ + c with the same power, ${st.d3.power.toFixed(1)}`, true); return; }
+  if (s==='mj' || s==='tetra'){ roundClip(P); const img=cachedAux('cm', ['cm',styleKey()].join('|'), P, {cx:-0.6,cy:0,scale:1.35,type:0,julia:false,iter:160});
+    g.drawImage(img,0,0,P.W,P.H); g.restore(); panelTitle(P, s==='mj'?'2D slice: Mandelbrot set':'2D cousin: Mandelbrot set', s==='mj'?'the cut where the starting z is 0':'the Tetrabrot is two of these at once', true); return; }
   if (s==='qj'){ roundClip(P); const c=[QC[0],QC[1]]; const img=cachedAux('cq', ['cq',styleKey()].join('|'), P, {cx:0,cy:0,scale:1.5,type:0,julia:true,c,iter:160});
     g.drawImage(img,0,0,P.W,P.H); g.restore(); panelTitle(P,'2D cousin: Julia set', 'same recipe, c = −0.2 + 0.6i', true); return; }
+  if (s==='mosely'){ const sh=GROW.vicsek, B=sh.build(4,1), pad=26, S=Math.min((P.W-24)/2,(P.H-pad-24)/2), cx=P.W/2, cy=pad+(P.H-pad-20)/2;
+    B.draw({g, tf:p=>[cx+p[0]*S, cy-p[1]*S], s:S, lw:1}); panelTitle(P,'Each face: Vicsek fractal','centre and edge squares, corners gone'); return; }
+  if (s==='nest' || s==='flake' || s==='jcube'){ const W=P.W, H=P.H, cx=W/2, cy=26+(H-46)/2, R=Math.min(W-24,H-56)/2, col=(t,a)=>css(palM(t+st.cycle),a); g.lineCap='round';
+    if (s==='nest'){ for (let k=0;k<9;k++){ const r=R*Math.pow(0.5,k), rot=k*Math.PI/4; if (r<1.2) break; g.strokeStyle=col(k*0.12); g.lineWidth=Math.max(0.8,2.2*Math.pow(0.8,k));
+        for (let q=0;q<4;q++){ const a0=rot+q*Math.PI/2+0.42, a1=rot+(q+1)*Math.PI/2-0.42; g.beginPath(); g.arc(cx,cy,r,-a1,-a0); g.stroke(); } }
+      panelTitle(P,'2D cousin: rings in rings','each ring has gaps and a copy inside'); return; }
+    if (s==='flake'){ const draw=(x,y,r,ang,l)=>{ g.fillStyle=col(l*0.12,0.9); g.beginPath(); g.arc(x,y,r,0,7); g.fill(); if (l>=4 || r<1) return;
+        for (const da of [-Math.PI/2,-Math.PI/6,Math.PI/6,Math.PI/2,0]){ const a=ang+da; draw(x+Math.cos(a)*r*4/3, y-Math.sin(a)*r*4/3, r/3, a, l+1); } };
+      draw(cx,cy+R*0.05,R*0.5,Math.PI/2,0); panelTitle(P,'2D cousin: circleflake','every circle grows smaller circles'); return; }
+    const K=s==='jcube'?Math.SQRT2-1:1/3;
+    const sq=(x,y,h,l)=>{ if (l>=4 || h*R<0.8){ g.fillStyle=col(l*0.12+(x+y)*0.05); g.fillRect(cx+(x-h)*R, cy-(y+h)*R, 2*h*R+0.4, 2*h*R+0.4); return; }
+      if (s==='jcube'){ const K2=K*K; for (const sx of [-1,1]) for (const sy of [-1,1]) sq(x+sx*h*(1-K), y+sy*h*(1-K), h*K, l+1);
+        for (const [ex,ey] of [[0,1],[0,-1],[1,0],[-1,0]]) sq(x+ex*h*(1-K2), y+ey*h*(1-K2), h*K2, l+1); }
+      else for (const [ex,ey] of [[0,1],[0,-1],[1,0],[-1,0]]) sq(x+ex*h*2/3, y+ey*h*2/3, h/3, l+1); };
+    sq(0,0,1,0); panelTitle(P, s==='jcube'?'2D cousin: Jerusalem square':'2D cousin: one face', s==='jcube'?'corner and edge squares, cross-shaped gaps':'corners and centre removed, flat'); return; }
+  if (s==='klein' || s==='pk'){ const sh=GROW.apollo, B=sh.build(5,1), pad=26, S=Math.min((P.W-24)/2,(P.H-pad-24)/2), cx=P.W/2, cy=pad+(P.H-pad-20)/2;
+    B.draw({g, tf:p=>[cx+p[0]*S, cy-p[1]*S], s:S, lw:1}); panelTitle(P,'2D cousin: Apollonian gasket', s==='klein'?'circles inside circles, by inversion':'the same invert-and-fold idea, flat'); return; }
+  if (s==='menger4') s='menger'; else if (s==='sier5') s='tet'; else if (s==='kifs4') s='kifs';
   if (s==='menger' || s==='tet' || s==='apo' || s==='kifs'){ const k=s==='menger'?4:s==='apo'?5:6, sh=GROW[s==='menger'?'carpet':s==='apo'?'apollo':'sier'], B=sh.build(k,1), pad=26, bw=B.bbox[2]-B.bbox[0], bh=B.bbox[3]-B.bbox[1], S=Math.min((P.W-24)/bw,(P.H-pad-24)/bh), cx=P.W/2, cy=pad+(P.H-pad-20)/2, bx=(B.bbox[0]+B.bbox[2])/2, by=(B.bbox[1]+B.bbox[3])/2;
     const sbg=st.bg; B.draw({g, tf:p=>[cx+(p[0]-bx)*S, cy-(p[1]-by)*S], s:S, lw:1});
     panelTitle(P, {menger:'2D cousin: Sierpinski carpet',tet:'2D cousin: Sierpinski triangle',apo:'2D cousin: Apollonian gasket',kifs:'2D cousin: Sierpinski triangle'}[s], {menger:'each face of the sponge',tet:'each face of the tetrahedron',apo:'circles in every gap',kifs:'the same fold-and-scale, flat'}[s]); return; }
@@ -1556,7 +1857,7 @@ const GUIDE = {
     ['Iterations', `Iterations is how many steps to try before deciding a point never escapes. Too few, and points that would escape late get wrongly painted dark, so deep views turn into black blobs. <strong>Automatic</strong> starts from a formula based on the zoom, then for deep Mandelbrot views it samples a grid of points to measure how many steps they really need and raises the count to match. The step counts show in Numbers. Smoothing (2 × 2 or 3 × 3) averages several samples per pixel when you stop moving; very high step counts use less, so the picture doesn't freeze.`],
     ['Colours', `<strong>Smooth</strong> colours by escape speed, blended between whole steps so there are no visible bands. <strong>Bands</strong> shows whole step counts, like contour lines on a map. <strong>Stripes</strong> averages the angle of each step of the path, which brings out filaments and spirals. <strong>Orbit trap</strong> colours by how close the path ever came to the two axes; with Inside set to "Show structure", it also reveals patterns inside the dark set. <strong>Edge glow</strong> estimates each pixel's distance to the set, so the thinnest filaments light up (exact for the Mandelbrot family; others fall back to Smooth). <strong>Density</strong> wraps the palette around more or fewer times, and <strong>Cycle</strong> animates it.`],
     ['Your own formula', `Choose <strong>Custom formula…</strong> to type any recipe in z and c, such as z^3 + sin(z) + c. You can use + − * / and ^ (any power, even a complex one), brackets, i, pi and e, and the functions sin, cos, tan, sinh, cosh, tanh, exp, log, sqrt, abs, conj, re, im and arg. Writing 2z or z(z + 1) multiplies, and |z| is the size of z. <strong>z starts at</strong> matters: the most interesting starting value is usually where the formula's slope is zero (0 for z² + c, pi/2 for c·sin z, 0.5 for cz(1 − z)). The <strong>escape radius</strong> is how far z must get before it counts as escaped; formulas with exp or sin often look best around 50. Your formula is compiled for the graphics card and also for the page itself, so Julia sets, Orbit, dives and links all work with it.`],
-    ['Saving, sharing and recording', `The page's address always carries the current view: place, zoom (exact to the last digit, even ×10⁸⁰ deep), colours, mode and settings. Bookmark it or send it, and it opens exactly there. <strong>Copy link to this view</strong> copies it; inside Claude, the page's own address and Share → Copy link carry it too. <strong>Save image</strong> saves a full-sharpness PNG, and <strong>Record video</strong> captures whatever is moving as a WebM (or MP4 in Safari) file, with the music if it's playing. Inside Claude, files go through Claude's download prompt; opened on its own in a browser, they go to your normal downloads.`],
+    ['Saving, sharing and recording', `<strong>Share this view</strong> gives a link that records the fractal, mode, place and zoom (exact to the last digit, even ×10⁸⁰ deep), colours and settings, written as readable fields after the # (for example <em>#t=burning-ship&amp;x=-1.7615&amp;y=0.028&amp;sc=0.045</em>), so you can read it and even edit it by hand. Opened on its own in a browser, the page's address keeps itself up to date, so a bookmark works too. Inside Claude, copy the code and paste it into <strong>Load a view</strong> to come back to the same picture. Links from earlier versions still load. <strong>Save image</strong> saves a full-sharpness PNG, and <strong>Record video</strong> captures whatever is moving as a WebM (or MP4 in Safari) file, with the music if it's playing. Inside Claude, files go through Claude's download prompt; opened on its own in a browser, they go to your normal downloads.`],
     ['Music', `Choose a music file and press Play, and the picture reacts: bass pulses the colours (and pushes the 3D shapes' power, twist or knife), treble spins the colour cycle, and louder passages speed up dives, growth and the turntable. Strength sets how much. The microphone works when the page is opened in its own browser tab; inside Claude it's blocked, so use a file there.`],
     ['A little history', `The set is named after Benoit Mandelbrot, who made it famous in 1980 with computer plots at IBM; Robert Brooks and Peter Matelski had drawn a rough version in 1978. Its area is about 1.5066, yet its edge is so wiggly that it has dimension 2, as rough as a curve can be (Mitsuhiro Shishikura, 1998). It's also connected: every black speck you find, however tiny, is joined to the main body by filaments too thin to see. Pierre Fatou and Gaston Julia studied the Julia sets around 1918, long before anyone could draw them.`],
   ],
@@ -1566,7 +1867,7 @@ const GUIDE = {
     ['Infinite, yet finite', `Many of these break everyday intuition. The Koch snowflake's edge gets 4/3 longer every generation, so its perimeter is infinite, yet the area it encloses never passes 1.6 times the starting triangle. The Sierpinski triangle and carpet end up with zero area, yet there are always infinitely many points left. The Cantor set has total length zero, yet as many points as the whole line. Benoit Mandelbrot asked "How long is the coast of Britain?" in 1967: the answer depends on the length of your ruler, because the coast is fractal, with a dimension of about 1.25.`],
     ['Self-similarity and the endless zoom', `Each part is a scaled copy of the whole. For the Koch snowflake, Sierpinski triangle and carpet, Cantor set and Vicsek fractal, <strong>Endless zoom</strong> zooms in by exactly the copy factor (×2 or ×3) and then quietly jumps back. Because the picture after the zoom is identical to the one before it, the loop never shows a seam.`],
     ['Folding, turtles and chaos', `The <strong>dragon curve</strong> is a strip of paper folded in half again and again, then opened so every fold makes a right angle. The <strong>Hilbert</strong> and <strong>Gosper</strong> curves are drawn by a "turtle" following a growing list of moves (an L-system). The <strong>Apollonian gasket</strong> uses Descartes' circle theorem: each new circle's bend (1 ÷ radius) is twice the sum of its three neighbours' bends minus the old circle opposite it. The <strong>Barnsley fern</strong> comes from the chaos game: jump to a random one of four simple stretch-and-turn rules over and over, and the dots settle onto the fern.`],
-['Saving, sharing and recording', `The page's address always carries the current view: place, zoom (exact to the last digit, even ×10⁸⁰ deep), colours, mode and settings. Bookmark it or send it, and it opens exactly there. <strong>Copy link to this view</strong> copies it; inside Claude, the page's own address and Share → Copy link carry it too. <strong>Save image</strong> saves a full-sharpness PNG, and <strong>Record video</strong> captures whatever is moving as a WebM (or MP4 in Safari) file, with the music if it's playing. Inside Claude, files go through Claude's download prompt; opened on its own in a browser, they go to your normal downloads.`],
+['Saving, sharing and recording', `<strong>Share this view</strong> gives a link that records the fractal, mode, place and zoom (exact to the last digit, even ×10⁸⁰ deep), colours and settings, written as readable fields after the # (for example <em>#t=burning-ship&amp;x=-1.7615&amp;y=0.028&amp;sc=0.045</em>), so you can read it and even edit it by hand. Opened on its own in a browser, the page's address keeps itself up to date, so a bookmark works too. Inside Claude, copy the code and paste it into <strong>Load a view</strong> to come back to the same picture. Links from earlier versions still load. <strong>Save image</strong> saves a full-sharpness PNG, and <strong>Record video</strong> captures whatever is moving as a WebM (or MP4 in Safari) file, with the music if it's playing. Inside Claude, files go through Claude's download prompt; opened on its own in a browser, they go to your normal downloads.`],
     ['Where they show up', `Rivers, lightning, blood vessels, lungs and trees branch like the branching tree. Coastlines and mountain ridges are rough at every scale, like the Koch curve. The H-tree routes clock signals on computer chips, Hilbert curves order data on disk and in maps, and fractal antennas use shapes like the Vicsek fractal and Sierpinski carpet to pick up many frequencies in a small space.`],
   ],
   link:[
@@ -1582,18 +1883,22 @@ const GUIDE = {
     ['Newton\'s method', `Choose the Newton fractal to follow Newton's method instead. Each step jumps to where the tangent line hits zero, homing in on one of the three cube roots of 1. Starts near a root land in a few steps. Near the boundaries, a tiny nudge changes which root you land on, which is why the boundaries are so tangled.`],
   ],
   d3:[
-    ['Why 3D is a cheat', `Complex numbers make the Mandelbrot set work because they can be multiplied like ordinary numbers, and there's no such number system in exactly three dimensions. So 3D fractals take different routes. The <strong>Mandelbulb</strong> fakes it with spherical coordinates: raise the distance to a power and multiply both angles (White and Nylander, 2009). The <strong>Mandelbox</strong> folds space in a box, then turns it inside out through a sphere (Tom Lowe, 2010). The <strong>Menger sponge</strong>, <strong>Sierpinski tetrahedron</strong>, <strong>Apollonian spheres</strong> and <strong>kaleidoscopic IFS</strong> are geometric. The <strong>quaternion Julia set</strong> uses quaternions, four-part numbers that do multiply properly, so it's truly 4D, and what you see is a 3D slice of it.`],
+    ['Why 3D is a cheat', `Complex numbers make the Mandelbrot set work because they can be multiplied like ordinary numbers, and there's no such number system in exactly three dimensions. So 3D fractals take different routes. The <strong>Mandelbulb</strong> fakes it with spherical coordinates: raise the distance to a power and multiply both angles (White and Nylander, 2009). The <strong>Mandelbox</strong> folds space in a box, then turns it inside out through a sphere (Tom Lowe, 2010). The <strong>Menger sponge</strong>, <strong>Sierpinski tetrahedron</strong>, <strong>Apollonian spheres</strong> and <strong>kaleidoscopic IFS</strong> are geometric. The <strong>quaternion Julia set</strong> uses quaternions, four-part numbers that do multiply properly, so it's truly 4D, and what you see is a 3D slice of it. The other 4D shapes are listed under <em>Into 4D</em>. The last group, <strong>spheres in spheres, halls and sponges</strong>, adds nested spheres, Kleinian pearls, the pseudo-Kleinian, the sphereflake, the Jerusalem cube and the Mosely snowflake.`],
+    ['Spheres inside spheres: a dive that never ends', `Most 3D dives stop around ×10⁴, because graphics cards keep only about 7 digits for positions, and the camera\'s position eventually needs more. <strong>Nested spheres</strong> get round that. Each layer is an exact copy of the one outside it, half the size and turned 45°. So when you pass through a layer, the app quietly scales everything up by 2 and turns it back 45°. You\'re now looking at exactly the same picture, but with the numbers back at a comfortable size. It\'s the same trick as Grow\'s endless zoom, and like walking down a staircase that keeps being moved back up under you. The dive flies down the top windows, which line up all the way, and the magnification keeps climbing for as long as you watch. The other shapes aren\'t exact copies of themselves around one point, so they can\'t use it. <strong>Kleinian pearls</strong> come from inversions: turning space inside out through a sphere, so the inside and outside swap. <strong>Pseudo-Kleinian</strong> mixes box folds with inversions to make endless halls. The <strong>sphereflake</strong>, <strong>Jerusalem cube</strong> and <strong>Mosely snowflake</strong> are built by copying, like the Menger sponge.`],
+    ['Into 4D: slices and a turning knife', `We can\'t see 4D, so the 4D shapes are shown the way the polytope explorer\'s Slice mode shows a tesseract: one 3D cross-section at a time. Picture a flat creature watching a ball pass through its plane: it sees a dot grow into a circle and shrink away. Here you are the flat creature, one dimension up. <strong>Knife position</strong> slides the cut along the hidden W direction. <strong>Turn the knife</strong> tilts it in the XW, YW or ZW plane, so the cut passes through at an angle and mixes the hidden direction into the picture; <strong>Keep turning</strong> rolls through all three. The new shapes: the <strong>Mandelbrot–Julia object</strong> (every c and every starting z of z → z² + c at once), the <strong>Tetrabrot</strong> (bicomplex numbers, which split into two Mandelbrot sets), the <strong>Sierpinski 5-cell</strong>, the <strong>4D Menger sponge</strong> and a <strong>4D kaleidoscope</strong>. A slice is usually one dimension less than the whole: the 4D Menger sponge (3.52) gives slices of about 2.52, solid enough to look like a sponge, but the Sierpinski 5-cell (2.32) gives about 1.32, so its slices are thin lace.`],
+    ['The same controls on every shape', `Every 3D and 4D shape has the same set of controls. <strong>Turn the shape</strong> spins the object itself in the XY, XZ and YZ planes (the camera and turntable stay where they are), and <strong>Keep turning</strong> tumbles it. <strong>Twist</strong> wrings it round its vertical axis, like twisting a towel; on the kaleidoscopes it's their own built-in twist instead. <strong>The knife</strong> slices the 4D shapes, as before. A 3D shape has no hidden fourth direction, so there the knife is a flat cut: tick <strong>Cut with the knife</strong> (or just move it) and it slices part of the shape away so you can see inside. Try it on the nested spheres. Power belongs to the Mandelbulb and Box scale to the Mandelbox, and both can <strong>Breathe</strong>. Everything starts still and straight, and Reset view puts it all back. Diving holds every animation still, and the nested spheres straighten up first, because their endless dive needs every layer to be an exact copy.`],
     ['How it\'s drawn', `There are no triangles here. Each pixel sends a ray into the scene, and a formula (a distance estimate) says how far away the nearest surface could possibly be. The ray jumps that far, asks again, and repeats until it's close enough to call it a hit. Picture walking blindfolded with a sense of how far the nearest wall is: you can safely stride that far each time. This is called sphere tracing (John Hart, 1996). Colour comes from the path each point's formula took (an orbit trap), stretched across the whole palette. The light follows the camera, crevices are darkened (ambient occlusion), and shadows are added once you stop moving.`],
     ['Moving and steering', `Drag to turn around the point you're looking at, and scroll or pinch to move closer. Switch <strong>One-finger drag</strong> to <strong>Move</strong> to slide sideways instead; two fingers always move, as do Shift-drag and right-drag on a computer. After moving, the view re-aims at whatever surface is straight ahead. Tap any spot on the shape and the camera swings over and heads toward it. The turntable spins the view slowly while you're not diving.`],
-    ['Diving in 3D', `Dive flies toward the surface in the middle of the screen. The closer you get, the more of the formula's steps are worked out, so new detail keeps appearing; it also re-aims as it goes, in case the extra detail carved away the spot it was heading for. If you move off the shape, the dive pauses until something is ahead again. Graphics cards only carry about 7 digits for 3D positions, so the surface starts to crumble at around ×10⁴. With <strong>Endless</strong> on, it then flies back out and dives somewhere new.`],
-['Saving, sharing and recording', `The page's address always carries the current view: place, zoom (exact to the last digit, even ×10⁸⁰ deep), colours, mode and settings. Bookmark it or send it, and it opens exactly there. <strong>Copy link to this view</strong> copies it; inside Claude, the page's own address and Share → Copy link carry it too. <strong>Save image</strong> saves a full-sharpness PNG, and <strong>Record video</strong> captures whatever is moving as a WebM (or MP4 in Safari) file, with the music if it's playing. Inside Claude, files go through Claude's download prompt; opened on its own in a browser, they go to your normal downloads.`],
+    ['Diving in 3D', `Dive flies toward the surface in the middle of the screen. The closer you get, the more of the formula's steps are worked out, so new detail keeps appearing; it also re-aims as it goes, in case the extra detail carved away the spot it was heading for. If you move off the shape, the dive pauses until something is ahead again. Graphics cards only carry about 7 digits for 3D positions, so the surface starts to crumble at around ×10⁴. Diving works on the 4D slices too; the knife sweep and turning pause when a dive starts, so the surface holds still under you. With <strong>Endless</strong> on, it then flies back out and dives somewhere new.`],
+['Saving, sharing and recording', `<strong>Share this view</strong> gives a link that records the fractal, mode, place and zoom (exact to the last digit, even ×10⁸⁰ deep), colours and settings, written as readable fields after the # (for example <em>#t=burning-ship&amp;x=-1.7615&amp;y=0.028&amp;sc=0.045</em>), so you can read it and even edit it by hand. Opened on its own in a browser, the page's address keeps itself up to date, so a bookmark works too. Inside Claude, copy the code and paste it into <strong>Load a view</strong> to come back to the same picture. Links from earlier versions still load. <strong>Save image</strong> saves a full-sharpness PNG, and <strong>Record video</strong> captures whatever is moving as a WebM (or MP4 in Safari) file, with the music if it's playing. Inside Claude, files go through Claude's download prompt; opened on its own in a browser, they go to your normal downloads.`],
     ['Music', `Choose a music file and press Play, and the picture reacts: bass pulses the colours (and pushes the 3D shapes' power, twist or knife), treble spins the colour cycle, and louder passages speed up dives, growth and the turntable. Strength sets how much. The microphone works when the page is opened in its own browser tab; inside Claude it's blocked, so use a file there.`],
-    ['Cousins and slices', `The panel at top right shows a 2D cousin: the Multibrot set with the same power for the Mandelbulb, a Sierpinski carpet for the sponge (it's on every face), a Sierpinski triangle for the tetrahedron, the Apollonian gasket for the spheres, and an ordinary Julia set for the quaternion one. Sweep the knife on the quaternion Julia set and you're doing exactly what the polytope explorer's Slice mode does: watching 3D cross-sections of a 4D object swell, split and merge.`],
+    ['Cousins and slices', `The panel at top right shows a 2D cousin: the Multibrot set with the same power for the Mandelbulb, a Sierpinski carpet for the sponge (it's on every face), a Sierpinski triangle for the tetrahedron, the Apollonian gasket for the spheres, and an ordinary Julia set for the quaternion one. For the 4D shapes the panel shows the nearest flat relative: the Mandelbrot set for the Mandelbrot–Julia object (it is literally one 2D cut of it) and the Tetrabrot, the carpet for the 4D sponge, the triangle for the 5-cell. Sweep the knife on any 4D shape and you're doing exactly what the polytope explorer's Slice mode does: watching 3D cross-sections of a 4D object swell, split and merge.`],
   ],
 };
 function guideHTML(mode){ return GUIDE[mode].map(([t,h],i)=>`<details class="sub"${i===0?' open':''}><summary>${t}</summary><p>${h}</p></details>`).join(''); }
 const CMODE_NOTE=['Smooth: how fast each point escapes, blended so there are no steps.','Bands: whole-number escape counts, so you see the contour lines.','Stripes: the angle of each step of the orbit, averaged. It brings out the filaments and spirals.','Orbit trap: how close the orbit ever came to the two axes. It works inside the set too, with "Show structure".','Edge glow: estimated distance to the set, so the thin filaments light up. Exact for the Mandelbrot family; others fall back to Smooth.'];
 function notAvail(m=st.mode){ const T=TYPES[st.type];
+  if (m==='d3' && f3Err) return ['The 3D shapes couldn\'t be prepared here', 'This device\'s graphics driver gave up building the 3D program. The 2D modes still work. Restarting the browser sometimes helps; a recent Chrome or Edge on a computer usually works. ('+f3Err.slice(0,120)+')'];
   if (m==='orbit' && T.noOrbit) return [`Orbit isn't available for the ${T.name}`, T.cpu ? 'The Buddhabrot is already a picture of millions of orbits at once. Try it in Explore.' : T.name.startsWith('Lyapunov') ? 'Each pixel here is a pair of growth rates, not a starting point with an orbit to follow. Try it in Explore.' : `Orbit tests escape with the circle of radius 2, which doesn't fit the ${T.name}'s formula. Try it in Explore, where it's drawn properly.`];
   if (m==='link' && T.noLink) return [`Julia link isn't available for the ${T.name}`, 'It has no Julia sets to link to. Try it in Explore.'];
   if (m==='link' && (T.newton||T.juliaOnly)) return [`Julia link isn't available for the ${T.name}`, T.newton ? 'Newton\'s method has no c to choose, so there is no map of Julia sets to link to. Try it in Explore or Orbit.' : 'The Phoenix is already a Julia-style set with its constants fixed, so there is no map to link it to. Try it in Explore or Orbit.'];
@@ -1603,7 +1908,7 @@ function setStats(a,la,b,lb,c,lc){ $('s1').textContent=a; $('s1l').textContent=l
 const curName=()=> st.mode==='grow' ? GROW[st.grow.shape].name : st.mode==='d3' ? S3[st.d3.shape].name : TYPES[st.type].name;
 function updateLabels(){
   $('gv-shapes').textContent=curName(); $('gv-style').textContent=st.palette.replace('_',' & ');
-  $('g-ctl').querySelector('.gt').textContent={explore:'Explore',grow:'Grow',link:'Julia link',orbit:'Orbit',d3:'3D'}[st.mode]+' controls';
+  $('g-ctl').querySelector('.gt').textContent={explore:'Explore',grow:'Grow',link:'Julia link',orbit:'Orbit',d3:'3D · 4D'}[st.mode]+' controls';
   const T=TYPES[st.type], jv=st.julia||T.juliaOnly; let about='', more='';
   if (st.mode==='grow'){ const sh=GROW[st.grow.shape]; $('title').textContent=sh.name; $('subtitle').textContent=`fractal dimension ${sh.dim?sh.dim.toFixed(3)+' = '+sh.dimTxt:sh.dimTxt}`;
     about=`<strong>${sh.name}.</strong> ${sh.info}`; more=guideHTML('grow'); }
@@ -1652,22 +1957,42 @@ function updateDynamic(){
       : D.esc>0 ? `<b>Escaped after ${D.esc} step${D.esc===1?'':'s'}.</b> Once past radius 2 it can only run off to infinity, so ${who} is outside the set. That count is exactly what sets its colour in Explore.`
       : D.period ? `<b>Trapped in a ${D.period}-step cycle</b> (ringed). The orbit never escapes, so ${who} is inside the set${!D.julia&&st.type===0?(D.period===1?': in the main cardioid.':D.period===2?': in the big disc on the left.':`: in a period-${D.period} bulb.`):'.'}`
       : `<b>Still bounded after 3,000 steps</b> but not settling into a short cycle. ${who[0].toUpperCase()+who.slice(1)} is in the set, or so close to its edge that it can't be told apart.`); }
+  else if (st.mode==='d3' && !f3Ready){ setCap('<b>Getting the 3D shapes ready…</b> The graphics card is building the 3D program. The first time can take a few seconds.'); return; }
   else if (st.mode==='d3'){ const D=st.d3, S=S3[D.shape];
     if (D.shape==='bulb') setStats(D.power.toFixed(2),'power', d3Iter()+'','iterations', S.dim,'dimension');
     else if (D.shape==='box') setStats(D.boxS.toFixed(2),'scale', d3Iter()+'','iterations','—','dimension');
-    else if (D.shape==='qj') setStats(D.w.toFixed(2),'knife W', d3Iter()+'','iterations','4D','lives in');
+    else if (is4()) setStats(wAct().toFixed(2),'knife W', d3Iter()+'',D.shape==='menger4'||D.shape==='sier5'?'levels':'iterations', (Math.abs(D.axw)+Math.abs(D.ayw)+Math.abs(D.azw))<0.5?'straight':'tilted','knife');
     else if (D.shape==='apo') setStats(d3Iter()+'','levels', '1.2','inversion', S.dim,'dimension');
     else if (D.shape==='kifs') setStats(D.twist.toFixed(1)+'°','twist', d3Iter()+'','folds', '—','dimension');
+    else if (D.shape==='nest') setStats(String(D.nestM||0),'layers in', '½ · 45°','each layer', '2','dimension');
+    else if (D.shape==='klein') setStats(d3Iter()+'','levels', fmtN(7*pow(6,d3Iter())),'pearls', 'dust','dimension');
+    else if (D.shape==='pk') setStats(d3Iter()+'','folds', 'box + ball','each fold', '—','dimension');
+    else if (D.shape==='flake') setStats(d3Iter()+'','levels', fmtN((pow(9,d3Iter()+1)-1)/8),'spheres', '2','dimension');
+    else if (D.shape==='jcube') setStats(d3Iter()+'','levels', '8 + 12','pieces each', '2.529','dimension');
+    else if (D.shape==='mosely') setStats(d3Iter()+'','levels', fmtN(pow(18,d3Iter())),'cubes', '2.631','dimension');
     else setStats(d3Iter()+'','levels', D.shape==='menger'?fmtN(pow(20,d3Iter())):fmtN(pow(4,d3Iter())), D.shape==='menger'?'cubes':'tetrahedra', D.shape==='menger'?'2.727':'2','dimension');
-    const d0=d3Bound()*3.4, mag=d0/D.dist; $('gv-view').textContent='×'+fmtBig(mag);
+    const mag=d3Mag(); $('gv-view').textContent='×'+fmtBig(mag);
     if (performance.now()-tap3Miss<3000){ setCap('<b>Nothing there to fly to.</b> Tap a spot on the shape itself.'); return; }
     if (D.floating && D.target){ setCap('<b>Nothing straight ahead.</b> The dive is paused: move or turn back toward the shape and it carries on.'); return; }
     if (performance.now()-dive3Msg<3500){ setCap('<b>Nothing in the middle of the screen to dive into.</b> Drag so the shape is under the centre, then press Dive again.'); return; }
     if (D.warp){ setCap(D.warpWhy==='reset' ? '<b>Starting a new trip.</b> Flying back out to pick a fresh spot.' : `<b>Out of precision at ×${fmtBig(D.warpMag)}.</b> Graphics cards only carry about 7 digits in 3D, so it's flying back out to dive somewhere new.`); return; }
-    if (D.target){ if (st.endless && D.dive){ setCap(`<b>Endless dive, trip ${D.trip||1}: ×${fmtBig(mag)}.</b> ${d3Iter()} iterations now. Tap a spot to fly toward it, drag to ${D.dragMode==='move'?'move':'turn'} (two fingers ${D.dragMode==='move'?'also move':'move'}); Reset view starts a new trip.`); return; }
+    if (D.target){ if (st.endless && D.dive){ setCap(`<b>Endless dive, trip ${D.trip||1}: ×${fmtBig(mag)}.</b> ${D.shape==='nest'?`Layer ${(D.nestM||0)+1}, and it never runs out of digits.`:`${d3Iter()} iterations now.`} Tap a spot to fly toward it, drag to ${D.dragMode==='move'?'move':'turn'} (two fingers ${D.dragMode==='move'?'also move':'move'}); Reset view starts a new trip.`); return; }
       setCap(D.dist<=d3MinDist()*1.001 ? `<b>As deep as 3D goes here: ×${fmtBig(mag)}.</b> Graphics cards draw 3D with about 7 digits of precision, so the surface starts to crumble past this point. Reset view to fly back out.`
+      : D.shape==='nest' ? `<b>${D.dive?'Diving through':'Inside'} layer ${(D.nestM||0)+1}: ×${fmtBig(mag)}.</b> Every layer is an exact copy of the one outside it, half the size and turned 45°, so the next one is swapped in as you pass through: this dive never runs out of digits.`
       : `<b>${D.dive?'Diving':'Dived'} into the ${S.name}: ×${fmtBig(mag)}.</b> ${d3Iter()} iterations now${d3Extra()?`, ${d3Extra()} more than at the start`:''}: the closer you get, the more detail is worked out. Drag to look around the spot you're diving toward.`); return; }
-    setCap(D.shape==='qj' ? `<b>Knife at W = ${D.w.toFixed(2)}.</b> A 3D slice of a 4D Julia set, the way Slice mode cuts a 4D polytope. ${Math.abs(D.w)>0.55?'Near the edge of the 4D shape the slice breaks into islands.':'Through the middle, the slice is one connected solid.'}`
+    const tilt=(Math.abs(D.axw)+Math.abs(D.ayw)+Math.abs(D.azw))>=0.5, kn=`<b>Knife at W = ${wAct().toFixed(2)}${tilt?`, tilted ${Math.round(D.axw)}° · ${Math.round(D.ayw)}° · ${Math.round(D.azw)}° (XW · YW · ZW)`:''}.</b> `;
+    setCap(D.shape==='qj' ? kn+`A 3D slice of a 4D Julia set, the way Slice mode cuts a 4D polytope. ${Math.abs(wAct())>0.55?'Near the edge of the 4D shape the slice breaks into islands.':'Through the middle, the slice is one connected solid.'}`
+      : D.shape==='mj' ? kn+(tilt?'A tilted cut mixes c and the starting z, so you see a shape partway between the Mandelbrot set and a Julia set.':'Across and up are c, depth is the real part of the starting z, and the knife sets its imaginary part. With the knife at 0, a cut straight across at depth 0 would show exactly the Mandelbrot set (top right).')
+      : D.shape==='tetra' ? kn+(Math.abs(wAct())<0.02&&!tilt?'This is the classic Tetrabrot: two Mandelbrot sets multiplied together, hence the boxy terraces.':'Bicomplex z² + c is two Mandelbrot sets at once, so every slice is built from Mandelbrot shapes meeting at right angles.')
+      : D.shape==='sier5' ? kn+`${d3Iter()} levels: ${fmtN(pow(5,d3Iter()))} pieces in 4D. A slice is only about 1.32-dimensional, so it falls apart into floating lace; lower Detail for chunkier pieces.`
+      : D.shape==='menger4' ? kn+`${d3Iter()} level${d3Iter()===1?'':'s'}: ${fmtN(pow(48,d3Iter()))} tesseracts. ${Math.abs(wAct())<0.33&&!tilt?'The knife is in the middle third along W, so any second middle coordinate is cut away: a frame of bars.':'Outside the middle third along W, the slice is a 3D Menger sponge.'}`
+      : D.shape==='kifs4' ? kn+`Twist ${D.twist.toFixed(1)}°. Fold with four mirrors, twist in XY and ZW, scale ×2, repeat ${d3Iter()} times.`
+      : D.shape==='nest' ? '<b>Spheres inside spheres.</b> Each hollow sphere has six round windows and a copy half its size inside, turned 45°. The windows on top line up all the way down. Press Dive in to fly through them forever.'
+      : D.shape==='klein' ? `<b>${d3Iter()} levels of inversion.</b> Seven spheres each turn space inside out, so each one fills with shrunken copies of the others, and those with smaller copies again. That makes ${fmtN(7*pow(6,d3Iter()))} pearls. Raise Detail, or dive, to see deeper ones.`
+      : D.shape==='pk' ? `<b>${d3Iter()} folds.</b> Fold into a box, invert through a ball, repeat. The real shape goes on forever; this is a round chunk of it. Dive in to fly through the halls.`
+      : D.shape==='flake' ? `<b>${d3Iter()} levels: ${fmtN((pow(9,d3Iter()+1)-1)/8)} spheres.</b> Every sphere grows nine a third its size, six round its middle and three on top. It never gets bigger than twice the first sphere.`
+      : D.shape==='jcube' ? `<b>${d3Iter()} levels.</b> Each cube becomes 8 corner cubes (0.414 the size) and 12 edge cubes (0.172 the size), leaving cross-shaped tunnels through every face.`
+      : D.shape==='mosely' ? `<b>${d3Iter()} levels: ${fmtN(pow(18,d3Iter()))} cubes.</b> Cut into 27, drop the 8 corners and the middle, keep 18. Volume left: ${pctTxt(pow(18/27,d3Iter()))}. The Menger sponge keeps the corners and throws away the face middles instead, so it looks quite different.`
       : D.shape==='bulb' ? `<b>Power ${D.power.toFixed(1)}.</b> ${D.power<2.5?'Power 2 is the closest analogue of the Mandelbrot set, but in 3D it comes out smooth and whipped.':D.power<6?'Low powers give lumpy, pumpkin-like shapes with a few big lobes.':D.power<14?'High powers grow rings of bulbs on bulbs, like a cauliflower or a temple roof.':'Very high powers pack the bulbs into dense rings of fine spikes and tiles, and the whole shape rounds out toward a sphere.'} The 2D cousin (top right) is the Multibrot set with the same power.`
       : D.shape==='box' ? `<b>Scale ${D.boxS.toFixed(2)}.</b> Fold into a box, invert through a ball, scale, add the start, repeat. Fly in close: it's made of rooms within rooms.`
       : D.shape==='apo' ? `<b>${d3Iter()} levels of folding.</b> Each level fills the gaps with smaller spheres. More detail shows deeper bubbles, but every level is 1.2 times smaller still, so the foam goes on forever.`
@@ -1700,6 +2025,7 @@ function setMode(m){
   if (m==='grow'){ st.grow.t=0; st.grow.playing=true; $('growPlay').textContent='Pause'; st.grow.fit=null; buildGenChips(); }
   if (m==='orbit'){ if (!notAvail()) newOrbit(); st.orbit.playing=true; $('orbPlay').textContent='Pause'; }
   st.q = m==='d3' ? 0.6 : 1; st.qMove=st.q; hqShown=false;
+  if (m==='d3' && !f3Ready && !f3Err) try { main.progAsync('f3',FS3); } catch(e){ f3Err=String(e.message||e).slice(0,240); }
   octx.setTransform(1,0,0,1,0,0); octx.clearRect(0,0,ovc.width,ovc.height);
   $('hint').textContent = m==='d3' ? 'Drag to orbit · scroll / pinch to move closer' : m==='orbit' ? 'Tap a point · drag to move · scroll to zoom' : m==='link' ? 'Drag on the map to move c' : 'Drag to move · scroll / pinch to zoom';
   lastCap=''; touch(); updateLabels();
@@ -1749,9 +2075,19 @@ $('endless3Chk').addEventListener('change', e=>{ st.endless=e.target.checked; $(
 $('diveBtn').addEventListener('click', ()=>{ if (st.dive||st.endlessRun){ st.dive=false; st.endlessRun=false; st.fly=null; st.steerTo=null; diveUI(); touch(); return; }
   st.dive=true; st.endlessRun=st.endless; st.trip=1; st.insideT=0; st.manualT=0; st.steerTo=null; st.vel=[0,0]; gridJob=null; st.fly=null; diveUI(); touch(); });
 $('diveSpd').addEventListener('input', e=>syncDiveSpd(+e.target.value));
-function resetView(){ if (st.mode==='explore' && st.endlessRun){ endlessWarp('reset'); return; }
+// Reset view puts the current mode back to how it starts: camera, knife, turns, motion and shape settings (not the fractal or colours)
+function resetSettings(){ const m=st.mode;
+  if (m==='d3'){ const D=st.d3;
+    setRange('pw3',8); setCheck('breathe',0); setRange('bs3',-1.8); setCheck('bsBreathe',0); setRange('tw3',0); setCheck('twAnim',0);
+    Object.assign(D,{rxy:0,rxz:0,ryz:0,spin3:false,cut:false}); $('spin3').checked=false; $('cut3').checked=false; syncT3();
+    setRange('w3',0); setCheck('sweep3',0); Object.assign(D,{axw:0,ayw:0,azw:0,spin4:false}); $('spin4').checked=false; syncR4(); r4c.key='';
+    setRange('lvl3',5); setRange('turn3',0); clickIn('drag3','dm','turn'); D.aim=null; D.needAim=false; D.floating=false; vel3={x:0,y:0}; }
+  else if (m==='grow'){ st.grow.angle={pyth:45, tree:28}; const sh=GROW[st.grow.shape]; if (sh.angle){ $('ang').value=st.grow.angle[sh.angle]; $('ango').textContent=st.grow.angle[sh.angle]+'°'; } }
+  else setRange('rot',0);
+  touch(); }
+function resetView(){ resetSettings(); if (st.mode==='explore' && st.endlessRun){ endlessWarp('reset'); return; }
   if (st.mode==='d3' && (st.d3.dive||st.d3.warp) && st.endless){ start3Warp('reset'); return; }
-  st.endlessRun=false; if (st.mode==='grow'){ st.grow.gv={ox:0,oy:0,z:1}; } else if (st.mode==='d3'){ st.d3.target=null; setDive3(false); st.d3.dist=d3Bound()*3.4; st.d3.yaw=0.7; st.d3.pitch=0.32; } else resetViews(); st.dive=false; diveUI(); touch(); }
+  st.endlessRun=false; if (st.mode==='grow'){ st.grow.gv={ox:0,oy:0,z:1}; } else if (st.mode==='d3'){ nestReset(); st.d3.target=null; setDive3(false); st.d3.dist=d3Bound()*3.4; st.d3.yaw=0.7; st.d3.pitch=0.32; } else resetViews(); st.dive=false; diveUI(); touch(); }
 $('resetView').addEventListener('click', resetView); $('resetBtn').addEventListener('click', resetView);
 // grow
 function buildGenChips(){ const sh=GROW[st.grow.shape]; $('genChips').innerHTML=[...Array(sh.max+1)].map((_,k)=>`<button data-k="${k}">${k}</button>`).join('');
@@ -1774,16 +2110,35 @@ $('orbAuto').addEventListener('change', e=>{ st.orbit.auto=e.target.checked; });
 segClick('orbStyle', d=>{ st.orbit.style=d.s; });
 $('orbCircle').addEventListener('change', e=>{ st.orbit.circle=e.target.checked; });
 // 3D
-function d3Rows(){ const s=st.d3.shape; $('pwRow').hidden=s!=='bulb'; $('twRow').hidden=s!=='kifs'; $('bsRow').hidden=s!=='box'; $('wRow').hidden=s!=='qj'; }
+function d3Rows(){ const s=st.d3.shape, f=is4(); $('pwRow').hidden=s!=='bulb'; $('bsRow').hidden=s!=='box'; $('cutRow').hidden=f;
+  $('knifeLbl').textContent=f?'Knife position (W)':'Knife position'; $('sweepLbl').textContent=f?'Sweep the knife through 4D':'Sweep the knife through the shape';
+  $('turnKLbl').textContent=f?'Turn the knife in 4D':'Tilt the knife'; [['k1l','XW','XZ'],['k2l','YW','YZ'],['k3l','ZW','XY']].forEach(([id,a,b])=>$(id).textContent=f?a:b);
+  $('knifeNote').textContent=f?'Sliding moves the cut along the hidden W direction. Turning it in the XW, YW or ZW plane tilts the cut, so it slices the 4D shape at an angle, the same turns as in the polytope explorer.'
+    :'A 3D shape has no hidden direction, so here the knife is a flat cut that slices part of the shape away and shows the inside. Slide it through, tilt it, or let it sweep.';
+  syncW(); syncT3(); }
+function syncW(){ const D=st.d3; $('w3').value=Math.round(D.w*100); $('w3o').textContent=knifeVal().toFixed(2); }
+function syncT3(){ const D=st.d3; for (const k of ['rxy','rxz','ryz']){ const id='t3'+k.slice(1); $(id).value=Math.round(D[k]); $(id+'o').textContent=Math.round(D[k])+'°'; } }
+function syncR4(){ const D=st.d3; for (const [k,id] of [['axw','rxw'],['ayw','ryw'],['azw','rzw']]){ $(id).value=Math.round(D[k]); $(id+'o').textContent=Math.round(D[k])+'°'; } }
 segClick('drag3', d=>{ st.d3.dragMode=d.dm; });
-segClick('shapes3', d=>{ st.d3.shape=d.s3; st.d3.target=null; setDive3(false); st.d3.dist=d3Bound()*3.4; d3Rows(); updateLabels(); });
+for (const gid of ['shapes3','shapes3b','shapes4']) $(gid).addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('.sh3 button').forEach(x=>x.classList.toggle('on', x===b)); nestReset(); st.d3.shape=b.dataset.s3; st.d3.target=null; setDive3(false); st.d3.dist=d3Bound()*3.4; d3Rows(); touch(); updateLabels(); });
+for (const [k,id] of [['axw','rxw'],['ayw','ryw'],['azw','rzw']]) $(id).addEventListener('input', e=>{ st.d3[k]=+e.target.value; if (e.isTrusted) cutOn(); $(id+'o').textContent=e.target.value+'°'; if (st.d3.spin4){ st.d3.spin4=false; $('spin4').checked=false; } touch(); });
+$('spin4').addEventListener('change', e=>{ st.d3.spin4=e.target.checked; if (st.d3.spin4) cutOn(); touch(); });
+$('cut3').addEventListener('change', e=>{ st.d3.cut=e.target.checked; syncW(); touch(); });
+for (const k of ['xy','xz','yz']) $('t3'+k).addEventListener('input', e=>{ st.d3['r'+k]=+e.target.value; $('t3'+k+'o').textContent=e.target.value+'°'; if (st.d3.spin3){ st.d3.spin3=false; $('spin3').checked=false; } touch(); });
+$('spin3').addEventListener('change', e=>{ st.d3.spin3=e.target.checked; touch(); });
+$('t3reset').addEventListener('click', ()=>{ Object.assign(st.d3,{rxy:0,rxz:0,ryz:0,spin3:false}); $('spin3').checked=false; syncT3(); touch(); });
+$('bsBreathe').addEventListener('change', e=>{ st.d3.bsBreathe=e.target.checked; st.d3.bsT=Math.asin(clamp((st.d3.boxS+2)/0.6,-1,1))/0.3; });
+$('r4reset').addEventListener('click', ()=>{ Object.assign(st.d3,{axw:0,ayw:0,azw:0,spin4:false}); $('spin4').checked=false; syncR4(); touch(); });
 $('pw3').addEventListener('input', e=>{ st.d3.power=+e.target.value; $('pw3o').textContent=st.d3.power.toFixed(1); if (st.d3.breathe){ st.d3.breathe=false; $('breathe').checked=false; } touch(); });
 $('breathe').addEventListener('change', e=>{ st.d3.breathe=e.target.checked; st.d3.t=Math.asin(clamp((st.d3.power-13)/11,-1,1))/0.22; });
-$('bs3').addEventListener('input', e=>{ st.d3.boxS=+e.target.value; $('bs3o').textContent=minus(st.d3.boxS.toFixed(2)); touch(); });
-$('w3').addEventListener('input', e=>{ st.d3.w=+e.target.value/100*0.9; $('w3o').textContent=st.d3.w.toFixed(2); if (st.d3.sweep){ st.d3.sweep=false; $('sweep3').checked=false; } touch(); });
-$('sweep3').addEventListener('change', e=>{ st.d3.sweep=e.target.checked; st.d3.wt=Math.asin(clamp(st.d3.w/0.85,-1,1))/0.45; });
+$('bs3').addEventListener('input', e=>{ st.d3.boxS=+e.target.value; if (e.isTrusted && st.d3.bsBreathe){ st.d3.bsBreathe=false; $('bsBreathe').checked=false; } $('bs3o').textContent=minus(st.d3.boxS.toFixed(2)); touch(); });
+const cutOn=()=>{ if (!is4() && !st.d3.cut){ st.d3.cut=true; $('cut3').checked=true; } };   // moving the knife on a 3D shape switches the cut on
+$('w3').addEventListener('input', e=>{ st.d3.w=+e.target.value/100; if (e.isTrusted) cutOn(); $('w3o').textContent=knifeVal().toFixed(2); if (st.d3.sweep){ st.d3.sweep=false; $('sweep3').checked=false; } touch(); });
+$('sweep3').addEventListener('change', e=>{ st.d3.sweep=e.target.checked; if (st.d3.sweep) cutOn(); st.d3.wt=Math.asin(clamp(st.d3.w/0.94,-1,1))/0.45; });
 $('tw3').addEventListener('input', e=>{ st.d3.twist=+e.target.value; $('tw3o').textContent=st.d3.twist.toFixed(1)+'°'; if (st.d3.twAnim){ st.d3.twAnim=false; $('twAnim').checked=false; } touch(); });
-$('twAnim').addEventListener('change', e=>{ st.d3.twAnim=e.target.checked; st.d3.twT=Math.asin(clamp((st.d3.twist-22)/20,-1,1))/0.25; });
+const twAmp=()=>isKifs()?21:60;   // Keep twisting swings the twist between 0 and this × 2 degrees
+$('twAnim').addEventListener('change', e=>{ st.d3.twAnim=e.target.checked; st.d3.twT=Math.asin(clamp(st.d3.twist/twAmp()-1,-1,1))/0.25; touch(); });
 $('dive3Btn').addEventListener('click', ()=>{ const D=st.d3; if (D.dive||D.warp){ setDive3(false); } else { D.trip=1; setDive3(true); } });
 $('reset3').addEventListener('click', resetView);
 function syncDiveSpd(v){ st.diveSpeed=v; for (const [i,o] of [['diveSpd','diveo'],['dive3Spd','dive3o']]){ $(i).value=v; $(o).textContent=v.toFixed(1)+'×'; } }
@@ -1810,9 +2165,11 @@ segClick('cmode', d=>{ st.cmode=+d.c; $('cmodeNote').textContent=CMODE_NOTE[st.c
 const palBox=$('palettes');
 for (const [name, stops] of Object.entries(PALETTES)){ const b=document.createElement('button'); b.title=name.replace('_',' & ').replace(/^./,c=>c.toUpperCase()); b.dataset.p=name;
   b.style.background=`linear-gradient(90deg,${stops.map(c=>css(c)).join(',')})`; if (name===st.palette) b.classList.add('on');
-  b.addEventListener('click', ()=>{ st.palette=name; RAMP=PALETTES[name]; palBox.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); $('palName').textContent='Palette: '+b.title; refreshLegend(); updateLabels(); touch(); });
+  b.addEventListener('click', ()=>{ st.palette=name; setRamp(); palBox.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); palLabel(); refreshLegend(); updateLabels(); touch(); });
   palBox.appendChild(b); }
 $('palName').textContent='Palette: Aurora';
+function palLabel(){ const b=palBox.querySelector('button.on'); $('palName').textContent='Palette: '+(b?b.title:'')+(st.palRev?' (reversed)':''); }
+$('palRev').addEventListener('change', e=>{ st.palRev=e.target.checked; setRamp(); palLabel(); refreshLegend(); updateLabels(); touch(); });
 $('cyc').addEventListener('input', e=>{ st.cycleSpeed=+e.target.value; $('cyco').textContent=st.cycleSpeed?st.cycleSpeed.toFixed(1)+'×':'off'; touch(); });
 $('dens').addEventListener('input', e=>{ st.density=+e.target.value; $('denso').textContent=st.density.toFixed(1)+'×'; touch(); });
 segClick('inside', d=>{ st.inside=+d.i; });
@@ -1871,7 +2228,7 @@ snapBtn.addEventListener('click', ()=>{
   if (st.mode!=='grow'){ st.prog=null; st.q=1; sizeBuffers(); if (st.mode==='d3') render3D(true); else render2DAll(true); hqShown=true; } else drawGrow();
   composite().toBlob(blob=>saveBlob(fileBase()+'.png', blob, dlNote), 'image/png'); });
 
-// ---------- shareable links: the whole view lives in the address (letters, digits and hyphens only) ----------
+// ---------- shareable links: readable fields after the # (old v3/v4 codes, f3-… and f4-…, still load) ----------
 const B32='abcdefghijklmnopqrstuvwxyz234567';
 function b32enc(bytes){ let out='', bits=0, val=0; for (const b of bytes){ val=(val<<8)|b; bits+=8; while (bits>=5){ out+=B32[(val>>>(bits-5))&31]; bits-=5; } val&=(1<<bits)-1; } if (bits>0) out+=B32[(val<<(5-bits))&31]; return out; }
 function b32dec(str){ const out=[]; let bits=0, val=0; for (const ch of str){ const i=B32.indexOf(ch); if (i<0) continue; val=(val<<5)|i; bits+=5; if (bits>=8){ out.push((val>>>(bits-8))&255); bits-=8; } val&=(1<<bits)-1; } return new Uint8Array(out); }
@@ -1880,21 +2237,21 @@ const r6=x=>+(+x).toPrecision(12);
 function getState(){ const v=st.vE, dg=clamp(Math.ceil(-Math.log10(v.scale))+8,17,125), D=st.d3, sh=st.grow, S={
   m:st.mode, t:st.type, j:st.julia?1:0, c:[r6(st.jc[0]),r6(st.jc[1])], pw:r6(st.power), pr:isExt()?1:0,
   v:[fixToDec(v.bx??dblToFix(v.cx),dg), fixToDec(v.by??dblToFix(v.cy),dg), +v.scale.toPrecision(8), r6(st.rotDeg)],
-  p:st.palette, cm:st.cmode, dn:r6(st.density), cy:r6(st.cycleSpeed), in:st.inside, bg:st.bg.slice(1), it:st.iterAuto?0:st.iter, aa:st.aa,
+  p:st.palette, rv:st.palRev?1:0, cm:st.cmode, dn:r6(st.density), cy:r6(st.cycleSpeed), in:st.inside, bg:st.bg.slice(1), it:st.iterAuto?0:st.iter, aa:st.aa,
   ly:st.lyaSeq, bm:st.budMode, bl:st.bla?1:0, ed:st.endless?1:0, sd:st.steer?1:0,
   g:[sh.shape, growStage(GROW[sh.shape],sh.t).k, sh.playing?1:0, sh.zoom?1:0, sh.angle.pyth, sh.angle.tree],
   l:[st.link.auto?1:0, st.link.path], o:st.orbit.data?[r6(st.orbit.data.p0[0]), r6(st.orbit.data.p0[1]), st.orbit.auto?1:0]:null,
-  d:[D.shape, r6(D.power), r6(D.boxS), r6(D.w), D.lvl, r6(D.twist), r6(D.yaw), r6(D.pitch), +D.dist.toPrecision(9), D.target?D.target.map(r6):0, r6(D.turn), D.breathe?1:0, D.sweep?1:0, D.twAnim?1:0, D.dragMode] };
+  d:[D.shape, r6(D.power), r6(D.boxS), r6(D.w), D.lvl, r6(D.twist), r6(D.yaw), r6(D.pitch), +D.dist.toPrecision(9), D.target?D.target.map(r6):0, r6(D.turn), D.breathe?1:0, D.sweep?1:0, D.twAnim?1:0, D.dragMode, r6(D.axw), r6(D.ayw), r6(D.azw), D.spin4?1:0, D.nestM||0, r6(D.rxy), r6(D.rxz), r6(D.ryz), D.spin3?1:0, D.cut?1:0, D.bsBreathe?1:0] };
   if (typeof customState==='function') S.f=customState();
   return S; }
-function encodeState(){ return 'f3-'+b32enc(new TextEncoder().encode(JSON.stringify(getState()))); }
-function decodeState(h){ try { if (!h.startsWith('f3-')) return null; return JSON.parse(new TextDecoder().decode(b32dec(h.slice(3)))); } catch(e){ return null; } }
+function encodeState(){ return 'f4-'+b32enc(new TextEncoder().encode(JSON.stringify(getState()))); }
+function decodeState(h){ try { if (!h.startsWith('f3-') && !h.startsWith('f4-')) return null; const S=JSON.parse(new TextDecoder().decode(b32dec(h.slice(3)))); if (h.startsWith('f3-') && S.d) S.d[3]=(+S.d[3]||0)/0.9; return S; } catch(e){ return null; } }
 const clickIn=(id, attr, val)=>{ const b=document.querySelector(`#${id} [data-${attr}="${val}"]`); if (b) b.click(); };
 const setRange=(id,val)=>{ const e=$(id); if (!e || val==null) return; e.value=val; e.dispatchEvent(new Event('input')); };
 const setCheck=(id,val)=>{ const e=$(id); if (!e || val==null || e.checked===!!val) return; e.checked=!!val; e.dispatchEvent(new Event('change')); };
 function applyState(S){ if (!S) return;
   try {
-    if (S.p && PALETTES[S.p]) clickIn('palettes','p',S.p);
+    if (S.p && PALETTES[S.p]) clickIn('palettes','p',S.p); setCheck('palRev', S.rv?1:0);
     if (S.bg) clickIn('bg','b','#'+S.bg); if (S.cm!=null) clickIn('cmode','c',S.cm); if (S.in!=null) clickIn('inside','i',S.in); if (S.aa) clickIn('aa','a',S.aa);
     setRange('dens',S.dn); setRange('cyc',S.cy);
     if (S.f && typeof applyCustomState==='function') applyCustomState(S.f);
@@ -1908,9 +2265,9 @@ function applyState(S){ if (!S) return;
     if (S.bl!=null) setCheck('blaChk',S.bl);
     setCheck('endlessChk',S.ed); setCheck('steerChk',S.sd);
     if (S.l){ setCheck('linkAuto',S.l[0]); if (S.l[1]) { st.link.path=S.l[1]; setSeg($('linkPath'), document.querySelector(`#linkPath [data-p="${S.l[1]}"]`)); } }
-    if (S.d){ const d=S.d; clickIn('shapes3','s3',d[0]); setRange('pw3',d[1]); setRange('bs3',d[2]); setRange('lvl3',d[4]); setRange('tw3',d[5]); setRange('turn3',d[10]);
-      setCheck('breathe',d[11]); setCheck('sweep3',d[12]); setCheck('twAnim',d[13]); if (d[14]) clickIn('drag3','dm',d[14]);
-      Object.assign(st.d3,{w:d[3], yaw:d[6], pitch:d[7], dist:d[8], target:d[9]?d[9].slice():null}); }
+    if (S.d){ const d=S.d; d[0]=({box4:'box',apo4:'apo'})[d[0]]||d[0]; { const b=document.querySelector(`.sh3 [data-s3="${d[0]}"]`); if (b) b.click(); } setRange('pw3',d[1]); setRange('bs3',d[2]); setRange('lvl3',d[4]); setRange('tw3',d[5]); setRange('turn3',d[10]);
+      setCheck('cut3',d[24]?1:0); setCheck('breathe',d[11]); setCheck('bsBreathe',d[25]?1:0); setCheck('sweep3',d[12]); setCheck('twAnim',d[13]); setCheck('spin3',d[23]?1:0); if (d[14]) clickIn('drag3','dm',d[14]);
+      Object.assign(st.d3,{w:clamp(+d[3]||0,-1,1), yaw:d[6], pitch:d[7], dist:d[8], target:d[9]?d[9].slice():null, axw:+d[15]||0, ayw:+d[16]||0, azw:+d[17]||0, spin4:!!d[18], nestM:d[0]==='nest'?(+d[19]||0):0, rxy:+d[20]||0, rxz:+d[21]||0, ryz:+d[22]||0, spin3:!!d[23], cut:!!d[24], bsBreathe:!!d[25]}); syncT3(); $('cut3').checked=st.d3.cut; $('spin4').checked=st.d3.spin4; syncR4(); syncW(); }
     if (S.g){ const g=S.g; clickIn('growShapes','g',g[0]); st.grow.angle.pyth=g[4]||45; st.grow.angle.tree=g[5]||28; }
     if (S.m) setMode(S.m);
     if (S.v){ const v=st.vE; v.bx=strToFix(S.v[0]); v.by=strToFix(S.v[1]); v.cx=fixToNum(v.bx); v.lx=fixToNum(v.bx-dblToFix(v.cx)); v.cy=fixToNum(v.by); v.ly=fixToNum(v.by-dblToFix(v.cy));
@@ -1919,13 +2276,77 @@ function applyState(S){ if (!S) return;
     if (S.m==='orbit' && S.o){ setCheck('orbAuto',S.o[2]); newOrbit([S.o[0],S.o[1]]); }
     st.iterNeed=0; touch(); updateLabels();
   } catch(e){ console.warn('Could not restore that link', e); } }
+// the centre written with just enough digits for this zoom (a few past one pixel), rounded so it reads back to the same digits
+function fixToDecR(b, digits){ const neg=b<0n; let a=neg?-b:b; const ip=a>>FIXN, fr=a-(ip<<FIXN), q=((fr*(10n**BigInt(digits)))+(1n<<(FIXN-1n)))>>FIXN;
+  let I=ip, F=q; if (F>=10n**BigInt(digits)){ I+=1n; F-=10n**BigInt(digits); } const f=F.toString().padStart(digits,'0').replace(/0+$/,''); const out=I.toString()+(f?'.'+f:''); return (neg && out!=='0'?'-':'')+out; }
+// readable names for the fractals in a link (numbers work too)
+const TKEY=['mandelbrot','burning-ship','tricorn','multibrot','celtic','phoenix','newton','magnet','nova','lyapunov','buddhabrot','custom'];
+const n6=x=>String(r6(x)), b01=x=>x?'1':'0', _j=a=>a.map(x=>typeof x==='number'?n6(x):String(x)).join('_');
+// the state as readable fields: only what the current mode needs, and only settings that differ from the defaults
+function viewCode(){ const S=getState(), P=new URLSearchParams(), on2D=['explore','link','orbit'].includes(S.m);
+  P.set('v','11'); P.set('m',S.m);
+  if (on2D){ const v=st.vE, dg=clamp(Math.ceil(-Math.log10(v.scale))+5,4,125); P.set('t',TKEY[S.t]); P.set('x',fixToDecR(v.bx??dblToFix(v.cx),dg)); P.set('y',fixToDecR(v.by??dblToFix(v.cy),dg)); P.set('sc',String(S.v[2])); if (S.v[3]) P.set('rot',n6(S.v[3]));
+    if (S.j) P.set('j','1'); if (S.j || S.m==='link' || TYPES[S.t].noBounded) P.set('c',_j(S.c));
+    if (S.t===3) P.set('pw',n6(S.pw)); if (S.pr) P.set('pr','extreme'); if (S.t===9) P.set('ly',S.ly); if (S.t===10) P.set('bm',S.bm);
+    if (S.t===11 && S.f){ P.set('f',S.f[0]); if (S.f[1]!=='0') P.set('z0',S.f[1]); P.set('bail',String(S.f[2])); if (S.f[3]) P.set('fv',_j(S.f[3])); }
+    if (S.cm) P.set('cm',String(S.cm)); if (S.in) P.set('in','1'); if (S.it) P.set('it',String(S.it)); if (S.aa!==2) P.set('aa',String(S.aa));
+    if (!S.bl) P.set('bla','0'); if (!S.ed) P.set('endless','0'); if (!S.sd) P.set('steer','0');
+    if (S.m==='link'){ P.set('auto',b01(S.l[0])); P.set('path',S.l[1]); }
+    if (S.m==='orbit' && S.o){ P.set('o',_j(S.o.slice(0,2))); if (!S.o[2]) P.set('oauto','0'); } }
+  else if (S.m==='grow'){ const g=S.g; P.set('g',g[0]); P.set('gen',String(g[1])); if (!g[2]) P.set('play','0'); if (g[3]) P.set('gzoom','1'); if (g[4]!==45) P.set('pyth',String(g[4])); if (g[5]!==28) P.set('tree',String(g[5])); }
+  else { const d=S.d; P.set('s3',d[0]);
+    if (d[0]==='bulb'){ P.set('pow3',n6(d[1])); if (d[11]) P.set('breathe','1'); }
+    if (d[0]==='box') P.set('box',n6(d[2]));
+    if (d[5]) P.set('twist',n6(d[5])); if (d[13]) P.set('twanim','1');
+    if (d[20]||d[21]||d[22]) P.set('turn3d',_j([d[20],d[21],d[22]])); if (d[23]) P.set('spin3','1'); if (d[25]) P.set('bbreathe','1');
+    if (d[24]) P.set('cut','1');
+    if (S3[d[0]] && (S3[d[0]].four || d[24])){ if (d[3]) P.set('w',n6(d[3])); if (d[12]) P.set('sweep','1'); if (d[15]||d[16]||d[17]) P.set('knife',_j([d[15],d[16],d[17]])); if (d[18]) P.set('spin4','1'); }
+    P.set('lvl',String(d[4])); P.set('cam',_j([d[6],d[7],d[8]])); if (d[9]) P.set('tgt',_j(d[9])); if (d[10]) P.set('turn',n6(d[10])); if (d[14]!=='turn') P.set('drag',d[14]); if (d[19]) P.set('nl',String(d[19])); if (!S.ed) P.set('endless','0'); }
+  P.set('pal',S.p); if (S.rv) P.set('rev','1'); if (S.bg!=='0b0d12') P.set('bg',S.bg); if (S.dn!==1) P.set('dn',n6(S.dn)); if (S.cy) P.set('cy',n6(S.cy));
+  return P.toString().replace(/\+/g,'%20').replace(/%28/g,'(').replace(/%29/g,')').replace(/%2A/g,'*').replace(/%2C/g,',').replace(/%5E/g,'^').replace(/%2F/g,'/').replace(/%7C/g,'|'); }
+// readable fields back into the same state object the restore code already uses (anything left out gets its default)
+function parseView(code){
+  const P=new URLSearchParams(String(code).replace(/\+/g,'%2B')), g=k=>P.get(k), has=k=>P.has(k), num=(k,d)=>{ const v=parseFloat(g(k)); return isFinite(v)?v:d; }, nums=k=>(g(k)||'').split('_').map(Number);
+  if (!['m','t','x','y','sc','g','s3','pal'].some(has)) return null;   // nothing we recognise: not a view code
+  const m=g('m')||'explore'; if (!['explore','grow','link','orbit','d3'].includes(m)) return null;
+  const S={ m, p:PALETTES[g('pal')]?g('pal'):'aurora', rv:g('rev')==='1'?1:0, bg:/^[0-9a-f]{6}$/i.test(g('bg')||'')?g('bg'):'0b0d12', dn:num('dn',1), cy:num('cy',0), ed:g('endless')==='0'?0:1 };
+  if (['explore','link','orbit'].includes(m)){ let t=g('t'); t=TKEY.includes(t)?TKEY.indexOf(t):parseInt(t,10); if (!TYPES[t]) t=0; S.t=t;
+    if (!has('x') || !has('y') || !/^-?\d+(\.\d+)?$/.test(g('x')) || !/^-?\d+(\.\d+)?$/.test(g('y'))){ const V=TYPES[t].view; S.v=[String(V[0]),String(V[1]),V[2],0]; }
+    else S.v=[g('x'), g('y'), num('sc',1.25), num('rot',0)];
+    S.j=g('j')==='1'?1:0; if (has('c')){ const c=nums('c'); if (c.length===2 && c.every(isFinite)) S.c=c; }
+    S.pw=num('pw',3); S.pr=g('pr')==='extreme'?1:0; S.cm=num('cm',0); S.in=num('in',0); S.it=num('it',0); S.aa=num('aa',2);
+    S.ly=/^[AB]{1,16}$/.test(g('ly')||'')?g('ly'):'AB'; S.bm=['buddha','nebula','anti'].includes(g('bm'))?g('bm'):'buddha';
+    S.bl=g('bla')==='0'?0:1; S.sd=g('steer')==='0'?0:1;
+    if (t===11 && has('f')){ const fv=has('fv')?nums('fv'):null; S.f=[g('f'), g('z0')||'0', num('bail',100), fv&&fv.length===3&&fv.every(isFinite)?fv:null]; }
+    if (m==='link') S.l=[g('auto')==='0'?0:1, g('path')==='edge'?'edge':'circle'];
+    if (m==='orbit' && has('o')){ const o=nums('o'); if (o.length===2 && o.every(isFinite)) S.o=[o[0],o[1],g('oauto')==='0'?0:1]; } }
+  else if (m==='grow'){ S.g=[GROW[g('g')]?g('g'):'koch', num('gen',0), g('play')==='0'?0:1, g('gzoom')==='1'?1:0, num('pyth',45), num('tree',28)]; }
+  else { const old=!has('v'), s3n=({box4:'box',apo4:'apo'})[g('s3')]||g('s3'), sh=S3[s3n]?s3n:'bulb', D=st.d3, cam=nums('cam'), tg=has('tgt')?nums('tgt'):null, kn=has('knife')?nums('knife'):[0,0,0];
+    const ok=a=>a&&a.every(isFinite);
+    S.d=[sh, num('pow3',8), num('box',-1.8), num('w',0), num('lvl',5), num('twist',!has('v')&&(sh==='kifs'||sh==='kifs4')?20:0), ok(cam)&&cam.length===3?cam[0]:0.7, ok(cam)&&cam.length===3?cam[1]:0.32, ok(cam)&&cam.length===3?cam[2]:0,
+      ok(tg)&&tg.length===3?tg:0, num('turn',old?0.25:0), g('breathe')==='1'?1:0, old?(g('sweep')==='0'||!S3[sh].four?0:1):(g('sweep')==='1'?1:0), old?(g('twanim')==='0'||!(sh==='kifs'||sh==='kifs4')?0:1):(g('twanim')==='1'?1:0), g('drag')==='move'?'move':'turn', ok(kn)?kn[0]:0, ok(kn)?kn[1]:0, ok(kn)?kn[2]:0, g('spin4')==='1'?1:0, Math.max(0,Math.round(num('nl',0))), ...(()=>{ const t=has('turn3d')?nums('turn3d'):[0,0,0]; return ok(t)&&t.length===3?t:[0,0,0]; })(), g('spin3')==='1'?1:0, g('cut')==='1'?1:0, g('bbreathe')==='1'?1:0];
+    if (!(S.d[8]>0)) S.d[8]=null; }
+  return S; }
+// a pasted link, a #code, or an old f3-/f4- code
+function readView(text){ let h=String(text||'').trim(); const i=h.indexOf('#'); if (i>=0) h=h.slice(i+1); if (!h) return null;
+  if (h.startsWith('f3-')||h.startsWith('f4-')) return decodeState(h);
+  return parseView(h); }
+function applyView(S){ if (!S) return false; applyState(S); if (S.it===0) setCheck('iterAuto',1);
+  if (S.d && S.d[8]==null){ st.d3.dist=d3Bound()*3.4; touch(); } return true; }
 let lastHash='', hashT=0;
-function writeHash(force){ if (!force && ptrs.size) return; const h=encodeState(); if (h===lastHash) return; lastHash=h;
-  try { if (location.hash.slice(1)!==h) location.replace('#'+h); } catch(e){} }
-window.addEventListener('hashchange', ()=>{ const h=location.hash.slice(1); if (h && h!==lastHash){ const S=decodeState(h); if (S){ lastHash=h; applyState(S); } } });
-$('copyLink').addEventListener('click', async ()=>{ writeHash(true); const url=location.href, box=$('linkBox'); box.hidden=false; box.value=url; box.select();
-  try { await navigator.clipboard.writeText(url); $('linkNote').textContent = 'Link copied.' + (inClaude ? ' Inside Claude, the page\'s own address (and Share → Copy link) also carries this view.' : ''); }
-  catch(e){ $('linkNote').textContent='Your browser blocked copying here, so the link is selected in the box above: copy it from there.'; } });
+const linkFor=c=> inClaude ? c : location.href.split('#')[0]+'#'+c;
+function writeHash(force){ if (!force && ptrs.size) return; const c=viewCode(); if (c===lastHash && !force) return; lastHash=c;
+  if (document.activeElement!==$('linkBox')) $('linkBox').value=linkFor(c);
+  if (!inClaude) try { if (location.hash.slice(1)!==c) history.replaceState(null,'','#'+c); } catch(e){} }
+window.addEventListener('hashchange', ()=>{ const h=location.hash.slice(1); if (h && h!==lastHash){ const S=readView(h); if (S){ lastHash=h; applyView(S); } } });
+if (inClaude) $('linkNote').textContent='This view code records the fractal, mode, place and zoom (to the last digit), colours and settings. Inside Claude, paste it into "Load a view" to return to this exact picture; in a saved copy of the page it also works after # at the end of the address.';
+$('copyLink').addEventListener('click', async ()=>{ writeHash(true); const box=$('linkBox'); box.select(); let ok=false;
+  try { await navigator.clipboard.writeText(box.value); ok=true; } catch(e){ try { ok=document.execCommand('copy'); } catch(e2){} }
+  $('shareNote').textContent = ok ? (inClaude ? 'Copied. Paste it into "Load a view" to come back to this exact picture.' : 'Copied. Anyone opening this link sees this exact picture.') : 'Select the text above and copy it.'; });
+function loadFromBox(){ const S=readView($('viewIn').value); if (!S){ $('shareNote').textContent='That doesn\'t look like a view link or code.'; return; }
+  applyView(S); lastHash=''; writeHash(true); $('shareNote').textContent='View loaded.'; }
+$('loadView').addEventListener('click', loadFromBox);
+$('viewIn').addEventListener('keydown', e=>{ if (e.key==='Enter'){ e.preventDefault(); loadFromBox(); } });
 
 // ---------- music: a file (or the microphone) analysed live, gently driving the picture ----------
 const aud={ctx:null, an:null, data:null, dest:null, el:null, src:null, mic:null, playing:false, react:true, amt:1, level:0, bass:0, mid:0, treb:0, bassAvg:0, pulse:0};
@@ -2019,6 +2440,9 @@ glc.addEventListener('dblclick', e=>{ if (st.mode==='explore' || st.mode==='orbi
 // ---------- loop ----------
 let tPrev=performance.now(), frameN=0, hqShown=false, dtAvg=16, lastStill=0;
 function advance3D(dt){ const D=st.d3; let moving=ptrs.size>0;
+  if (D.shape==='nest' && D.target && !D.aim && !D.warp && nestStraight()){ let g=0;
+    while (D.dist<0.4 && Math.hypot(...D.target)<1.2 && g++<8) nestIn();
+    while (D.dist>1.0 && (D.nestM||0)>0 && g++<16) nestOut(); }
   if (!ptrs.size && Math.abs(vel3.x)+Math.abs(vel3.y)>0.05){ D.yaw-=vel3.x*0.008; D.pitch=clamp(D.pitch+vel3.y*0.008,-1.45,1.45); vel3.x*=0.9; vel3.y*=0.9; moving=true; }
   if (D.turn>0 && !D.target){ D.yaw+=dt*0.3*D.turn*audSpeed(); moving=true; }
   if (D.aim){ const A=D.aim; A.t+=dt/0.8; const u=clamp(A.t,0,1), e=smooth(u); moving=true;
@@ -2032,13 +2456,16 @@ function advance3D(dt){ const D=st.d3; let moving=ptrs.size>0;
     D.dist=Math.exp(lerp(W.ls0,W.ls1,e)); D.target=[0,1,2].map(i=>lerp(W.T0[i],0,smooth(clamp((u-0.4)/0.6,0,1)))); D.yaw=lerp(W.y0,W.y1,e); D.pitch=lerp(W.p0,W.p1,e);
     if (u>=1){ D.warp=null; D.target=null; D.trip=(D.trip||1)+1; let ok=false;
       for (let k=0;k<8 && !ok;k++){ ok=retarget3(); if (!ok){ D.yaw+=0.7; D.pitch=clamp(D.pitch+0.25*(Math.random()-0.5),-0.6,0.9); } }
-      if (ok){ D.dive=true; D.extra=d3Extra(); } else { D.target=null; D.dive=false; } dive3UI(); } }
+      if (D.shape==='nest'){ D.target=[0,0,0]; nestDive(); } else if (ok){ D.dive=true; D.extra=d3Extra(); } else { D.target=null; D.dive=false; } dive3UI(); } }
   if (D.breathe && D.shape==='bulb'){ D.t+=dt; D.power=13+11*Math.sin(D.t*0.22); $('pw3').value=D.power; $('pw3o').textContent=D.power.toFixed(1); moving=true; }
-  if (D.twAnim && D.shape==='kifs'){ D.twT+=dt; D.twist=22+20*Math.sin(D.twT*0.25); $('tw3').value=D.twist; $('tw3o').textContent=D.twist.toFixed(1)+'°'; moving=true; }
-  if (D.sweep && D.shape==='qj'){ D.wt+=dt; D.w=0.85*Math.sin(D.wt*0.45); $('w3').value=Math.round(D.w/0.9*100); $('w3o').textContent=D.w.toFixed(2); moving=true; }
+  if (D.bsBreathe && D.shape==='box'){ D.bsT+=dt; D.boxS=-2+0.6*Math.sin(D.bsT*0.3); $('bs3').value=D.boxS; $('bs3o').textContent=minus(D.boxS.toFixed(2)); moving=true; }
+  if (D.spin3){ const wrap=a=>((a+180)%360+360)%360-180; D.rxy=wrap(D.rxy+dt*9); D.rxz=wrap(D.rxz+dt*13); D.ryz=wrap(D.ryz+dt*6); if (frameN%3===0) syncT3(); moving=true; }
+  if (D.twAnim){ D.twT+=dt; D.twist=twAmp()*(1+Math.sin(D.twT*0.25)); $('tw3').value=D.twist; $('tw3o').textContent=D.twist.toFixed(1)+'°'; moving=true; }
+  if (D.sweep){ D.wt+=dt; D.w=0.94*Math.sin(D.wt*0.45); syncW(); moving=true; }
+  if (D.spin4){ D.spT+=dt; const wrap=a=>((a+180)%360+360)%360-180; D.axw=wrap(D.axw+dt*11); D.ayw=wrap(D.ayw+dt*7); D.azw=wrap(D.azw+dt*4.5); if (frameN%3===0) syncR4(); moving=true; }
   return moving; }
 function loop(now){
-  const dt=Math.min(0.12,(now-tPrev)/1000); tPrev=now;
+  const dt=clamp((now-tPrev)/1000,0,0.12); tPrev=now;   // the first frame's timestamp can be slightly earlier than start-up
   let anim=false;
   if (audStep(dt) && st.mode!=='grow') anim=true;
   if (st.cycleSpeed>0){ st.cycle=(st.cycle+dt*st.cycleSpeed*0.06)%1; anim=true; if (frameN%10===0) refreshLegend(); }
@@ -2111,7 +2538,7 @@ document.addEventListener('keydown', e=>{
   switch (k){
     case ' ': if (st.mode==='grow') $('growPlay').click(); else if (st.mode==='orbit') $('orbPlay').click(); else if (st.mode==='explore') $('diveBtn').click(); else if (st.mode==='link') { $('linkAuto').click(); } else if (st.mode==='d3'){ const el=$('turn3'); el.value = +el.value>0 ? 0 : 0.25; el.dispatchEvent(new Event('input')); } if (document.activeElement && document.activeElement!==document.body) document.activeElement.blur(); break;
     case '1': case '2': case '3': case '4': case '5': setMode(['explore','grow','link','orbit','d3'][+k-1]); break;
-    case 'ArrowRight': case 'ArrowLeft': clickNext(st.mode==='grow'?'#growShapes button':st.mode==='d3'?'#shapes3 button':'#types button', k==='ArrowRight'?1:-1); break;
+    case 'ArrowRight': case 'ArrowLeft': clickNext(st.mode==='grow'?'#growShapes button':st.mode==='d3'?'.sh3 button':'#types button', k==='ArrowRight'?1:-1); break;
     case '+': case '=': zoomBy(0.8, cssW/2, cssH/2); break;
     case '-': case '_': zoomBy(1.25, cssW/2, cssH/2); break;
     case 'd': case 'D': if (st.mode==='explore') $('diveBtn').click(); else if (st.mode==='d3') $('dive3Btn').click(); else used=false; break;
@@ -2138,8 +2565,8 @@ document.addEventListener('keydown', e=>{
 new ResizeObserver(()=>touch()).observe(glc.parentElement);
 
 sizeBuffers(); resetViews(); buildPlaces(); typeChanged(); d3Rows(); setMode('explore');
-{ const h=location.hash.slice(1), S=h?decodeState(h):null; if (S){ lastHash=h; applyState(S); } }
-window.__fx={st, aud, render2DAll, refSlots, gl, encodeState, decodeState, applyState, getState, setMode, flyTo, newOrbit, touch, auxRender, get target(){ const sx="-0.743643887037158704752191506114774", sy="0.131825904205311970493132056385139", x=ddFrom(sx), y=ddFrom(sy); return {cx:x[0],lx:x[1],cy:y[0],ly:y[1],bx:strToFix(sx),by:strToFix(sy)}; }, strToFix, fixToNum, moveCentre};
+{ const h=location.hash.slice(1), S=h?readView(h):null; if (S){ lastHash=h; applyView(S); } writeHash(true); }
+window.__fx={st, aud, render3D, nestIn, nestOut, nestReset, render2DAll, refSlots, gl, encodeState, decodeState, applyState, getState, viewCode, readView, applyView, parseView, setMode, flyTo, newOrbit, touch, auxRender, get target(){ const sx="-0.743643887037158704752191506114774", sy="0.131825904205311970493132056385139", x=ddFrom(sx), y=ddFrom(sy); return {cx:x[0],lx:x[1],cy:y[0],ly:y[1],bx:strToFix(sx),by:strToFix(sy)}; }, strToFix, fixToNum, moveCentre};
 requestAnimationFrame(loop);
 })();
 </script>
