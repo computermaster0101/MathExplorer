@@ -66,7 +66,10 @@ export const shapeBtns=[...document.querySelectorAll('.shapes button')];
 shapeBtns.forEach(b=>b.addEventListener('click', ()=>{ st.shape=b.dataset.s; shapeBtns.forEach(x=>x.classList.toggle('on', x===b));
   $('duo').hidden = st.shape!=='d'; $('morphRow').hidden = st.shape!=='morph'; syncRoundRow(); syncHdRow(); shapeChanged(); }));
 function syncRoundRow(){ const sh=SHAPES[st.shape]; $('roundRow').hidden=!sh.round; if (!sh.round) return; $('rdet').value=sh.detail||3; $('rdeto').textContent=sh.detail||3;
-  $('rdetNote').textContent = (st.shape==='hopf' ? `${sh.nRings} rings of circles, ${sh.fiberInfo.length} circles in all` : `${sh.verts.length.toLocaleString()} mesh points, ${sh.edges.length.toLocaleString()} lines`)+'. More detail draws more of the surface.'; }
+  $('packView').hidden=!sh.packing; $('packView').querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.pv===st.packView));
+  $('rdetNote').textContent = sh.packing ? `${sh.gens} round${sh.gens===1?'':'s'} of filling: ${sh.verts.length.toLocaleString()} balls touching at ${sh.edges.length.toLocaleString()} points. Always shown in stereographic projection, the only one that keeps balls round.`
+    : (st.shape==='hopf' ? `${sh.nRings} rings of circles, ${sh.fiberInfo.length} circles in all` : `${sh.verts.length.toLocaleString()} mesh points, ${sh.edges.length.toLocaleString()} lines`)+'. More detail draws more of the surface.'; }
+$('packView').addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return; st.packView=b.dataset.pv; syncRoundRow(); shapeChanged(true); });
 $('rdet').addEventListener('input', e=>{ const sh=SHAPES[st.shape]; if (!sh.round || !sh.remake) return; sh.remake(+e.target.value); syncRoundRow(); shapeChanged(true); });
 $('knifeDir').querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ if (b.dataset.k!==shared.knifeDir) shared.knifeAnim={from:knifeNow||I4, t:0}; shared.knifeDir=b.dataset.k; setSeg($('knifeDir'), b); $('knifeNote').textContent=KNIFE_NOTES[shared.knifeDir]+KNIFE_TURN;
   if (shared.knifeDir!=='free' && st.spin && $('sliceSpin').checked) $('sliceSpin').click();

@@ -7,7 +7,7 @@ import { glc, isLight } from '../render/webgl.js';
 import { deepT, effIter, extT, minScale } from '../view.js';
 import { notAvail, showNA } from './notice.js';
 import { bud, budLimit } from '../modes/buddhabrot.js';
-import { S3, d3Extra, d3Iter, d3Mag, d3MinDist, dive3Msg, f3Ready, is4, tap3Miss, wAct } from '../modes/fractal3d.js';
+import { S3, d3Extra, d3Iter, d3Mag, d3MinDist, dive3Msg, f3Ready, is4, soddyMin, tap3Miss, wAct } from '../modes/fractal3d.js';
 import { GROW, growStage, pctTxt, pow } from '../modes/grow.js';
 import { orbitIdx } from '../modes/orbit.js';
 import { boundedTest } from '../modes/julia-link.js';
@@ -126,6 +126,7 @@ export function updateDynamic(){
     else if (D.shape==='apo') setStats(d3Iter()+'','levels', '1.2','inversion', S.dim,'dimension');
     else if (D.shape==='kifs') setStats(D.twist.toFixed(1)+'°','twist', d3Iter()+'','folds', '—','dimension');
     else if (D.shape==='nest') setStats(String(D.nestM||0),'layers in', '½ · 45°','each layer', '2','dimension');
+    else if (D.shape==='soddy') setStats(pctTxt(soddyMin(d3Iter())),'smallest ball', '5','first balls', S.dim,'dimension');
     else if (D.shape==='klein') setStats(d3Iter()+'','levels', fmtN(7*pow(6,d3Iter())),'pearls', 'dust','dimension');
     else if (D.shape==='pk') setStats(d3Iter()+'','folds', 'box + ball','each fold', '—','dimension');
     else if (D.shape==='flake') setStats(d3Iter()+'','levels', fmtN((pow(9,d3Iter()+1)-1)/8),'spheres', '2','dimension');
@@ -149,6 +150,7 @@ export function updateDynamic(){
       : D.shape==='menger4' ? kn+`${d3Iter()} level${d3Iter()===1?'':'s'}: ${fmtN(pow(48,d3Iter()))} tesseracts. ${Math.abs(wAct())<0.33&&!tilt?'The knife is in the middle third along W, so any second middle coordinate is cut away: a frame of bars.':'Outside the middle third along W, the slice is a 3D Menger sponge.'}`
       : D.shape==='kifs4' ? kn+`Twist ${D.twist.toFixed(1)}°. Fold with four mirrors, twist in XY and ZW, scale ×2, repeat ${d3Iter()} times.`
       : D.shape==='nest' ? '<b>Spheres inside spheres.</b> Each hollow sphere has six round windows and a copy half its size inside, turned 45°. The windows on top line up all the way down. Press Dive in to fly through them forever.'
+      : D.shape==='soddy' ? `<b>Every ball down to ${pctTxt(soddyMin(d3Iter()))} of the outer ball\'s size.</b> Five balls that all touch, and every gap filled with the biggest ball that fits, again and again. Each ball is an inside-out copy of one of the first five. Raise Detail for smaller balls, or dive in: they never run out.`
       : D.shape==='klein' ? `<b>${d3Iter()} levels of inversion.</b> Seven spheres each turn space inside out, so each one fills with shrunken copies of the others, and those with smaller copies again. That makes ${fmtN(7*pow(6,d3Iter()))} pearls. Raise Detail, or dive, to see deeper ones.`
       : D.shape==='pk' ? `<b>${d3Iter()} folds.</b> Fold into a box, invert through a ball, repeat. The real shape goes on forever; this is a round chunk of it. Dive in to fly through the halls.`
       : D.shape==='flake' ? `<b>${d3Iter()} levels: ${fmtN((pow(9,d3Iter()+1)-1)/8)} spheres.</b> Every sphere grows nine a third its size, six round its middle and three on top. It never gets bigger than twice the first sphere.`

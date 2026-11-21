@@ -324,6 +324,34 @@ float deKlein(vec3 p, out float trap){ float ds=1.0, w=1.0; trap=0.0; int last=-
       trap=fract(trap); return m/ds; }
     vec3 v=p-KC[hit]; float f=KR[hit]*KR[hit]/max(dot(v,v),1e-30); p=KC[hit]+v*f; ds*=f; last=hit; trap+=(float(hit)+0.5)/7.0*w; w*=0.45; }
   float m=1e9; for (int i=0;i<7;i++) if (i!=last) m=min(m, length(p-KC[i])-KR[i]); trap=fract(trap); return m/ds; }   // the pearls at the deepest level
+// Apollonian sphere packing: five balls that all touch (the outer sphere and four inside it), every gap filled with the
+// biggest ball that fits, forever. A point is flipped (inverted) through five partner spheres, each crossing four of the five
+// at right angles, until it lands beside one of the five. Each sphere is also kept as five numbers (co-curvature, curvature,
+// curvature × centre); a flip through sphere d changes them linearly, x -> x - 2<x,d> d. So the chain of flips (M, five rows)
+// gives every nearby ball's real centre and size exactly: balls smaller than rmin are left out whole, distances are exact
+// (no seams between flips), and the outer sphere drops out by itself (its curvature is negative until a flip turns it into a ball).
+const float SDA=0.317837245;
+const vec4 SBA[6]=vec4[6](vec4(0.22474487,2.22474487,0.7071067804,0.7071067804),vec4(0.22474487,2.22474487,0.7071067804,-0.7071067804),vec4(0.22474487,2.22474487,-0.7071067804,0.7071067804),vec4(0.22474487,2.22474487,-0.7071067804,-0.7071067804),vec4(-0.1010205143,9.898979498,0.0,0.0),vec4(1.0,-1.0,0.0,0.0));
+const float SBE[6]=float[6](0.7071067804,-0.7071067804,-0.7071067804,0.7071067804,0.0,0.0);
+const vec4 SDDA[5]=vec4[5](vec4(-0.317837245,3.146264372,0.0,0.0),vec4(0.3535533906,0.3535533906,-0.6123724357,-0.6123724357),vec4(0.3535533906,0.3535533906,-0.6123724357,0.6123724357),vec4(0.3535533906,0.3535533906,0.6123724357,-0.6123724357),vec4(0.3535533906,0.3535533906,0.6123724357,0.6123724357));
+const float SDDE[5]=float[5](0.0,-0.6123724357,0.6123724357,0.6123724357,-0.6123724357);
+const vec4 SDGA[5]=vec4[5](vec4(-1.573132186,0.1589186225,0.0,0.0),vec4(-0.1767766953,-0.1767766953,-0.6123724357,-0.6123724357),vec4(-0.1767766953,-0.1767766953,-0.6123724357,0.6123724357),vec4(-0.1767766953,-0.1767766953,0.6123724357,-0.6123724357),vec4(-0.1767766953,-0.1767766953,0.6123724357,0.6123724357));
+const float SDGE[5]=float[5](0.0,-0.6123724357,0.6123724357,0.6123724357,-0.6123724357);
+const vec3 SDC[5]=vec3[5](vec3(0.0),vec3(-1.732050808),vec3(-1.732050808,1.732050808,1.732050808),vec3(1.732050808,-1.732050808,1.732050808),vec3(1.732050808,1.732050808,-1.732050808));
+float deSoddy(vec3 p, out float trap){ vec3 p0=p; float ds=1.0, best=1e9, rmin=0.025*pow(0.55,float(u_it3-5)); int last=-1; trap=0.0;
+  vec4 Ma[5]; float Me[5]; for (int i=0;i<5;i++){ Ma[i]=vec4(0.0); Me[i]=0.0; } Ma[0].x=1.0; Ma[1].y=1.0; Ma[2].z=1.0; Ma[3].w=1.0; Me[4]=1.0;
+  for (int n=0;n<49;n++){
+    for (int b=0;b<6;b++){ float k=dot(Ma[1],SBA[b])+Me[1]*SBE[b]; if (k<=0.0 || k*rmin>1.0) continue;   // inside out, or too small to draw
+      vec3 c=vec3(dot(Ma[2],SBA[b])+Me[2]*SBE[b], dot(Ma[3],SBA[b])+Me[3]*SBE[b], dot(Ma[4],SBA[b])+Me[4]*SBE[b])/k; float e=length(p0-c)-1.0/k;
+      if (e<best){ best=e; trap=fract(0.3*log2(k)); } }   // colour by size
+    if (best<0.0 || ds*rmin>4.0 || n==48) break;   // inside a ball, or everything deeper is too small to draw
+    int hit=-1; float R2=8.0;
+    if (last!=0 && dot(p,p)<SDA*SDA){ hit=0; R2=SDA*SDA; }
+    else for (int i=1;i<5;i++){ if (i==last) continue; vec3 v=p-SDC[i]; if (dot(v,v)<8.0){ hit=i; break; } }
+    if (hit<0) break;
+    vec3 v=p-SDC[hit]; float f=R2/max(dot(v,v),1e-30); p=SDC[hit]+v*f; ds*=f; last=hit;
+    for (int i=0;i<5;i++){ float s=2.0*(dot(Ma[i],SDDA[hit])+Me[i]*SDDE[hit]); Ma[i]-=s*SDGA[hit]; Me[i]-=s*SDGE[hit]; } }
+  return max(best, length(p0)-1.0); }
 // pseudo-Kleinian (Knighty, 2011): fold into a box, invert through a ball, repeat; a round chunk of its endless halls
 float dePK(vec3 p, out float trap){ const vec3 CS=vec3(0.92436,0.90756,0.92436); vec3 q=p*1.6; float df=1.0, mr=1e9;
   for (int i=0;i<20;i++){ if (i>=u_it3) break; q=2.0*clamp(q,-CS,CS)-q; float r2=dot(q,q); mr=min(mr,r2); float k=max(1.0/max(r2,1e-12),1.0); q*=k; df*=k; }
@@ -356,7 +384,7 @@ float deMosely(vec3 p, out float trap){ const float T=0.33333333; float sc=1.0, 
   return min(d, sdBox(p,vec3(1.0))/sc); }
 float mapRaw(vec3 p, out float tr){ if (u_s3==0) return deBulb(p,tr); if (u_s3==1) return deBox(p,tr); if (u_s3==2) return deMenger(p,tr); if (u_s3==3) return deTet(p,tr); if (u_s3==4) return deQJ(p,tr); if (u_s3==5) return deApo(p,tr); if (u_s3==6) return deKIFS(p,tr);
   if (u_s3==7) return deMJ(p,tr); if (u_s3==8) return deTetra(p,tr); if (u_s3==9) return deSier5(p,tr); if (u_s3==10) return deMenger4(p,tr); if (u_s3==11) return deKIFS4(p,tr);
-  if (u_s3==12) return deNest(p,tr); if (u_s3==13) return deKlein(p,tr); if (u_s3==14) return dePK(p,tr); if (u_s3==15) return deFlake(p,tr); if (u_s3==16) return deJcube(p,tr); return deMosely(p,tr); }
+  if (u_s3==12) return deNest(p,tr); if (u_s3==13) return deKlein(p,tr); if (u_s3==14) return dePK(p,tr); if (u_s3==15) return deFlake(p,tr); if (u_s3==16) return deJcube(p,tr); if (u_s3==18) return deSoddy(p,tr); return deMosely(p,tr); }
 // the same controls for every shape: turn it, twist it round its vertical axis, and (3D shapes) cut it with a flat knife
 float map(vec3 p, out float tr){ vec3 q=u_rot3*p; bool tw=u_tw!=0.0;
   float d=mapRaw(tw ? rotYv(q,u_tw*q.y) : q, tr)*(tw ? u_twS : 1.0);   // one call: a twist stretches distances, so steps shrink to stay safe
@@ -377,7 +405,7 @@ void main(){
   float pixA=1.0/(u_res.y*u_fov), tr=0.0; bool hit=false;
   float k=(u_s3==1)?0.7:(u_s3==0?(u_power<0.0?0.22:clamp(5.0/u_power,0.3,0.8)):(u_s3==5?0.8:(u_s3==4?0.7:0.92)));
   if (u_s3>=7) k=(u_s3==7||u_s3==8)?0.7:0.9;
-  if (u_s3>=12) k=u_s3==13?0.6:(u_s3==14?0.8:(u_s3==15?0.85:0.9));
+  if (u_s3>=12) k=(u_s3==13||u_s3==18)?0.6:(u_s3==14?0.8:(u_s3==15?0.85:0.9));
   for (int i=0;i<500;i++){ float d=map(ro+rd*t,tr); if (d<pixA*t*0.8){ hit=true; break; } t+=d*k; if (t>tmax) break; }
   if (!hit){ outC=vec4(bgc,1.0); return; }
   vec3 p=ro+rd*t, n=calcN(p,max(pixA*t*0.5,1e-6));

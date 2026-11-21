@@ -94,3 +94,38 @@ Object.assign(INFO, {
   tiger:'A torus whose tube is itself a torus: three circles nested inside each other. It\'s one of four shapes that could be called a 4D doughnut, and it\'s named after its stripes. Slice it and you get two or four separate rings, depending on where the knife falls.',
 });
 for (const k of ['sph4','duocyl','hopf','spherinder','cubinder','tiger']) SHAPES[k].info=INFO[k];
+
+// ---------- Apollonian packing on the 3-sphere ----------
+// Five balls on the 3-sphere (caps), centred on the corners of a 5-cell and just big enough that each touches the other four.
+// Every gap is then filled with the biggest ball that fits, round after round. A ball is kept as five numbers,
+// x = (centre, cos r) / sin r, where r is its angular radius: two balls touch exactly when x·y (with the last term
+// subtracted) is −1. In those numbers the ball that fills the gap left by ball i of five touching balls is simply
+// (the sum of the other four) − x_i. Stereographic projection turns every ball on the 3-sphere into a round ball in 3D, and
+// the one holding the projection point turns inside out into the container round all the others (see render/packing.js).
+function packing(gens){
+  const a=Math.acos(-0.25)/2, sa=Math.sin(a), ca=Math.cos(a), t=Math.sqrt(15)/4/Math.sqrt(3);
+  const C=[[0,0,0,1], ...[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]].map(v=>[v[0]*t, v[1]*t, v[2]*t, -0.25])];   // a 5-cell, one corner at the pole
+  const X=C.map(n=>[...n.map(v=>v/sa), ca/sa]), gen=[0,0,0,0,0], E=[], seenE=new Set(), at=new Map();
+  const key=x=>x.map(v=>Math.round(v*1e6)).join();   // in 3D the same ball can be reached by two routes: keep one copy
+  X.forEach((x,i)=>at.set(key(x),i));
+  const edge=(i,j)=>{ const k=i<j?i+'_'+j:j+'_'+i; if (!seenE.has(k)){ seenE.add(k); E.push([i,j]); } };
+  for (let i=0;i<5;i++) for (let j=i+1;j<5;j++) edge(i,j);
+  const grow=(cfg, skip, g)=>{ for (let i=0;i<5;i++){ if (i===skip) continue;
+    const x=[0,1,2,3,4].map(k=>cfg.reduce((s,b,j)=>j===i ? s : s+X[b][k], 0)-X[cfg[i]][k]), kx=key(x);
+    let id=at.get(kx); if (id===undefined){ id=X.push(x)-1; gen.push(g); at.set(kx,id); }
+    for (let j=0;j<5;j++) if (j!==i) edge(cfg[j], id);
+    if (g<gens){ const nc=cfg.slice(); nc[i]=id; grow(nc, i, g+1); } } };
+  if (gens>0) grow([0,1,2,3,4], -1, 1);
+  const caps=X.map((x,i)=>{ const L=Math.hypot(x[0],x[1],x[2],x[3]); return { n:[x[0]/L,x[1]/L,x[2]/L,x[3]/L], c:x[4]/L, s:1/L, gen:gen[i] }; });
+  return { V:caps.map(q=>q.n), E, caps, gens };
+}
+function makePacking(d){
+  const m=packing(d), sh={ name:'Apollonian packing', alt:'balls in every gap between balls, on the 3-sphere', round:true, packing:true, cells:'—',
+    verts:m.V, edges:m.E, caps:m.caps, gens:m.gens, tk:0.6, ballScale:0.6, detail:d };
+  sh._cells=[]; sh._cellEdges=[]; sh._faces=[]; sh._faceEdges=[];
+  sh.remake=dd=>{ const old=SHAPES.apack; makePacking(dd); Object.assign(SHAPES.apack, {info:old.info}); };
+  SHAPES.apack=sh;
+}
+makePacking(3);
+INFO.apack='Five balls on the 3-sphere, centred on the corners of a 5-cell, each just touching the other four (so the touching points join up exactly like the 5-cell\'s edges). Every gap is then filled with the biggest ball that fits, and the new gaps filled again, forever. Seen through stereographic projection every ball stays perfectly round, and the ball holding the projection point turns inside out into the container round all the others: the classic Apollonian packing, a ball full of balls. Turn it in 4D and a different ball swells to become the container while the old one shrinks inside. In between, where the projection point passes a touching point, the two balls there become flat walls: the slab of Apollonian foam. It\'s the same packing every time, seen from a different point of the 3-sphere.';
+SHAPES.apack.info=INFO.apack;

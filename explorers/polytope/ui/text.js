@@ -23,6 +23,7 @@ const ABOUT = {
 };
 // Which shapes a mode can't show, and why. The shape stays picked so switching back to a mode that can show it just works.
 export function notAvail(m=st.mode, k=st.shape){ const sh=SHAPES[k], nm=sh.name, ML={build:'Build up',slice:'Slice',unfold:'Unfold'}[m];
+  if (sh.packing && m==='slice') return [`Slice isn't available for the ${nm}`, 'Its balls fill the 3-sphere all the way down, so there\'s no surface for the knife to trace. Try it in Explore, where you can turn it inside out, or in Ping.'];
   if (sh.round && m==='build') return [`Build up isn't available for the ${nm}`, 'It\'s a smooth curved surface, not corners joined by edges, so there are no steps to build it from. Try it in Explore, Ping or Slice.'];
   if (sh.round && m==='unfold') return [`Unfold isn't available for the ${nm}`, 'A smooth curved surface has no flat cells to hinge open, so there\'s no net. Try it in Explore, Ping or Slice.'];
   if (sh.compound && (m==='build' || m==='slice' || m==='unfold')) return [`${ML} isn't available for the ${nm}`, 'A compound is several separate shapes passing through each other, with no cells joining them into one solid. Look at it in Explore, or Ping it: the light can\'t jump between the separate shapes. To slice or unfold one part, pick that shape on its own.'];
@@ -40,9 +41,9 @@ export function updateLabels(){
   updateEuler(); if (st.faceFill) updateFaceNote(); $('sym').textContent=symbolFor(SHAPES[st.shape]);
   { const shN=SHAPES[st.shape]; $('gv-shapes').textContent = shN.name + (st.shape==='hcube' ? '' : ''); }
   if (showNA()) return;
-  const sh=SHAPES[st.shape], pj={stereo:'stereographic',persp:'perspective',ortho:'orthographic'}[st.proj];
+  const sh=SHAPES[st.shape], pj=sh.packing ? 'stereographic' : {stereo:'stereographic',persp:'perspective',ortho:'orthographic'}[st.proj];
   if (st.mode==='explore'){ $('title').textContent=sh.name; $('subtitle').textContent=`${sh.alt} · ${pj} projection`;
-    $('about').innerHTML=`<strong>${sh.name}.</strong> ${sh.info||''}`; if (sh.round) setStats(sh.verts.length, sh.edges.length, '—', 'mesh points', 'mesh lines', 'flat cells'); else if (sh.highD) setStats(sh.verts.length.toLocaleString(), sh.edges.length.toLocaleString(), sh.cells.toLocaleString(), 'corners', 'connections', sh.cellWord); else setStats(sh.verts.length, sh.edges.length, sh.cells); }
+    $('about').innerHTML=`<strong>${sh.name}.</strong> ${sh.info||''}`; if (sh.packing) setStats(sh.verts.length.toLocaleString(), sh.edges.length.toLocaleString(), sh.gens, 'balls', 'touching points', 'rounds of filling'); else if (sh.round) setStats(sh.verts.length, sh.edges.length, '—', 'mesh points', 'mesh lines', 'flat cells'); else if (sh.highD) setStats(sh.verts.length.toLocaleString(), sh.edges.length.toLocaleString(), sh.cells.toLocaleString(), 'corners', 'connections', sh.cellWord); else setStats(sh.verts.length, sh.edges.length, sh.cells); }
   else if (st.mode==='ping'){ $('title').textContent=`${sh.name}: ping`; $('subtitle').textContent='a pulse spreading edge by edge';
     $('about').innerHTML=ABOUT.ping+` <br><br><strong>${sh.name}.</strong> ${sh.info||''}`; }
   else if (st.mode==='slice'){ $('title').textContent=`${sh.name}: slice`; $('subtitle').textContent='the 3D cross-section at one value of W';
@@ -109,7 +110,8 @@ export function refreshColours(){
   if (notAvail()){ lg.style.display='none'; return; }
   lg.style.display='flex';
   const hdLegend = SHAPES[st.shape].highD && (st.mode==='build' || (st.cmode==='dir' && st.mode!=='ping' && st.mode!=='unfold'));
-  if (hdLegend){ const n=SHAPES[st.shape].n; bar.style.background=`linear-gradient(90deg,${[...Array(n)].map((_,k)=>`${css(axisHue(k,n))} ${k*100/n}% ${(k+1)*100/n}%`).join(',')})`; L.textContent='direction 1'; Rr.textContent=`… ${n}`; }
+  if (SHAPES[st.shape].packing && st.packView==='balls' && st.mode==='explore'){ bar.style.background=`linear-gradient(90deg,${shared.RAMP.map(css).join(',')})`; L.textContent='first five balls'; Rr.textContent='last round'; }
+  else if (hdLegend){ const n=SHAPES[st.shape].n; bar.style.background=`linear-gradient(90deg,${[...Array(n)].map((_,k)=>`${css(axisHue(k,n))} ${k*100/n}% ${(k+1)*100/n}%`).join(',')})`; L.textContent='direction 1'; Rr.textContent=`… ${n}`; }
   else if (st.mode==='build' && getBuild().kind!=='parts'){ bar.style.background=`linear-gradient(90deg,${AXISCOL.map((c,i)=>`${css(c)} ${i*25}% ${(i+1)*25}%`).join(',')})`; L.textContent='step 1'; Rr.textContent='2 · 3 · 4'; }
   else if (st.mode==='build' || st.mode==='unfold' || st.mode==='ping'){ bar.style.background=`linear-gradient(90deg,${shared.RAMP.map(css).join(',')})`; L.textContent=st.mode==='unfold'?'centre cell':st.mode==='ping'?'start':'first cell'; Rr.textContent=st.mode==='ping'?'farthest':'last'; }
   else if (st.cmode==='w' || st.cmode==='body'){ bar.style.background=`linear-gradient(90deg,${shared.RAMP.map(css).join(',')})`; L.textContent=st.cmode==='body'?'painted W −':'W −'; Rr.textContent='W +'; }

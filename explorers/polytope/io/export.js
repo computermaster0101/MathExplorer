@@ -35,6 +35,8 @@ const exportFrame = () => st.mode==='slice' ? sliceFrame : lastFrame;
 export function updatePrintNote(){
   const fr=exportFrame(); const pn=$('printnote');
   if (notAvail()){ pn.textContent=`Nothing to print: this mode isn't available for the ${SHAPES[st.shape].name}.`; pn.className='note'; return; }
+  if (fr && fr.packing){ const ex=extents(fr); if (!(ex.span>0)) return; const r=Math.min(...fr.balls.map(b=>b.r))*2*st.mm/ex.span;
+    pn.textContent=`Smallest ball: ${r.toFixed(1)} mm across. Each ball is printed 4% bigger so the touching ones fuse into one piece; the glass container is left out.`+(r<1.5?' Some balls are very small: print bigger, or use less detail.':''); pn.className='note'+(r<1.5?' warn':''); return; }
   if (!fr || !fr.tubes.length){ pn.textContent = st.mode==='slice' ? 'Move the knife into the shape to get something to print.' : (mainLines.vis ? 'Too many connections to print as tubes. Pick 10D or fewer to export an STL.' : 'Thinnest tube: –'); pn.className='note'; return; }
   const ex=extents(fr); if (!(ex.span>0)) return;
   const dia=2*ex.minR*st.mm/ex.span;
@@ -63,12 +65,13 @@ if (window.claude && typeof window.claude.use==='function'){
     .catch(()=>{ dlNote.textContent='Downloads aren\'t available in this view.'; });
 } else dlReady(localSave);
 exportBtn.addEventListener('click', async ()=>{ if (notAvail()) return;
-  const fr=exportFrame(); if (!downloads || !fr || !fr.tubes.length) return;
+  let fr=exportFrame(); if (!downloads || !fr || !(fr.tubes.length || (fr.packing && fr.balls.length))) return;
+  if (fr.packing) fr={tubes:[], balls:fr.balls.map(b=>({...b, r:b.r*1.04}))};   // balls that only touch at a point would fall apart: overlap them a little
   exportBtn.disabled=true; const label=exportBtn.textContent; exportBtn.textContent='Building…';
   await new Promise(r=>setTimeout(r,30));
   try {
     const ex=extents(fr), s=st.mm/ex.span, nm=SHAPES[st.shape].name.toLowerCase().replace(/\W+/g,'');
-    const base = st.mode==='unfold' ? `${nm}_net_${st.unf.f>0?'2d_'+Math.round(st.unf.f*100):'3d_'+Math.round(st.unf.u*100)}pct_${st.mm}mm` : st.mode==='slice' ? `${nm}_slice_${st.mm}mm` : `${nm}_${st.proj}_${st.mm}mm`;
+    const base = !fr.tubes.length ? `${nm}_balls_${st.mm}mm` : st.mode==='unfold' ? `${nm}_net_${st.unf.f>0?'2d_'+Math.round(st.unf.f*100):'3d_'+Math.round(st.unf.u*100)}pct_${st.mm}mm` : st.mode==='slice' ? `${nm}_slice_${st.mm}mm` : `${nm}_${st.proj}_${st.mm}mm`;
     const stl=makeSTL(exportTriangles(fr), ex.lo, s);   // Claude's downloads won't take .stl directly, so it goes in a zip there; a plain browser saves the .stl itself
     if (downloads.local){ await downloads.save({ filename: base+'.stl', data: stl }); dlNote.textContent='Saved '+base+'.stl.'; }
     else { await downloads.save({ filename: base+'.zip', data: zipStore(base+'.stl', stl) }); dlNote.textContent='Saved. Unzip to get the STL.'; }

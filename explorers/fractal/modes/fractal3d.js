@@ -20,8 +20,8 @@ export const S3 = {
   qj:{ name:'Quaternion Julia set', alt:'a 4D Julia set, seen one 3D slice at a time', bound:1.6, dim:'4D object, 3D slice', four:true, wR:0.9, rg:[0.47,1.12],
     info:'Quaternions are 4-part numbers (1, i, j, k) that do multiply properly, so z → z² + c works in 4D. The full Julia set lives in 4D, so we see a 3D slice of it at one value of W, just like the knife in the polytope explorer\'s Slice mode. Sweep the knife and watch the slice swell, split and merge.' },
 };
-S3.apo={ name:'Apollonian spheres', alt:'a sphere in every gap: a round slab of endless foam', bound:1.5, dim:'≈ 2.47',
-  info:'The 3D Apollonian gasket: spheres packed so that every gap between touching spheres holds the biggest sphere that fits, forever. It\'s drawn by folding space into a repeating box and turning it inside out through a sphere, over and over (Inigo Quilez\'s method), and cutting a round slab out of the endless foam. Dive into the rim: the bubbles never stop.' };
+S3.apo={ name:'Apollonian foam', alt:'a sphere in every gap: a round slab of endless foam', bound:1.5, dim:'≈ 2.47',
+  info:'A foam of bubbles in the spirit of the 3D Apollonian gasket, where every gap between touching spheres holds the biggest sphere that fits, forever (Apollonian packing shows the true gasket, in a ball). It\'s drawn by folding space into a repeating box and turning it inside out through a sphere, over and over (Inigo Quilez\'s method), and cutting a round slab out of the endless foam. Dive into the rim: the bubbles never stop.' };
 S3.kifs={ name:'Kaleidoscopic IFS', alt:'fold space like a kaleidoscope, twist, scale, repeat', bound:2.1, dim:'—',
   info:'Knighty\'s kaleidoscopic iterated function systems (2010): fold space into a single wedge with mirrors, the way a kaleidoscope does, turn it a little, scale it up and shift it, and repeat. With no twist the half-size copies fit together exactly and fill a plain solid cube; any twist turns them apart and grows crystal spires and cathedral tracery. Keep twisting to watch it morph.' };
 Object.assign(S3, {
@@ -47,10 +47,12 @@ Object.assign(S3, {
     info:'Eric Haines, 1987, made as a test scene for ray tracers. Every sphere sprouts nine spheres a third its size: six around its middle and three on top, leaving the side facing its parent clear. Each new sphere does the same. The whole thing never grows past twice the first sphere\'s size, and with nine copies at a third the size its dimension is exactly 2.' },
   jcube:{ name:'Jerusalem cube', alt:'a cube carved by cross-shaped tunnels, made of smaller Jerusalem cubes', bound:1.75, dim:'≈ 2.529', rg:[0,1],
     info:'Eric Baird, 2011. Keep eight corner cubes, each √2 − 1 ≈ 0.414 times the size, and twelve smaller cubes along the edges, each (√2 − 1)² ≈ 0.172 times the size, and each piece is a Jerusalem cube again. The gaps between them form cross-shaped tunnels through every face. Using √2 − 1 makes the corner and edge cubes fit edge to edge exactly.' },
+  soddy:{ name:'Apollonian packing', alt:'a ball filled with balls: every gap holds the biggest ball that fits, forever', bound:1.02, dim:'≈ 2.47', rg:[0,1],
+    info:'Start with five balls that all touch each other: one big outer ball and four inside it. Fill every gap with the biggest ball that fits, then fill the new gaps, forever. The sizes follow a rule found by Frederick Soddy in 1936 (and Thorold Gosset): for any five balls that all touch, the sum of their curvatures squared, times three, equals the square of their sum (curvature is one over the radius). The balls end up filling the whole ball, leaving only a dust of points between them, so here each one is drawn a little smaller to keep them apart. It\'s the ball-shaped cousin of Apollonian foam: blow the outer ball up until it\'s infinitely big and from inside it looks like two flat walls, which gives the foam\'s slab.' },
   mosely:{ name:'Mosely snowflake', alt:'cut a cube into 27, keep 18: drop the 8 corners and the middle', bound:1.75, dim:'log 18 ÷ log 3 ≈ 2.631', rg:[0,1],
     info:'Jeannine Mosely, 2006, who also built a Menger sponge out of 66,048 business cards. Like the Menger sponge, cut a cube into 27 and keep some: here the 12 edge cubes and 6 face cubes, dropping the 8 corners and the centre. Repeat in each of the 18. The Menger sponge does the opposite (it keeps the corners and drops the face middles), so here the faces stay solid in the middle while the corners erode, and from along a diagonal the outline looks like a snowflake. Keeping 18 instead of 20 also makes its dimension a little lower: log 18 ÷ log 3 ≈ 2.631, against the sponge\'s 2.727.' },
 });
-export const QC=[-0.2,0.6,0.2,0.2], SH3=['bulb','box','menger','tet','qj','apo','kifs','mj','tetra','sier5','menger4','kifs4','nest','klein','pk','flake','jcube','mosely'];
+export const QC=[-0.2,0.6,0.2,0.2], SH3=['bulb','box','menger','tet','qj','apo','kifs','mj','tetra','sier5','menger4','kifs4','nest','klein','pk','flake','jcube','mosely','soddy'];
 // nested spheres: how many layers we've swapped in (each one: ×2 bigger, turned 45° back), and up to 3 outer layers kept in view
 // While a 3D print is built (over many frames) the shape's distance functions read a frozen copy of the settings, so a
 // Breathe or Keep twisting going on meanwhile can't change the shape halfway through. Everything else reads st.d3.
@@ -109,8 +111,8 @@ function de4(q, sh, it){ const D=D3(), [x,y,z,w]=q;
   for (let i=0;i<it;i++){ dz=qm(Z,dz).map(v=>2*v); Z=qm(Z,Z).map((v,k)=>v+QC[k]); m=Z.reduce((sm,v)=>sm+v*v,0); if (m>16) break; }
   return 0.25*Math.log(Math.max(m,1e-12))*Math.sqrt(m)/Math.hypot(...dz); }
 export function d3Extra(){ const D=D3(); if (D.shape==='nest') return 0; return D.target ? Math.max(0, Math.floor(Math.log2(d3Bound()*3.4/D.dist)*0.7)) : 0; }
-export function d3Iter(x=d3Extra()){ const l=D3().lvl, s=D3().shape; return Math.min({bulb:16,box:20,menger:12,tet:20,qj:16,apo:20,kifs:20,mj:48,tetra:48,sier5:12,menger4:7,kifs4:20,nest:1,klein:24,pk:20,flake:10,jcube:12,mosely:10}[s],
-  {bulb:3+l, box:7+l, menger:Math.min(l,6), tet:4+l, qj:4+l, apo:3+l, kifs:6+l, mj:10+3*l, tetra:10+3*l, sier5:Math.max(2,l-1), menger4:Math.min(l,5), kifs4:6+l, nest:1, klein:l>>1, pk:5+l, flake:1+l, jcube:1+l, mosely:l}[s]+x); }
+export function d3Iter(x=d3Extra()){ const l=D3().lvl, s=D3().shape; return Math.min({bulb:16,box:20,menger:12,tet:20,qj:16,apo:20,kifs:20,mj:48,tetra:48,sier5:12,menger4:7,kifs4:20,nest:1,klein:24,pk:20,flake:10,jcube:12,mosely:10,soddy:40}[s],
+  {bulb:3+l, box:7+l, menger:Math.min(l,6), tet:4+l, qj:4+l, apo:3+l, kifs:6+l, mj:10+3*l, tetra:10+3*l, sier5:Math.max(2,l-1), menger4:Math.min(l,5), kifs4:6+l, nest:1, klein:l>>1, pk:5+l, flake:1+l, jcube:1+l, mosely:l, soddy:l}[s]+(s==='soddy'?Math.round(1.66*x):x)); }   // the packing's smallest ball keeps pace with the zoom
 export const d3MinDist=()=>d3Bound()*2e-4;
 export const d3Mag=()=>{ const D=st.d3; return D.shape==='nest' ? 1.05*3.4/D.dist*Math.pow(2,(D.nestM||0)) : d3Bound()*3.4/D.dist; };
 function cam3(){ const D=st.d3, T=D.target||[0,0,0], cp=Math.cos(D.pitch), bz=[cp*Math.sin(D.yaw), Math.sin(D.pitch), cp*Math.cos(D.yaw)];
@@ -120,6 +122,16 @@ function cam3(){ const D=st.d3, T=D.target||[0,0,0], cp=Math.cos(D.pitch), bz=[c
 const fract=x=>x-Math.floor(x), mod2=x=>x-2*Math.floor(x/2);
 const KCJ=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1],[0,0,0]], KRJ=[0.68,0.68,0.68,0.68,0.68,0.68,0.3];
 const FDJ=[...Array(9)].map((_,j)=> j<6 ? [Math.cos(j*Math.PI/3),0,Math.sin(j*Math.PI/3)] : (b=>[0.5*Math.cos(b),0.8660254,0.5*Math.sin(b)])(Math.PI/6+(j-6)*2*Math.PI/3));
+// Apollonian packing (see deSoddy in render/webgl.js): inner balls at SDA·(±1,±1,±1) with radius SDR, partner spheres at the
+// middle (radius SDA) and at −SDE·(the same corners) with radius √8, every ball drawn SH0 of its size
+const SDA=0.317837245, SDE=1.732050808, SDV=[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]];
+// …and the same balls and partner spheres as five numbers each (co-curvature, curvature, curvature × centre); SDG = the form applied to SDD
+const SB=[[0.22474487,2.22474487,0.7071067804,0.7071067804,0.7071067804],[0.22474487,2.22474487,0.7071067804,-0.7071067804,-0.7071067804],[0.22474487,2.22474487,-0.7071067804,0.7071067804,-0.7071067804],[0.22474487,2.22474487,-0.7071067804,-0.7071067804,0.7071067804],[-0.1010205143,9.898979498,0,0,0],[1,-1,0,0,0]],
+  SDD=[[-0.317837245,3.146264372,0,0,0],[0.3535533906,0.3535533906,-0.6123724357,-0.6123724357,-0.6123724357],[0.3535533906,0.3535533906,-0.6123724357,0.6123724357,0.6123724357],[0.3535533906,0.3535533906,0.6123724357,-0.6123724357,0.6123724357],[0.3535533906,0.3535533906,0.6123724357,0.6123724357,-0.6123724357]],
+  SDG=[[-1.573132186,0.1589186225,0,0,0],[-0.1767766953,-0.1767766953,-0.6123724357,-0.6123724357,-0.6123724357],[-0.1767766953,-0.1767766953,-0.6123724357,0.6123724357,0.6123724357],[-0.1767766953,-0.1767766953,0.6123724357,-0.6123724357,0.6123724357],[-0.1767766953,-0.1767766953,0.6123724357,0.6123724357,-0.6123724357]];
+/** The smallest ball drawn in the Apollonian packing, as a share of the outer radius, from its detail level (the shader uses the same formula). */
+export const soddyMin=it=>0.025*Math.pow(0.55,it-5);
+const dot5=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4];
 const len3=v=>Math.hypot(v[0],v[1],v[2]), sub3=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
 const sdBox3=(p,h)=>{ const q=p.map(x=>Math.abs(x)-h); return Math.hypot(Math.max(q[0],0),Math.max(q[1],0),Math.max(q[2],0))+Math.min(Math.max(q[0],q[1],q[2]),0); };
 const sortDesc=p=>{ const a=p.map(Math.abs); return a.sort((u,v)=>v-u); };
@@ -144,6 +156,17 @@ function deNew(p, sh, it){
         z=[u[1]*x[2]-u[2]*x[1], u[2]*x[0]-u[0]*x[2], u[0]*x[1]-u[1]*x[0]], v=sub3(q,u.map(c=>c*4/3)), dt=(A,B)=>A[0]*B[0]+A[1]*B[1]+A[2]*B[2];
       q=[dt(v,x)*3, dt(v,u)*3, dt(v,z)*3]; sc*=3; d=Math.min(d,(len3(q)-1)/sc); }
     return d; }
+  if (sh==='soddy'){ let q=p.slice(), ds=1, best=Infinity, last=-1; const rmin=soddyMin(it), M=[0,1,2,3,4].map(i=>[0,1,2,3,4].map(j=>+(i===j)));   // the shader's deSoddy
+    for (let n=0;n<49;n++){
+      for (const b of SB){ const k=dot5(M[1],b); if (k<=0 || k*rmin>1) continue; const c=[dot5(M[2],b)/k, dot5(M[3],b)/k, dot5(M[4],b)/k]; best=Math.min(best, len3(sub3(p,c))-1/k); }
+      if (best<0 || ds*rmin>4 || n===48) break;
+      let hit=-1, c=[0,0,0], R2=8;
+      if (last!==0 && q[0]*q[0]+q[1]*q[1]+q[2]*q[2]<SDA*SDA){ hit=0; R2=SDA*SDA; }
+      else for (let i=0;i<4;i++){ if (i+1===last) continue; const cc=SDV[i].map(x=>-SDE*x), v=sub3(q,cc); if (v[0]*v[0]+v[1]*v[1]+v[2]*v[2]<8){ hit=i+1; c=cc; break; } }
+      if (hit<0) break;
+      const v=sub3(q,c), f=R2/Math.max(v[0]*v[0]+v[1]*v[1]+v[2]*v[2],1e-300); q=c.map((x,i)=>x+v[i]*f); ds*=f; last=hit;
+      for (const row of M){ const s=2*dot5(row,SDD[hit]); for (let i=0;i<5;i++) row[i]-=s*SDG[hit][i]; } }
+    return Math.max(best, len3(p)-1); }
   if (sh==='jcube'){ const K=Math.SQRT2-1, K2=K*K; let q=p.slice(), sc=1, d=Infinity;
     for (let n=0;n<it;n++){ q=sortDesc(q); const ca=[1-K,1-K,1-K], cb=[1-K2,1-K2,0], ba=sdBox3(sub3(q,ca),K), bb=sdBox3(sub3(q,cb),K2);
       if (Math.min(ba,bb)/sc>d) return d;

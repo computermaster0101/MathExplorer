@@ -99,8 +99,8 @@ function drawCousin(P){
         for (const [ex,ey] of [[0,1],[0,-1],[1,0],[-1,0]]) sq(x+ex*h*(1-K2), y+ey*h*(1-K2), h*K2, l+1); }
       else for (const [ex,ey] of [[0,1],[0,-1],[1,0],[-1,0]]) sq(x+ex*h*2/3, y+ey*h*2/3, h/3, l+1); };
     sq(0,0,1,0); panelTitle(P, s==='jcube'?'2D cousin: Jerusalem square':'2D cousin: one face', s==='jcube'?'corner and edge squares, cross-shaped gaps':'corners and centre removed, flat'); return; }
-  if (s==='klein' || s==='pk'){ const sh=GROW.apollo, B=sh.build(5,1), pad=26, S=Math.min((P.W-24)/2,(P.H-pad-24)/2), cx=P.W/2, cy=pad+(P.H-pad-20)/2;
-    B.draw({g, tf:p=>[cx+p[0]*S, cy-p[1]*S], s:S, lw:1}); panelTitle(P,'2D cousin: Apollonian gasket', s==='klein'?'circles inside circles, by inversion':'the same invert-and-fold idea, flat'); return; }
+  if (s==='klein' || s==='pk' || s==='soddy'){ const sh=GROW.apollo, B=sh.build(5,1), pad=26, S=Math.min((P.W-24)/2,(P.H-pad-24)/2), cx=P.W/2, cy=pad+(P.H-pad-20)/2;
+    B.draw({g, tf:p=>[cx+p[0]*S, cy-p[1]*S], s:S, lw:1}); panelTitle(P,'2D cousin: Apollonian gasket', s==='soddy'?'circles in every gap of a circle, forever':s==='klein'?'circles inside circles, by inversion':'the same invert-and-fold idea, flat'); return; }
   if (s==='menger4') s='menger'; else if (s==='sier5') s='tet'; else if (s==='kifs4') s='kifs';
   if (s==='menger' || s==='tet' || s==='apo' || s==='kifs'){ const k=s==='menger'?4:s==='apo'?5:6, sh=GROW[s==='menger'?'carpet':s==='apo'?'apollo':'sier'], B=sh.build(k,1), pad=26, bw=B.bbox[2]-B.bbox[0], bh=B.bbox[3]-B.bbox[1], S=Math.min((P.W-24)/bw,(P.H-pad-24)/bh), cx=P.W/2, cy=pad+(P.H-pad-20)/2, bx=(B.bbox[0]+B.bbox[2])/2, by=(B.bbox[1]+B.bbox[3])/2;
     const sbg=st.bg; B.draw({g, tf:p=>[cx+(p[0]-bx)*S, cy-(p[1]-by)*S], s:S, lw:1});

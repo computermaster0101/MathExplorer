@@ -8,6 +8,7 @@ import { axisHue, hdProjectAll } from '../geometry/higher-dim.js';
 import { facePolys } from '../geometry/faces.js';
 import { mulM, project, rot4 } from '../math/rotate4d.js';
 import { LINE_LIMIT, drawSource, faceFill, fit, mainLayer, mainLines, makeFrames, pingLayer, pingLines, sliceFill, sliceLayer } from '../render/scene.js';
+import { drawPacking, hidePacking } from '../render/packing.js';
 import { buildSource, getBuild } from './build.js';
 import { unfoldSource } from './unfold.js';
 
@@ -94,13 +95,14 @@ export const KNIFE_NOTES={free:'Free: the shape sits square to the knife, the wa
   edge:'Edge first: one edge faces the knife, lying across its path, so the first cut is a line segment.',
   face:'Face first: one face meets the knife flat on, so the first cut is that flat polygon, which then thickens. For mixed shapes it\'s one of the biggest faces.',
   cell:'Cell first: a whole 3D cell meets the knife flat on, so the first cut is a copy of that cell. On a tesseract it\'s a cube the whole way through. For mixed shapes it\'s one of the biggest cells.'};
+// the Apollonian packing is always stereographic: the only projection that keeps balls round
 export function getSource(){
   if (st.mode==='build') return buildSource();
   if (st.mode==='unfold') return unfoldSource();
   const sh=shapeCtx(SHAPES[st.shape]), KA=st.mode==='slice' ? knifeMatrix(SHAPES[st.shape]) : null, M=KA ? mat4mul(KA, rot4()) : rot4();
   const V4 = sh.highD && sh.n>4 && st.hdA ? hdProjectAll(sh, st.hdA) : sh.verts;
   const src={ O:sh.verts, V:V4.map(v=>mulM(M,v)), edges:sh.edges, fam:sh.fam, amax:sh.amax, wmax:sh.wmax, tk:sh.tk,
-    proj: st.mode==='slice' && st.proj==='stereo' ? 'persp' : st.proj, curved: (st.mode==='explore' || st.mode==='ping') && st.edges==='curved' && !sh.noCurve };
+    proj: sh.packing ? 'stereo' : st.mode==='slice' && st.proj==='stereo' ? 'persp' : st.proj, curved: (st.mode==='explore' || st.mode==='ping') && st.edges==='curved' && !sh.noCurve };
   if (sh.edgeColor && st.mode!=='ping') src.edgeCol=sh.edgeColor;
   if (sh.highD && st.cmode==='dir' && st.mode!=='ping') src.edgeCol=i=>axisHue(sh.axis[i], sh.n);   // one colour per direction
   const E=sh.edges.length, NV=sh.verts.length;
@@ -167,7 +169,11 @@ export function updateGeometry(){
   // (dragging and the turntable only turn the camera, so they don't need it either)
   const key = st.mode==='unfold' ? [st.shape+(SHAPES[st.shape].ver||'')+'n'+shared.netSeed, $('dp').value, $('dq').value, st.unf.u, st.unf.f, st.thk, st.conf, st.palette, st.palRev, st.cycle, st.density, st.bg].join('|') : '';
   let bound;
-  if (key && key===stillKey && lastFrame){ bound=stillBound; }
+  const pk=SHAPES[st.shape].packing && st.packView==='balls' && st.mode==='explore';
+  if (pk){ const r=drawPacking(SHAPES[st.shape]); mainLayer.setVisible(false); mainLines.setVisible(false); lastFrame={tubes:[], balls:r.balls, packing:true}; bound=r.bound; }
+  else hidePacking();
+  if (pk){}
+  else if (key && key===stillKey && lastFrame){ bound=stillBound; }
   else {
     const r=drawSource(getSource(), mainLayer, mainLines); lastFrame=r.frame; bound=r.bound; stillKey=key; stillBound=bound;
   }

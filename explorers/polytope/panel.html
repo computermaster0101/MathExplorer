@@ -95,10 +95,12 @@
       <button data-s="spherinder">Spherinder</button>
       <button data-s="cubinder">Cubinder</button>
       <button data-s="tiger">Tiger (4D torus)</button>
+      <button data-s="apack">Apollonian packing</button>
     </div>
     <div id="roundRow" hidden style="margin-top:8px">
       <div class="row"><span style="width:44px">Detail</span><input type="range" id="rdet" min="1" max="5" value="3" step="1"><output id="rdeto">3</output></div>
       <p class="note" id="rdetNote"></p>
+      <div class="seg" id="packView" hidden style="margin-top:6px"><button data-pv="balls" class="on">Balls</button><button data-pv="net">Touching points joined up</button></div>
     </div>
   </div>
   <div class="lbl" style="margin-top:12px">Star polytopes</div>
@@ -389,6 +391,8 @@
     <p>The 4D ball's surface, the <strong>3-sphere</strong>, is a 3D space that curves back on itself: travel straight in any direction and you come back to where you started. It can be split into two solid doughnuts glued along a flat torus, the <strong>Clifford torus</strong>. That's the duocylinder's ridge.</p>
     <p>It can also be filled completely with circles, no two touching, every one linked through every other. That's the <strong>Hopf fibration</strong>. It turns up in physics too, in the maths of spin and of light.</p>
     <div class="btns"><button class="btn try" data-try="hopf|explore">Try it: the Hopf fibration</button><button class="btn try" data-try="duocyl|explore">The duocylinder</button></div>
+    <p>It can be packed with balls, too: five that all touch, then a ball in every gap, forever. That's the <strong>Apollonian packing</strong>. Seen in stereographic projection the ball holding the projection point becomes the container round all the others, so turning it in 4D turns the packing inside out.</p>
+    <div class="btns"><button class="btn try" data-try="apack|explore">Try it: the Apollonian packing</button></div>
   </details>
   <details class="topic"><summary>Moving with music</summary>
     <p>Open <strong>Music &amp; sound</strong>, choose a file and press Play (or <kbd>M</kbd>), or play a song in another tab (YouTube, Spotify) and press <strong>Listen to a tab</strong> (desktop Chrome or Edge). The same music drives the fractals too, and keeps playing when you switch. <strong>Beats</strong> flash the lights on every hit, or, with <strong>Pulse the shape</strong>, push it outward. With <strong>Tempo</strong> on, the 4D spin and the turntable surge gently on each beat, the knife sweeps once every few bars (set by <strong>Slow motions take</strong>), and Ping lights one ring of corners per beat. <strong>Vocals and melody</strong> sway the shape back and forth through a third 4D plane. <strong>Colour</strong> shimmers with the treble and drifts on each new bar, and <strong>Energy</strong> slows the spin in quiet passages and speeds it up in big ones.</p>
