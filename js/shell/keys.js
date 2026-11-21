@@ -1,5 +1,6 @@
 // Keyboard shortcuts. The shell handles the keys every explorer shares; anything else goes to the explorer on screen.
 import { togglePanel, toggleZen, exitZen, showKeys } from './layout.js';
+import { toggle as toggleMusic } from './audio/engine.js';
 
 let handler = () => false;
 /** The active explorer's key handler: gets the keydown event, returns true when it used the key. */
@@ -7,6 +8,7 @@ export const setKeyHandler = fn => { handler = fn || (() => false); };
 
 const SHARED = {
   h: () => togglePanel(),
+  m: () => toggleMusic(),
   f: () => toggleZen(),
   Escape: () => exitZen(),
   e: () => document.querySelectorAll('details.grp:not([hidden])').forEach(g => { g.open = true; }),

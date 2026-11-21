@@ -9,7 +9,7 @@ import { PALETTES, css, fmtBig, fmtC, minus, setRamp } from '../color/palettes.j
 import { FS3, main, octx, ovc, refSlots } from '../render/webgl.js';
 import { cssH, cssW, effIter, minScale, resetViews, toWorld, touch } from '../view.js';
 import { notAvail } from './notice.js';
-import { d3Bound, f3Ready, is4, isKifs, knifeVal, nestReset, r4c, setDive3, start3Warp, syncT3 } from '../modes/fractal3d.js';
+import { d3Bound, snapGap, f3Ready, is4, isKifs, knifeVal, nestReset, r4c, setDive3, start3Warp, syncT3 } from '../modes/fractal3d.js';
 import { GROW, GROW_EXT, GROW_HOLD, fern } from '../modes/grow.js';
 import { newOrbit, orbitIdx } from '../modes/orbit.js';
 import { CMODE_NOTE, refreshLegend, updateDynamic, updateLabels } from './learn.js';
@@ -56,7 +56,7 @@ function pickSpot(){ const T=TYPES[st.type], h=view(T.view); fitV(h, cssW/cssH);
       for (let i=0;i<500;i++){ z=f(z,c); if (!(z[0]*z[0]+z[1]*z[1]<=R2)){ n=i; break; } } if (n>=30) pool.push({w, n}); } }
   if (!pool.length) return T.places.length>1 ? (()=>{ const p=T.places[1+Math.floor(Math.random()*(T.places.length-1))]; return [ddFrom(p[1]),ddFrom(p[2])]; })() : [[h.cx+(Math.random()-0.5)*h.scale,0],[h.cy+(Math.random()-0.5)*h.scale,0]];
   let tot=0; for (const q of pool) tot+=q.n*q.n; let r=Math.random()*tot; for (const q of pool){ r-=q.n*q.n; if (r<=0) return [[q.w[0],0],[q.w[1],0]]; } return [[pool[0].w[0],0],[pool[0].w[1],0]]; }
-export function endlessWarp(why){ const T=TYPES[st.type], v=st.vE; st.dive=false; st.endlessRun=true; st.steerTo=null; st.vel=[0,0]; shared.gridJob=null; st.insideT=0; st.manualT=0; const mag=v.def/v.scale;
+export function endlessWarp(why){ const T=TYPES[st.type], v=st.vE; st.dive=false; st.endlessRun=true; st.steerTo=null; st.vel=[0,0]; shared.gridJob=null; st.insideT=0; st.manualT=0; st.steerCentreIn=false; st.steerPref=Math.random()*2*Math.PI; const mag=v.def/v.scale;
   const msg = why==='reset' ? '<b>Starting a new trip.</b> Flying back to the top to pick a fresh spot on the edge.'
     : why==='inside' ? `<b>Landed inside the set at ×${fmtBig(mag)}</b>, where it's black all the way down. Flying back to the top to dive somewhere new.`
     : `<b>Out of digits at ×${fmtBig(mag)}.</b> This is as deep as the numbers go here, so it's flying back to the top to dive somewhere new.`;
@@ -73,7 +73,7 @@ $('steerChk').addEventListener('change', e=>{ st.steer=e.target.checked; st.stee
 $('endlessChk').addEventListener('change', e=>{ st.endless=e.target.checked; $('endless3Chk').checked=st.endless; });
 $('endless3Chk').addEventListener('change', e=>{ st.endless=e.target.checked; $('endlessChk').checked=st.endless; });
 $('diveBtn').addEventListener('click', ()=>{ if (st.dive||st.endlessRun){ st.dive=false; st.endlessRun=false; st.fly=null; st.steerTo=null; diveUI(); touch(); return; }
-  st.dive=true; st.endlessRun=st.endless; st.trip=1; st.insideT=0; st.manualT=0; st.steerTo=null; st.vel=[0,0]; shared.gridJob=null; st.fly=null; diveUI(); touch(); });
+  st.dive=true; st.endlessRun=st.endless; st.trip=1; st.insideT=0; st.steerCentreIn=false; st.steerPref=Math.random()*2*Math.PI; st.manualT=0; st.steerTo=null; st.vel=[0,0]; shared.gridJob=null; st.fly=null; diveUI(); touch(); });
 $('diveSpd').addEventListener('input', e=>syncDiveSpd(+e.target.value));
 // Reset view puts the current mode back to how it starts: camera, knife, turns, motion and shape settings (not the fractal or colours)
 function resetSettings(){ const m=st.mode;
@@ -91,7 +91,7 @@ export function resetView(){ resetSettings(); if (st.mode==='explore' && st.endl
 $('resetView').addEventListener('click', resetView);
 // grow
 function buildGenChips(){ const sh=GROW[st.grow.shape]; $('genChips').innerHTML=[...Array(sh.max+1)].map((_,k)=>`<button data-k="${k}">${k}</button>`).join('');
-  $('gzRow').hidden=!sh.zoom; $('angRow').hidden=!sh.angle; if (sh.angle){ $('ang').value=st.grow.angle[sh.angle]; $('ango').textContent=st.grow.angle[sh.angle]+'°'; } }
+  $('gzRow').hidden=!sh.zoom; $('angRow').hidden=!sh.angle; if (sh.angle){ $('ang').max = sh.angle==='tree' ? 160 : 80; $('ang').value=st.grow.angle[sh.angle]; $('ango').textContent=st.grow.angle[sh.angle]+'°'; } }
 $('genChips').addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return; const k=+b.dataset.k; st.grow.t = k===0 ? 0.01 : GROW_HOLD+(k-1)*(GROW_EXT+GROW_HOLD)+GROW_EXT+0.01; st.grow.playing=false; st.grow.zoom=false; $('growZoom').checked=false; $('growPlay').textContent='Play'; touch(); });
 $('growPlay').addEventListener('click', ()=>{ st.grow.playing=!st.grow.playing; $('growPlay').textContent=st.grow.playing?'Pause':'Play'; });
 $('growReplay').addEventListener('click', ()=>{ st.grow.t=0; st.grow.playing=true; st.grow.zoom=false; $('growZoom').checked=false; $('growPlay').textContent='Pause'; fern.n=1e12; });
@@ -115,7 +115,11 @@ export function d3Rows(){ const s=st.d3.shape, f=is4(); $('pwRow').hidden=s!=='b
   $('turnKLbl').textContent=f?'Turn the knife in 4D':'Tilt the knife'; [['k1l','XW','XZ'],['k2l','YW','YZ'],['k3l','ZW','XY']].forEach(([id,a,b])=>$(id).textContent=f?a:b);
   $('knifeNote').textContent=f?'Sliding moves the cut along the hidden W direction. Turning it in the XW, YW or ZW plane tilts the cut, so it slices the 4D shape at an angle, the same turns as in the polytope explorer.'
     :'A 3D shape has no hidden direction, so here the knife is a flat cut that slices part of the shape away and shows the inside. Slide it through, tilt it, or let it sweep.';
-  syncW(); syncT3(); }
+  twRange(); syncW(); syncT3(); }
+// The twist slider's range per shape. A twist either way works on most shapes (left of centre is the mirror-image spiral).
+// The kaleidoscopes turn their folded wedge instead, and outside these angles almost nothing survives the folding.
+function twRange(){ const s=st.d3.shape, [lo,hi]= s==='kifs' ? [-20,70] : s==='kifs4' ? [0,50] : [-180,180], e=$('tw3');
+  e.min=lo; e.max=hi; st.d3.twist=clamp(st.d3.twist,lo,hi); e.value=st.d3.twist; $('tw3o').textContent=st.d3.twist.toFixed(1)+'°'; }
 export function syncW(){ const D=st.d3; $('w3').value=Math.round(D.w*100); $('w3o').textContent=knifeVal().toFixed(2); }
 
 export function syncR4(){ const D=st.d3; for (const [k,id] of [['axw','rxw'],['ayw','ryw'],['azw','rzw']]){ $(id).value=Math.round(D[k]); $(id+'o').textContent=Math.round(D[k])+'°'; } }
@@ -128,22 +132,27 @@ $('cut3').addEventListener('change', e=>{ st.d3.cut=e.target.checked; syncW(); t
 for (const k of ['xy','xz','yz']) $('t3'+k).addEventListener('input', e=>{ st.d3['r'+k]=+e.target.value; $('t3'+k+'o').textContent=e.target.value+'°'; if (st.d3.spin3){ st.d3.spin3=false; $('spin3').checked=false; } touch(); });
 $('spin3').addEventListener('change', e=>{ st.d3.spin3=e.target.checked; touch(); });
 $('t3reset').addEventListener('click', ()=>{ Object.assign(st.d3,{rxy:0,rxz:0,ryz:0,spin3:false}); $('spin3').checked=false; syncT3(); touch(); });
-$('bsBreathe').addEventListener('change', e=>{ st.d3.bsBreathe=e.target.checked; st.d3.bsT=Math.asin(clamp((st.d3.boxS+2)/0.6,-1,1))/0.3; });
+$('bsBreathe').addEventListener('change', e=>{ st.d3.bsBreathe=e.target.checked; const [c,a]=bsSweep(); st.d3.bsT=Math.asin(clamp((st.d3.boxS-c)/a,-1,1))/0.3; });
 $('r4reset').addEventListener('click', ()=>{ Object.assign(st.d3,{axw:0,ayw:0,azw:0,spin4:false}); $('spin4').checked=false; syncR4(); touch(); });
-$('pw3').addEventListener('input', e=>{ st.d3.power=+e.target.value; $('pw3o').textContent=st.d3.power.toFixed(1); if (st.d3.breathe){ st.d3.breathe=false; $('breathe').checked=false; } touch(); });
-$('breathe').addEventListener('change', e=>{ st.d3.breathe=e.target.checked; st.d3.t=Math.asin(clamp((st.d3.power-13)/11,-1,1))/0.22; });
-$('bs3').addEventListener('input', e=>{ st.d3.boxS=+e.target.value; if (e.isTrusted && st.d3.bsBreathe){ st.d3.bsBreathe=false; $('bsBreathe').checked=false; } $('bs3o').textContent=minus(st.d3.boxS.toFixed(2)); touch(); });
+$('pw3').addEventListener('input', e=>{ const b0=d3Bound(); st.d3.power=snapGap(+e.target.value,-2,2); e.target.value=st.d3.power; refit3(b0); $('pw3o').textContent=st.d3.power.toFixed(1); if (st.d3.breathe){ st.d3.breathe=false; $('breathe').checked=false; } touch(); });
+$('breathe').addEventListener('change', e=>{ st.d3.breathe=e.target.checked; const [c,a]=pwSweep(); st.d3.t=Math.asin(clamp((st.d3.power-c)/a,-1,1))/0.22; });
+// Breathe stays on the side it started: powers 2 to 24, or −2 to −16
+export const pwSweep=()=> st.d3.power<0 ? [-9,7] : [13,11];
+export const bsSweep=()=> st.d3.boxS>0 ? [2.2,0.6] : [-2,0.6];
+$('bs3').addEventListener('input', e=>{ const b0=d3Bound(); st.d3.boxS=snapGap(+e.target.value,-1.1,1.5); e.target.value=st.d3.boxS; refit3(b0); if (e.isTrusted && st.d3.bsBreathe){ st.d3.bsBreathe=false; $('bsBreathe').checked=false; } $('bs3o').textContent=minus(st.d3.boxS.toFixed(2)); touch(); });
 const cutOn=()=>{ if (!is4() && !st.d3.cut){ st.d3.cut=true; $('cut3').checked=true; } };   // moving the knife on a 3D shape switches the cut on
 $('w3').addEventListener('input', e=>{ st.d3.w=+e.target.value/100; if (e.isTrusted) cutOn(); $('w3o').textContent=knifeVal().toFixed(2); if (st.d3.sweep){ st.d3.sweep=false; $('sweep3').checked=false; } touch(); });
 $('sweep3').addEventListener('change', e=>{ st.d3.sweep=e.target.checked; if (st.d3.sweep) cutOn(); st.d3.wt=Math.asin(clamp(st.d3.w/0.94,-1,1))/0.45; });
 $('tw3').addEventListener('input', e=>{ st.d3.twist=+e.target.value; $('tw3o').textContent=st.d3.twist.toFixed(1)+'°'; if (st.d3.twAnim){ st.d3.twAnim=false; $('twAnim').checked=false; } touch(); });
-export const twAmp=()=>isKifs()?21:60;   // Keep twisting swings the twist between 0 and this × 2 degrees
-$('twAnim').addEventListener('change', e=>{ st.d3.twAnim=e.target.checked; st.d3.twT=Math.asin(clamp(st.d3.twist/twAmp()-1,-1,1))/0.25; touch(); });
+export const twAmp=()=>isKifs()?21:60;   // Keep twisting swings the twist between 0 and this × 2 degrees, on the side (left or right hand) it started
+$('twAnim').addEventListener('change', e=>{ st.d3.twAnim=e.target.checked; st.d3.twSg=st.d3.twist<0&&!isKifs()?-1:1; st.d3.twT=Math.asin(clamp(Math.abs(st.d3.twist)/twAmp()-1,-1,1))/0.25; touch(); });
 $('dive3Btn').addEventListener('click', ()=>{ const D=st.d3; if (D.dive||D.warp){ setDive3(false); } else { D.trip=1; setDive3(true); } });
 $('reset3').addEventListener('click', resetView);
 function syncDiveSpd(v){ st.diveSpeed=v; for (const [i,o] of [['diveSpd','diveo'],['dive3Spd','dive3o']]){ $(i).value=v; $(o).textContent=v.toFixed(1)+'×'; } }
 $('dive3Spd').addEventListener('input', e=>syncDiveSpd(+e.target.value));
 $('lvl3').addEventListener('input', e=>{ st.d3.lvl=+e.target.value; $('lvl3o').textContent=e.target.value; touch(); });
+// when a slider changes the shape's size a lot, move the camera with it so the framing stays the same
+function refit3(b0){ const D=st.d3; if (D.target || D.dive) return; const b1=d3Bound(); if (Math.abs(b1/b0-1)>0.02) D.dist*=b1/b0; }
 $('turn3').addEventListener('input', e=>{ st.d3.turn=+e.target.value; $('turn3o').textContent=st.d3.turn?st.d3.turn.toFixed(1)+'×':'off'; });
 $('cousinChk').addEventListener('change', e=>{ st.cousinInset=e.target.checked; });
 // view

@@ -48,3 +48,5 @@ export function stop(){ stopLoop(); }
 export const reset = resetAll;
 export const layoutChanged = resize;
 export { onKey, showView };
+/** Shown under the Music & sound switches while this explorer is on screen. */
+export const soundHelp='Here, each beat flashes the lights (or, with Pulse the shape, pushes the whole shape outward). Tempo times the 4D spin and the turntable, the knife sweep in Slice, Ping\'s steps, Build up, Unfold and the morph animation. Vocals sway the shape through a third 4D plane. Colour shimmers and drifts on each bar. Energy sets how fast it all spins.';

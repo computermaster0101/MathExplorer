@@ -2,6 +2,7 @@ import { shared } from '../shared.js';
 import { $ } from '../util.js';
 import { ddAdd, ddMul } from '../math/double-double.js';
 import { effDensity, st } from '../state.js';
+import { flash } from '../../../js/shell/audio/react.js';
 import { RAMP, hexRGB } from '../color/palettes.js';
 
 // ---------- WebGL ----------
@@ -10,7 +11,7 @@ in vec2 a; void main(){ gl_Position=vec4(a,0.0,1.0); }`;
 const FS2=`#version 300 es
 precision highp float; precision highp int;
 uniform vec2 u_res, u_org, u_center, u_c, u_refOff;
-uniform float u_scale, u_rot, u_power, u_density, u_cycle;
+uniform float u_scale, u_rot, u_power, u_density, u_cycle, u_flash;
 uniform int u_iter, u_type, u_julia, u_cmode, u_inside, u_aa, u_refLen, u_dim, u_seq, u_seqLen, u_ext, u_scaleE;
 uniform float u_scaleM, u_bail; uniform vec2 u_refOffS;
 uniform int u_blaOn, u_blaL; uniform int u_blaOff[18]; uniform sampler2D u_blaAB, u_blaR;
@@ -206,12 +207,13 @@ void main(){
   for (int a=0;a<3;a++){ if (a>=N) break; for (int b=0;b<3;b++){ if (b>=N) break; c+=sampleAt(px-0.5+(vec2(float(a),float(b))+0.5)/float(N)); } }
   c/=float(N*N);
   if (u_dim==1) c=mix(u_bg,c,0.42);
+  c=c*(1.0+0.35*u_flash)+0.05*u_flash;   // the music's beat flash
   outC=vec4(clamp(c,0.0,1.0),1.0);
 }`;
 export const FS3=`#version 300 es
 precision highp float; precision highp int;
 uniform vec2 u_res; uniform vec3 u_cam; uniform mat3 u_rotM; uniform float u_fov;
-uniform int u_s3, u_it3, u_hq; uniform float u_power, u_boxS, u_w, u_density, u_cycle, u_bound, u_twist, u_view;
+uniform int u_s3, u_it3, u_hq; uniform float u_power, u_boxS, u_w, u_density, u_cycle, u_bound, u_twist, u_view, u_flash;
 uniform vec4 u_qc; uniform vec3 u_pal[8]; uniform int u_npal; uniform vec3 u_bg;
 uniform mat4 u_r4; uniform vec2 u_rg; uniform int u_nest0, u_nestM; uniform mat3 u_rot3; uniform float u_tw, u_twS; uniform int u_cut; uniform vec4 u_cutP;
 out vec4 outC;
@@ -225,7 +227,7 @@ float deBulb(vec3 p, out float trap){
   for (int i=0;i<16;i++){ if (i>=u_it3) break;
     r=length(z); if (r>2.0) break; trap=min(trap,r);
     float th=acos(clamp(z.z/max(r,1e-9),-1.0,1.0))*u_power, ph=atan(z.y,z.x+1e-12)*u_power;
-    dr=pow(r,u_power-1.0)*u_power*dr+1.0;
+    dr=pow(r,u_power-1.0)*abs(u_power)*dr+1.0;
     z=pow(r,u_power)*vec3(sin(th)*cos(ph), sin(th)*sin(ph), cos(th))+p; }
   r=max(r,1e-9); return 0.5*log(r)*r/dr;
 }
@@ -373,7 +375,7 @@ void main(){
   if (h<0.0){ outC=vec4(bgc,1.0); return; }
   h=sqrt(h); float t=max(0.0,-b-h), tmax=-b+h;
   float pixA=1.0/(u_res.y*u_fov), tr=0.0; bool hit=false;
-  float k=(u_s3==1)?0.7:(u_s3==0?clamp(5.0/u_power,0.3,0.8):(u_s3==5?0.8:(u_s3==4?0.7:0.92)));
+  float k=(u_s3==1)?0.7:(u_s3==0?(u_power<0.0?0.22:clamp(5.0/u_power,0.3,0.8)):(u_s3==5?0.8:(u_s3==4?0.7:0.92)));
   if (u_s3>=7) k=(u_s3==7||u_s3==8)?0.7:0.9;
   if (u_s3>=12) k=u_s3==13?0.6:(u_s3==14?0.8:(u_s3==15?0.85:0.9));
   for (int i=0;i<500;i++){ float d=map(ro+rd*t,tr); if (d<pixA*t*0.8){ hit=true; break; } t+=d*k; if (t>tmax) break; }
@@ -390,7 +392,7 @@ void main(){
   float spec=pow(clamp(dot(n,normalize(L-rd)),0.0,1.0),40.0)*dif*sh, sky=0.5+0.5*dot(n,u_rotM*vec3(0.0,1.0,0.0));
   float fres=pow(1.0-clamp(dot(n,-rd),0.0,1.0),3.0);
   float lit=(0.38+0.22*sky)*mix(0.6,1.0,ao) + 0.8*dif*sh*mix(0.75,1.0,ao);
-  vec3 col=base*lit + vec3(spec*0.35) + fres*0.3*ao*base;
+  vec3 col=(base*lit + vec3(spec*0.35) + fres*0.3*ao*base)*(1.0+0.4*u_flash) + fres*0.3*u_flash*base;   // beat flash: brighter, with a glow at the rim
   outC=vec4(clamp(col,0.0,1.0),1.0);
 }`;
 function mkCtx(cv){
@@ -446,7 +448,7 @@ export function draw2D(C, vp, o){
   g.uniform1i(P.u('u_cmode'),st.cmode); g.uniform1i(P.u('u_inside'),st.inside); g.uniform1i(P.u('u_aa'),o.aa||1);
   const ex=o.ext; g.uniform1i(P.u('u_ext'),ex?1:0); if (ex){ g.uniform1f(P.u('u_scaleM'),ex.M); g.uniform1i(P.u('u_scaleE'),ex.E); g.uniform2f(P.u('u_refOffS'),ex.offS[0],ex.offS[1]); }
   g.uniform2f(P.u('u_refOff'),(o.refOff||[0,0])[0],(o.refOff||[0,0])[1]); g.uniform1i(P.u('u_refLen'),o.refLen||0); g.uniform1i(P.u('u_dim'),o.dim?1:0);
-  g.uniform1f(P.u('u_density'),effDensity()); g.uniform1f(P.u('u_cycle'),st.cycle);
+  g.uniform1f(P.u('u_density'),effDensity()); g.uniform1f(P.u('u_cycle'),st.cycle); g.uniform1f(P.u('u_flash'),flash());
   const sq=st.lyaSeq; let bits=0; for (let i=0;i<sq.length;i++) if (sq[i]==='B') bits|=1<<i; g.uniform1i(P.u('u_seq'),bits); g.uniform1i(P.u('u_seqLen'),sq.length);
   setPal(g,P); g.uniform3fv(P.u('u_inC'),insideCol()); g.uniform3fv(P.u('u_bg'),hexRGB(st.bg));
   g.activeTexture(g.TEXTURE3); g.bindTexture(g.TEXTURE_2D,o.ctex||C.dummyR); g.uniform1i(P.u('u_refC'),3);

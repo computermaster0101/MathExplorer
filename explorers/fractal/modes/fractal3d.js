@@ -1,6 +1,7 @@
 import { shared } from '../shared.js';
 import { $, clamp } from '../util.js';
-import { aud, audOn, effDensity, st } from '../state.js';
+import { effDensity, st } from '../state.js';
+import { flash, pulse, voice } from '../../../js/shell/audio/react.js';
 import { hexRGB } from '../color/palettes.js';
 import { FS3, gl, glc, main, setPal } from '../render/webgl.js';
 import { cssH, cssW, touch } from '../view.js';
@@ -74,7 +75,9 @@ function cutPlane(){ const D=st.d3, t=a=>a*Math.PI/180; let n=[0,0,1];
   const rp=(v,a,b,deg)=>{ const c=Math.cos(t(deg)), s=Math.sin(t(deg)), o=v.slice(); o[a]=c*v[a]-s*v[b]; o[b]=s*v[a]+c*v[b]; return o; };
   n=rp(n,0,2,D.axw); n=rp(n,1,2,D.ayw); n=rp(n,0,1,D.azw); return {n, o:D.w*d3Bound()*0.95}; }
 export const knifeVal=()=> is4() ? wAct() : st.d3.w*d3Bound()*0.95;
-function d3Tf(){ const D=st.d3, b=d3Bound(), tw=isKifs()?0:D.twist*Math.PI/180/b; return {R:getR3(), tw, twS:1/Math.sqrt(1+(tw*b)*(tw*b)), cut:!is4()&&D.cut ? cutPlane() : null}; }
+// the twist actually drawn: the slider, plus a slow sway with the vocals and melody on 3D shapes (4D shapes sway their slice instead)
+export const twistNow=()=>st.d3.twist+(is4()?0:voice()*(isKifs()?6:15));
+function d3Tf(){ const D=st.d3, b=d3Bound(), tw=isKifs()?0:twistNow()*Math.PI/180/b; return {R:getR3(), tw, twS:1/Math.sqrt(1+(tw*b)*(tw*b)), cut:!is4()&&D.cut ? cutPlane() : null}; }
 export const wAct=()=>st.d3.w*(S3[st.d3.shape].wR||0.9);
 // 4D distance estimates, in double precision (the shader's twins), for aiming dives
 const S5=1/Math.sqrt(5), V5=[[1,1,1,-S5],[1,-1,-1,-S5],[-1,1,-1,-S5],[-1,-1,1,-S5],[0,0,0,4*S5]];
@@ -93,7 +96,7 @@ function de4(q, sh, it){ const D=st.d3, [x,y,z,w]=q;
   if (sh==='menger4'){ const a0=q.map(v=>Math.abs(v)-1); let d=Math.hypot(...a0.map(v=>Math.max(v,0)))+Math.min(Math.max(...a0),0), s=1;
     for (let m=0;m<it;m++){ const r=q.map(v=>Math.abs(1-3*Math.abs(mod2(v*s)-1))); s*=3; const mn=r.slice().sort((u,v)=>v-u)[1]; const c=(mn-1)/s; if (c>d) d=c; }
     return d; }
-  if (sh==='kifs4'){ const a=D.twist*Math.PI/180, ca=Math.cos(a), sa=Math.sin(a), cb=Math.cos(a*0.7), sb=Math.sin(a*0.7); let p=q.slice(), n=0;
+  if (sh==='kifs4'){ const a=twistNow()*Math.PI/180, ca=Math.cos(a), sa=Math.sin(a), cb=Math.cos(a*0.7), sb=Math.sin(a*0.7); let p=q.slice(), n=0;
     for (let i=0;i<it;i++){ p=p.map(Math.abs).sort((u,v)=>v-u); let t=ca*p[0]-sa*p[1]; p[1]=sa*p[0]+ca*p[1]; p[0]=t; t=cb*p[2]-sb*p[3]; p[3]=sb*p[2]+cb*p[3]; p[2]=t; p=p.map(v=>2*v-1); n++; }
     return (Math.hypot(...p)-1)*Math.pow(2,-n); }
   // quaternion Julia
@@ -155,7 +158,7 @@ function de3raw(p){ const D=st.d3, it=d3Iter(), sh=D.shape;
   if (S3[sh].four){ const R=getR4(), w=wAct(), q=[0,1,2,3].map(i=>R[i][0]*p[0]+R[i][1]*p[1]+R[i][2]*p[2]+R[i][3]*w); return de4(q, sh, it); }
   if (sh==='bulb'){ const P=[p[0],p[2],p[1]]; let z=P.slice(), dr=1, r=0;
     for (let i=0;i<it;i++){ r=Math.hypot(z[0],z[1],z[2]); if (r>2) break; const th=Math.acos(clamp(z[2]/Math.max(r,1e-9),-1,1))*D.power, ph=Math.atan2(z[1],z[0]+1e-12)*D.power;
-      dr=Math.pow(r,D.power-1)*D.power*dr+1; const zr=Math.pow(r,D.power); z=[zr*Math.sin(th)*Math.cos(ph)+P[0], zr*Math.sin(th)*Math.sin(ph)+P[1], zr*Math.cos(th)+P[2]]; }
+      dr=Math.pow(r,D.power-1)*Math.abs(D.power)*dr+1; const zr=Math.pow(r,D.power); z=[zr*Math.sin(th)*Math.cos(ph)+P[0], zr*Math.sin(th)*Math.sin(ph)+P[1], zr*Math.cos(th)+P[2]]; }
     r=Math.max(r,1e-9); return 0.5*Math.log(r)*r/dr; }
   if (sh==='box'){ let z=p.slice(), dr=1; const S=D.boxS;
     for (let i=0;i<it;i++){ z=z.map(x=>clamp(x,-1,1)*2-x); const r2=z[0]*z[0]+z[1]*z[1]+z[2]*z[2]; if (r2<0.25){ z=z.map(x=>x*4); dr*=4; } else if (r2<1){ z=z.map(x=>x/r2); dr/=r2; } z=z.map((x,k)=>x*S+p[k]); dr=dr*Math.abs(S)+1; }
@@ -172,7 +175,7 @@ function de3raw(p){ const D=st.d3, it=d3Iter(), sh=D.shape;
     return 0.25*Math.log(Math.max(m,1e-12))*Math.sqrt(m)/Math.hypot(...dz); }
   if (sh==='apo'){ let q=p.slice(), s=1; for (let i=0;i<it;i++){ q=q.map(x=>-1+2*fract(0.5*x+0.5)); const r2=q[0]*q[0]+q[1]*q[1]+q[2]*q[2], k=1.2/Math.max(r2,1e-9); q=q.map(x=>x*k); s*=k; }
     return Math.max(0.25*Math.abs(q[1])/s, Math.hypot(...p)-1.45); }
-  const a=D.twist*Math.PI/180, ca=Math.cos(a), sa=Math.sin(a), cb=Math.cos(a*0.7), sb=Math.sin(a*0.7); let [x,y,z]=p, n=0;
+  const a=twistNow()*Math.PI/180, ca=Math.cos(a), sa=Math.sin(a), cb=Math.cos(a*0.7), sb=Math.sin(a*0.7); let [x,y,z]=p, n=0;
   for (let i=0;i<it;i++){ x=Math.abs(x); y=Math.abs(y); z=Math.abs(z); if (x<y){ const t=x; x=y; y=t; } if (x<z){ const t=x; x=z; z=t; } if (y<z){ const t=y; y=z; z=t; }
     let t=ca*x-sa*y; y=sa*x+ca*y; x=t; t=cb*y-sb*z; z=sb*y+cb*z; y=t; x=2*x-1; y=2*y-1; z=2*z-1; n++; }
   return (Math.hypot(x,y,z)-1)*Math.pow(2,-n); }
@@ -214,7 +217,18 @@ export function setDive3(on){ const D=st.d3; if (!on) D.warp=null; if (on) hold4
     if (found){ D.dive=true; tap3(found[0], found[1]); dive3UI(); return; } }
   if (on){ if (!retarget3()){ dive3Msg=performance.now(); D.dive=false; } else { D.dive=true; D.extra=d3Extra(); } } else D.dive=false;
   dive3UI(); touch(); }
-export function d3Bound(){ const s=st.d3.shape; if (s==='nest') return 1.05*Math.pow(2,nestOuter()); if (s==='box'){ const S=Math.abs(st.d3.boxS); return clamp((S+1)/(S-1)*1.05,2.2,7.5); } return S3[s].bound; }
+// How far each shape reaches, measured by marching rays with the same formulas (bounds a little bigger than that).
+// Mandelbulb: powers 2 to 3 reach out to about 1.7, high powers hug the unit ball. Negative powers leave every point closer
+// than 2 hanging, so their surface is wherever the distance estimate says; they get extra room (and smaller steps in the shader).
+// 1.25 is kept as the smallest so the usual power-8 view is unchanged.
+export function bulbBound(n){ const a=Math.abs(n); if (n>0) return Math.max(1.25, Math.min(1.75, Math.pow(2,1/(a-1)))*1.04);
+  const T=[[2,1.95],[3,1.95],[4,1.8],[8,1.6],[16,1.42]]; for (let i=1;i<T.length;i++) if (a<=T[i][0]){ const [x0,y0]=T[i-1], [x1,y1]=T[i]; return y0+(y1-y0)*(clamp(a,x0,x1)-x0)/(x1-x0); } return 1.42; }
+// Mandelbox: negative scales stay inside the cube of half-width 2 (corners 2√3 ≈ 3.46) and shrink for big scales;
+// positive scales fill a cube of half-width 2(S+1)/(S−1), so corners at 2√3 times that: 10.4 at scale 2, 17.3 at 1.5.
+export function boxBound(S){ return S<0 ? clamp((-S+1)/(-S-1)*1.05,2.2,3.7) : 2*Math.sqrt(3)*(S+1)/(S-1)*1.02; }
+// The gaps where these shapes fall apart (power between −2 and 2, box scale between −1.1 and 1.5): snap to the nearer end.
+export const snapGap=(v,lo,hi)=> v>lo && v<hi ? (v-lo < hi-v ? lo : hi) : v;
+export function d3Bound(){ const s=st.d3.shape; if (s==='nest') return 1.05*Math.pow(2,nestOuter()); if (s==='box') return boxBound(st.d3.boxS); if (s==='bulb') return bulbBound(st.d3.power); return S3[s].bound; }
 export let f3Ready=false; shared.f3Err = '';
 export function render3D(hq){
   if (shared.f3Err) return false;
@@ -228,10 +242,10 @@ export function render3D(hq){
   g.uniform1i(P.u('u_s3'),SH3.indexOf(D.shape));
   { const R=getR4(), cm=new Float32Array(16); for (let j=0;j<4;j++) for (let i=0;i<4;i++) cm[j*4+i]=R[i][j]; g.uniformMatrix4fv(P.u('u_r4'),false,cm); const rg=S3[D.shape].rg||[0,1]; g.uniform2f(P.u('u_rg'),rg[0],rg[1]); g.uniform1i(P.u('u_nest0'),-nestOuter()); g.uniform1i(P.u('u_nestM'),st.d3.nestM||0);
     const T=d3Tf(), M=T.R; g.uniformMatrix3fv(P.u('u_rot3'),false,new Float32Array([M[0][0],M[0][1],M[0][2],M[1][0],M[1][1],M[1][2],M[2][0],M[2][1],M[2][2]]));
-    g.uniform1f(P.u('u_tw'),T.tw); g.uniform1f(P.u('u_twS'),T.twS); g.uniform1i(P.u('u_cut'),T.cut?1:0); if (T.cut) g.uniform4f(P.u('u_cutP'),T.cut.n[0],T.cut.n[1],T.cut.n[2],T.cut.o); } g.uniform1f(P.u('u_twist'),(D.twist+(audOn()&&!D.target?Math.min(1,aud.pulse+aud.bass*0.5)*aud.amt*6:0))*Math.PI/180); g.uniform1i(P.u('u_it3'),d3Iter()); g.uniform1i(P.u('u_hq'),hq?1:0);
-  const ab=audOn()&&!D.target ? Math.min(1,aud.pulse+aud.bass*0.5)*aud.amt : 0;
-  g.uniform1f(P.u('u_power'),D.power+ab*1.6); g.uniform1f(P.u('u_boxS'),D.boxS-ab*0.12); g.uniform1f(P.u('u_w'),(is4()?wAct():0)+ab*0.08);
-  g.uniform1f(P.u('u_density'),effDensity()); g.uniform1f(P.u('u_cycle'),st.cycle); g.uniform1f(P.u('u_bound'),d3Bound()); g.uniform1f(P.u('u_view'),D.dist);
+    g.uniform1f(P.u('u_tw'),T.tw); g.uniform1f(P.u('u_twS'),T.twS); g.uniform1i(P.u('u_cut'),T.cut?1:0); if (T.cut) g.uniform4f(P.u('u_cutP'),T.cut.n[0],T.cut.n[1],T.cut.n[2],T.cut.o); } g.uniform1f(P.u('u_twist'),(twistNow()+(!D.target?pulse()*3:0))*Math.PI/180); g.uniform1i(P.u('u_it3'),d3Iter()); g.uniform1i(P.u('u_hq'),hq?1:0);
+  const ab=!D.target ? pulse() : 0, vo=voice();   // music: an optional pulse of the shape on each beat, and the vocal sway (4D slice)
+  g.uniform1f(P.u('u_power'),D.power+Math.sign(D.power)*ab*0.8); g.uniform1f(P.u('u_boxS'),D.boxS+Math.sign(D.boxS)*ab*0.06);   // a beat pushes away from zero, never into the gap g.uniform1f(P.u('u_w'),(is4()?wAct()+vo*0.1:0)+ab*0.05);
+  g.uniform1f(P.u('u_density'),effDensity()); g.uniform1f(P.u('u_cycle'),st.cycle); g.uniform1f(P.u('u_flash'),flash()); g.uniform1f(P.u('u_bound'),d3Bound()); g.uniform1f(P.u('u_view'),D.dist);
   g.uniform4fv(P.u('u_qc'),QC); setPal(g,P); g.uniform3fv(P.u('u_bg'),hexRGB(st.bg));
   g.drawArrays(g.TRIANGLES,0,3);
 }

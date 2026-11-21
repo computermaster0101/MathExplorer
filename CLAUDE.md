@@ -18,7 +18,8 @@ css/app.css                shared theme, layout and panel controls
 js/main.js                 explorer registry, routing, mount/start/stop lifecycle
 js/shell/route.js          #/<explorer>/<view-code> parsing, setViewCode, shareLink, activeExplorer
 js/shell/layout.js         hide panel / full screen (zen)
-js/shell/keys.js           shared keys (h f Esc e q ?) and dispatch to the active explorer's onKey
+js/shell/keys.js           shared keys (h f m Esc e q ?) and dispatch to the active explorer's onKey
+js/shell/audio/            the one music player for the whole app (see "Music" below)
 explorers/<name>/          one folder per explorer: stage.html, panel.html, style.css, index.js + modules
 vendor/three/              three.js r128 ES module build
 ```
@@ -32,6 +33,33 @@ vendor/three/              three.js r128 ES module build
 - Explorers never touch `location.hash` or `history` directly. They use `setViewCode(name, code)` (ignored unless that explorer is active), `shareLink`, `codeFromText` (accepts pasted links or bare codes) and `parseRoute().code` at boot. Old fractal codes (`f3-…`, `f4-…`) still load through `codeFromText`.
 - Shell-owned controls (`#panelBtn`, `#zenBtn`, `#zenExit`, `#resetBtn`) and the shared keys are not bound by explorers. Each panel's keyboard group must keep the id `g-keys`, which `?` opens.
 
+## Music (js/shell/audio/)
+
+One player serves the whole app. Music keeps playing across explorer switches and both explorers react to it. Its panel group (`#g-sound` in `index.html`) is moved by `main.js` into the active explorer's panel, right after that explorer's `#g-ctl` group. Explorers never touch the audio graph.
+
+- `frames.js` turns raw samples into spectral frames at a fixed hop (512 samples), each stamped with its audio time. It runs in an AudioWorklet (`frames-worklet.js`). AudioWorklet needs a secure context, so on plain-http hosts `engine.js` falls back to a ScriptProcessor. Keep both paths working.
+- `analysis.js` does all beat work per frame on the audio clock, never per screen frame, so results are identical at any frame rate:
+  - auto-levelled bands
+  - onset detection with an adaptive threshold
+  - tempo from a smoothed tempogram: autocorrelation of the bass and the mid/high onset curves, each weighted per song by how clearly it pulses, then folded into 85–170 BPM
+  - confidence as how consistently recent windows agree with the tempo (octaves and 2:3 count as agreeing), not as absolute correlation strength, because that varies hugely between songs
+  - beat phase by folding onsets over the beat
+  - bar start from where the bass falls
+  - energy against the song's long-run loudness
+  `update()` only places the beat clock at the moment being heard (output latency plus one frame).
+- `engine.js` handles playback: a file, the microphone, or another tab's sound. "Listen to a tab" uses `getDisplayMedia` with audio. It needs desktop Chrome or Edge on a secure page; the captured audio isn't sent to the speakers; a `CaptureController` asks Chrome not to jump to the shared tab; and the share ending in the browser bar stops it. To test it headlessly, use a second page plus `--auto-select-tab-capture-source-by-title=<title>`, without puppeteer's default `--mute-audio` and without `--use-fake-ui-for-media-stream`, which substitutes a fake silent device. Also handled:  pause/resume bookkeeping (`analysis.pause/resume`, which also skip the silence-to-music windows that would read as a false hit), and `recordTracks()` for video recording.
+- `react.js` is the only thing explorers should import. It holds the panel settings (saved in localStorage) and helpers that already respect them:
+  - `flash()` / `pulse()` (0..1) are the beat effect. Only one is non-zero, depending on the panel's "On each beat" choice: Flash brightens (the `u_flash` shader uniform in fractals, light intensity in polytopes); Pulse moves the shape.
+  - `voice()` is a slow sway in -1..1 around the vocals' recent level. Use it for at most one gentle parameter per scene.
+  - `shimmer()` is treble (0..1); `energyMul()` is a speed multiplier; `colourStep(dt)` advances the palette.
+  - Keep the mapping sparse: every extra parameter the music moves at once makes the picture read as chaos, not rhythm. That was the "jumpy" complaint behind this design.
+  - `new Phase().step(value, dt, period, cycleBeats(n), freeRate)` is for periodic motions: their cycles land on bar lines when the tempo is locked.
+  - `new Groove().delta(dt, perSecond, perBeat, steps)` is for advancing motions: they surge on each beat. Pass `steps=true` when exactly one step per beat matters.
+  - `BeatGate` reports beat crossings.
+  - Each motion owns its own `Phase`/`Groove` instance (see the `clk` objects in each explorer's `loop.js`).
+- Each explorer's `index.js` exports `soundHelp`, the text shown under the switches saying what reacts in that explorer.
+- To check analysis changes, run a track through `FrameMaker` and `Analysis` directly: decode it, push 128-sample blocks, call `update()` at a simulated frame rate. Then compare tempo, lock percentage, and how close strong hits land to whole beats (`Analysis.hits = []` records them). Check several songs of different styles, because a tweak that helps one kind of beat can break another. `engine.analysisForDebug()` gives the live instance. There's no test suite for this in the repo.
+
 ## Module conventions inside an explorer
 
 These modules came from splitting large single-file apps, and they keep that code's dense style (many statements per line, short names). Match it when editing.
@@ -42,6 +70,11 @@ These modules came from splitting large single-file apps, and they keep that cod
 - The "Learn" sections are user-facing explanations written in plain English with no jargon; comments follow the same style.
 
 ### Fractal explorer specifics
+- Frame pacing lives in `loop.js` (`pace`, `adjustPace`). When a moving scene can't hold the screen's rate, it draws on every other refresh (an even 30 fps), checking for headroom every 8 s. Render quality `st.q` changes only in small steps, after real measurements: uneven frames and quality swings looked far worse than a steady lower rate. `pace.simulate` lets tests imitate a slow graphics card, because headless Chrome doesn't wait for the GPU.
+- While recording at 720p/1080p, `shared.recCapH` caps the render size to the video's height.
+- Dive steering (`startGrid`/`finishGrid` in `view.js`) scans a coarse grid and pulls toward the busiest edge. While the middle of the view is in the black (`st.steerCentreIn`), it favours a random direction chosen per dive (`st.steerPref`) and the zoom eases off. Without that, a mirror-symmetric view such as the whole Mandelbrot set pulls equally both ways and dives straight into the black.
+- `d3Bound()` is the sphere the 3D ray-marcher starts in, and the camera distance is fitted from it. A shape that reaches past it is drawn sliced off as a ball. The Mandelbulb (`bulbBound`, by power, including negative powers) and the Mandelbox (`boxBound`, by scale, including positive scales) size it from measurements: rays marched inward with the same distance formulas. Remeasure if you change a formula or a range. Power −2…2 and box scale −1.1…1.5 are dead zones that the sliders snap out of (`snapGap`).
+- The Twist slider's range depends on the shape (`twRange` in `ui/controls.js`): −180…180 for most shapes (negative is the mirror-image spiral), but the kaleidoscopes turn their folded wedge and are empty outside about −20…70° (3D) and 0…50° (4D).
 - `fractals/types.js` (`TYPES`) defines the families. `render/webgl.js` holds the GLSL shaders as strings, plus context setup.
 - Deep zoom uses three precision tiers: doubles, double-double (`math/double-double.js`, about 32 digits) and 416-bit BigInt fixed point (`math/big-fixed.js`, about 125 digits). It uses perturbation: a reference orbit is computed on the CPU (in a Blob-URL worker for Extreme precision), uploaded as a texture, and sped up with BLA (`render/bla.js`).
 - Custom formulas (`formula/formula.js`) are compiled twice, by `toGLSL` and by `toJS`. Both must give the same results.

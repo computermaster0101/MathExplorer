@@ -30,6 +30,35 @@
     <!-- each explorer's controls are mounted here (explorers/<name>/panel.html) -->
   </aside>
 </div>
+
+<!-- Shared panel groups. The shell moves each into the active explorer's panel (after its Controls group). -->
+<div id="shellParts" hidden>
+  <details class="grp" id="g-sound"><summary><span class="gt">Music &amp; sound</span><span class="gv" id="gv-sound"></span></summary><div class="gb">
+    <div class="sec">
+      <div class="lbl">Music <b id="sndName">none</b></div>
+      <div class="btns"><label class="btn" for="sndFile" style="text-align:center">Choose a music file</label></div>
+      <div class="btns" style="margin-top:8px"><button class="btn" id="sndTab" title="Play music in another tab (YouTube, Spotify…) and share that tab's sound">Listen to a tab</button><button class="btn" id="sndMic">Use microphone</button></div>
+      <input type="file" id="sndFile" accept="audio/*" hidden>
+      <div class="btns" style="margin-top:8px"><button class="btn" id="sndPlay" disabled>Play</button><button class="btn" id="sndStop" disabled>Stop</button></div>
+      <div class="meter"><div class="meterBar"><div id="sndLevel"></div></div><span class="beatDot" id="sndBeat"></span><span class="bpm" id="sndBpm">no music</span></div>
+      <p class="note" id="sndNote">The music keeps playing when you switch explorers, and both react to it. To use YouTube or Spotify, play it in another tab, press Listen to a tab, choose that tab and tick Share tab audio.</p>
+    </div>
+    <div class="sec">
+      <label class="check" style="margin-top:0"><input type="checkbox" id="sndOn" checked> React to the music</label>
+      <div class="row"><span style="width:74px">Strength</span><input type="range" id="sndAmt" min="0" max="2" step="0.05" value="1"><output id="sndAmto">1.0×</output></div>
+      <div class="lbl" style="margin-top:12px">What reacts</div>
+      <label class="check" style="margin-top:0"><input type="checkbox" id="sndBeats" checked> Beats: something happens on every hit</label>
+      <div class="seg" id="sndBeatStyle" style="margin-top:8px"><button data-s="flash" class="on">Flash</button><button data-s="pulse">Pulse the shape</button></div>
+      <label class="check"><input type="checkbox" id="sndTempo" checked> Tempo: motion moves in time with the beat</label>
+      <div class="lbl" style="margin-top:10px">Slow motions take</div>
+      <div class="seg" id="sndBars"><button data-b="1">1 bar</button><button data-b="2" class="on">2 bars</button><button data-b="4">4 bars</button><button data-b="8">8 bars</button></div>
+      <label class="check"><input type="checkbox" id="sndVocals" checked> Vocals and melody: a slow sway</label>
+      <label class="check"><input type="checkbox" id="sndColour" checked> Colour: treble shimmers the palette, and it drifts on each bar</label>
+      <label class="check"><input type="checkbox" id="sndEnergy" checked> Energy: quiet passages calm things down, big ones speed them up</label>
+      <p class="note" id="sndHow"></p>
+    </div>
+  </div></details>
+</div>
 <noscript><p style="padding:20px">Math Explorer needs JavaScript.</p></noscript>
 <script type="module" src="js/main.js"></script>
 </body>

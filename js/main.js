@@ -19,6 +19,7 @@
 import { parseRoute, DEFAULT_EXPLORER, setActiveExplorer } from './shell/route.js';
 import { onLayoutChange } from './shell/layout.js';
 import { setKeyHandler } from './shell/keys.js';
+import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
 
 const EXPLORERS = {
   fractal:  { title: 'Fractals' },
@@ -43,8 +44,13 @@ async function mount(name) {
   return import(fileUrl(name, 'index.js').href);
 }
 
-function attach({ stageEl, panelEl }) { stage.insertBefore(stageEl, $('stageBtns')); panel.append(panelEl); }
-function detach({ stageEl, panelEl }) { stageEl.remove(); panelEl.remove(); }
+// shared panel groups (Music & sound) sit inside the active explorer's panel, right after its Controls group
+function attach({ stageEl, panelEl }) {
+  stage.insertBefore(stageEl, $('stageBtns')); panel.append(panelEl);
+  const ctl = panelEl.querySelector('#g-ctl');
+  panelEl.insertBefore(soundGroup, ctl ? ctl.nextSibling : null);
+}
+function detach({ stageEl, panelEl }) { $('shellParts').append(soundGroup); stageEl.remove(); panelEl.remove(); }
 
 function markSwitcher(name) {
   for (const a of document.querySelectorAll('#switcher a')) a.classList.toggle('on', a.dataset.explorer === name);
@@ -82,7 +88,7 @@ async function show() {
   if (current !== name) return;            // the user moved on while it loaded
 
   if (!first && code) api.showView?.(code);
-  setKeyHandler(api.onKey); onLayoutChange(() => api.layoutChanged?.());
+  setKeyHandler(api.onKey); onLayoutChange(() => api.layoutChanged?.()); setSoundHelp(api.soundHelp);
   api.start?.();
 }
 

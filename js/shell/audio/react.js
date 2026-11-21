@@ -1,0 +1,97 @@
+// What explorers use to move with the music. Each helper already respects the Sound panel's switches and strength,
+// and returns a neutral value (0, or 1 for multipliers) when the music is off or that reaction is switched off.
+//
+//   flash()         0..1   a flash of light on each hit (Beats, when 'On each beat' is Flash)
+//   pulse()         0..1   a pulse of the shape itself on each hit (Beats, when 'On each beat' is Pulse the shape)
+//   voice()         -1..1  vocals and melody as a slow sway around their recent level (Vocals)
+//   shimmer()       0..1   treble (Colour)
+//   energyMul()     ~0.5..1.5, a speed multiplier: calm passages slower, big ones faster (Energy)
+//   colourStep(dt)  how far to advance the palette this frame: treble shimmer, plus a shift on each new bar (Colour)
+//   tempoLocked()   true when motion should follow the tempo (Tempo, and a steady beat was found)
+//   new Phase()     a periodic motion (breathe, sweep…) that lands its cycles on bar lines when the tempo is locked
+//   new Groove()    an advancing motion (turning…) that surges on each beat and settles in between
+import * as engine from './engine.js';
+const { player } = engine;
+
+const KEY = 'mathexplorer.sound';
+const DEFAULTS = { on: true, amount: 1, beats: true, beatStyle: 'flash', tempo: true, vocals: true, colour: true, energy: true, bars: 2 };
+export const settings = { ...DEFAULTS };
+try { Object.assign(settings, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* storage blocked: defaults */ }
+export function saveSettings() { try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch (e) { /* not saved */ } }
+
+const f = () => engine.features;   // the live object (re-created when the audio context first starts)
+const live = () => settings.on && player.playing;
+const amt = () => settings.amount;
+
+export const reacting = () => live();
+const beat = () => (live() && settings.beats ? Math.min(1.5, f().beat * amt()) : 0);
+export const flash = () => (settings.beatStyle === 'pulse' ? 0 : beat());
+export const pulse = () => (settings.beatStyle === 'pulse' ? beat() : 0);
+export const voice = () => (live() && settings.vocals ? Math.max(-1.5, Math.min(1.5, f().voiceSway * amt())) : 0);
+export const shimmer = () => (live() && settings.colour ? Math.min(1.5, f().treble * amt()) : 0);
+export const energyMul = () => (live() && settings.energy ? 1 + (f().energy - 0.5) * Math.min(2, amt()) : 1);
+export const tempoLocked = () => live() && settings.tempo && f().locked;
+/** Beats per cycle for slow periodic motions, from the "one cycle every N bars" setting, times an optional factor. */
+export const cycleBeats = (mult = 1) => 4 * settings.bars * mult;
+export const bpm = () => f().bpm;
+
+// musical position in beats, counted from the first beat of a bar
+const barBeats = () => f().beats - f().barOffset;
+
+let colourBar = null, colourJump = 0;
+export function colourStep(dt) {
+  if (!(live() && settings.colour)) { colourBar = null; return 0; }
+  let d = dt * (0.008 + 0.09 * f().treble) * amt();
+  if (f().locked) {
+    // a shift of the palette at the start of each bar, blended in over about half a second
+    const bar = Math.floor(barBeats() / 4);
+    if (colourBar !== null && bar !== colourBar) colourJump += 0.05 * Math.min(1.5, amt());
+    colourBar = bar;
+  }
+  const j = colourJump * (1 - Math.exp(-dt / 0.4)); colourJump -= j;
+  return d + j;
+}
+
+/**
+ * A periodic motion whose position is `value` (in the motion's own units, `period` per cycle).
+ * Free-running it advances at `rate` units per second (times energyMul). With the tempo locked it runs at one cycle
+ * per `cycleBeats` beats and is gently pulled so each cycle starts on a bar line.
+ */
+export class Phase {
+  step(value, dt, period, beatsPerCycle, rate = 1) {
+    if (!tempoLocked()) return value + dt * rate * energyMul();
+    const target = ((barBeats() / beatsPerCycle) % 1 + 1) % 1 * period;
+    let e = target - (((value % period) + period) % period);
+    if (e > period / 2) e -= period; else if (e < -period / 2) e += period;
+    return value + dt * period * (bpm() / 60) / beatsPerCycle + e * (1 - Math.exp(-dt / 0.8));
+  }
+}
+
+/**
+ * An advancing motion. `delta(dt, perSecond, perBeat, steps)` returns how far to move this frame: perSecond × dt (times
+ * energyMul) when free, or perBeat × the beats that passed, shaped so a little more of each beat's movement happens just
+ * after the beat lands. The surge is gentler when the screen draws slowly, so it never becomes a jerk between two frames.
+ * Pass steps = true for motions that must take exactly one step per beat (no energy scaling).
+ */
+export class Groove {
+  constructor() { this.last = null; }
+  delta(dt, perSecond, perBeat, steps = false) {
+    if (!tempoLocked()) { this.last = null; return dt * perSecond * energyMul(); }
+    const a = 0.45 - 0.3 * Math.max(0, Math.min(1, (f().frameDt - 0.02) / 0.025));   // surge share: 0.45 at 60 fps, 0.15 at 22 fps
+    const g = b => { const n = Math.floor(b), x = b - n; return n + (1 - a) * x + a * (1 - (1 - x) ** 2); };
+    const b = f().beats;
+    if (this.last === null || Math.abs(b - this.last) > 2) { this.last = b; return 0; }
+    const d = Math.max(0, g(b) - g(this.last)); this.last = b;
+    return d * perBeat * (settings.energy && !steps ? 0.75 + 0.5 * f().energy : 1);
+  }
+}
+
+/** True once per beat (first call after each new beat while the tempo is locked). Each caller keeps its own. */
+export class BeatGate {
+  constructor() { this.last = null; }
+  crossed() {
+    if (!tempoLocked()) { this.last = null; return false; }
+    const n = Math.floor(f().beats), was = this.last; this.last = n;
+    return was !== null && n !== was;
+  }
+}

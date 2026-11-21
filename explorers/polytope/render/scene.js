@@ -14,9 +14,11 @@ renderer.setClearColor(0x0b0d12);
 export const scene = new THREE.Scene();
 export const camera = new THREE.PerspectiveCamera(38, 1, 0.01, 100);
 camera.position.set(0,0,8.5);   // start zoomed all the way out
-scene.add(new THREE.HemisphereLight(0xdfe6ff, 0x1a1420, 0.75));
+const hemi = new THREE.HemisphereLight(0xdfe6ff, 0x1a1420, 0.75); scene.add(hemi);
 const d1 = new THREE.DirectionalLight(0xffffff, 0.85); d1.position.set(2,3,4); scene.add(d1);
 const d2 = new THREE.DirectionalLight(0x99aaff, 0.35); d2.position.set(-3,-1,-2); scene.add(d2);
+/** The music's beat flash: brighten the lights by up to half again (k = 0..1.5). */
+export function setFlash(k){ const m=1+0.5*k; hemi.intensity=0.75*m; d1.intensity=0.85*m; d2.intensity=0.35*m; }
 export const pivot = new THREE.Group(); scene.add(pivot);
 export const fit = new THREE.Group(); pivot.add(fit);
 export const HOME = new THREE.Euler(0.38, -0.62, 0);

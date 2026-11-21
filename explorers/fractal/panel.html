@@ -57,19 +57,19 @@
   </div>
   <div class="sec" data-show="d3">
     <div id="pwRow">
-      <div class="row"><span style="width:74px">Power</span><input type="range" id="pw3" min="2" max="32" step="0.05" value="8"><output id="pw3o">8.0</output></div>
-      <label class="check" style="margin-top:2px"><input type="checkbox" id="breathe"> Breathe (sweep the power from 2 to 24)</label>
+      <div class="row"><span style="width:74px">Power</span><input type="range" id="pw3" min="-16" max="32" step="0.05" value="8"><output id="pw3o">8.0</output></div>
+      <label class="check" style="margin-top:2px"><input type="checkbox" id="breathe"> Breathe (sweep the power from 2 to 24, or −2 to −16)</label>
     </div>
     <div id="bsRow">
-      <div class="row"><span style="width:74px">Box scale</span><input type="range" id="bs3" min="-3" max="-1.3" step="0.01" value="-1.8"><output id="bs3o">−1.80</output></div>
-      <label class="check" style="margin-top:2px"><input type="checkbox" id="bsBreathe"> Breathe (sweep the scale from −2.6 to −1.4)</label>
+      <div class="row"><span style="width:74px">Box scale</span><input type="range" id="bs3" min="-3" max="3" step="0.01" value="-1.8"><output id="bs3o">−1.80</output></div>
+      <label class="check" style="margin-top:2px"><input type="checkbox" id="bsBreathe"> Breathe (sweep the scale from −2.6 to −1.4, or 1.6 to 2.8)</label>
     </div>
     <div class="lbl" style="margin-top:12px">Turn the shape</div>
     <div class="row"><span style="width:40px">XY</span><input type="range" id="t3xy" min="-180" max="180" step="1" value="0"><output id="t3xyo">0°</output></div>
     <div class="row"><span style="width:40px">XZ</span><input type="range" id="t3xz" min="-180" max="180" step="1" value="0"><output id="t3xzo">0°</output></div>
     <div class="row"><span style="width:40px">YZ</span><input type="range" id="t3yz" min="-180" max="180" step="1" value="0"><output id="t3yzo">0°</output></div>
     <label class="check"><input type="checkbox" id="spin3"> Keep turning</label>
-    <div class="row" style="margin-top:10px"><span style="width:74px">Twist</span><input type="range" id="tw3" min="0" max="180" step="0.5" value="0"><output id="tw3o">0°</output></div>
+    <div class="row" style="margin-top:10px"><span style="width:74px">Twist</span><input type="range" id="tw3" min="-180" max="180" step="0.5" value="0"><output id="tw3o">0°</output></div>
     <label class="check" style="margin-top:2px"><input type="checkbox" id="twAnim"> Keep twisting</label>
     <div id="wRow" style="margin-top:12px">
       <label class="check" id="cutRow" style="margin-top:0"><input type="checkbox" id="cut3"> Cut with the knife (shows the inside)</label>
@@ -91,7 +91,7 @@
     <label class="check" style="margin-top:0"><input type="checkbox" id="endless3Chk" checked> Endless: when it runs out of precision, fly back out and dive somewhere new</label>
     <div class="row"><span style="width:74px">Dive speed</span><input type="range" id="dive3Spd" min="0.1" max="2" step="0.05" value="0.5"><output id="dive3o">0.5×</output></div>
     <div class="row"><span style="width:74px">Detail</span><input type="range" id="lvl3" min="1" max="8" step="1" value="5"><output id="lvl3o">5</output></div>
-    <div class="row"><span style="width:74px">Turntable</span><input type="range" id="turn3" min="0" max="2" step="0.05" value="0"><output id="turn3o">off</output></div>
+    <div class="row"><span style="width:74px">Turntable</span><input type="range" id="turn3" min="-2" max="2" step="0.05" value="0"><output id="turn3o">off</output></div>
     <p class="note">Scroll or pinch to move closer. Dive flies toward whatever surface is in the middle of the screen, adding detail as it goes. The picture sharpens and gains shadows when you stop moving.</p>
   </div>
 </div></details>
@@ -119,7 +119,7 @@
       <div class="seg g2" id="cfPresets"></div>
       <p class="note">Use z, c, i, pi, e, numbers, + − * / ^ and brackets. Functions: sin cos tan sinh cosh tanh exp log sqrt abs conj re im arg, and pow(a, b). Writing 2z or z(z + 1) multiplies, and |z| is the size of z. "z starts at" can use c, for example pi/2 or c.</p>
     </div>
-    <div id="powRow" hidden class="row" style="margin-top:8px"><span style="width:74px">Power d</span><input type="range" id="pow" min="2" max="8" step="0.05" value="3"><output id="powo">3.00</output></div>
+    <div id="powRow" hidden class="row" style="margin-top:8px"><span style="width:74px">Power d</span><input type="range" id="pow" min="2" max="16" step="0.05" value="3"><output id="powo">3.00</output></div>
   </div>
   <div class="sec" data-show="grow">
     <div class="lbl">Built by a rule</div>
@@ -234,16 +234,6 @@
     <div class="btns" style="margin-top:8px"><button class="btn" id="recBtn">● Record</button></div>
     <p class="note" id="recNote">Records whatever is moving (an endless dive, a 3D breathe, a growing fractal) as a video file, with the music if it's playing.</p>
   </div>
-  <div class="sec">
-    <div class="lbl">Music <b id="audName"></b></div>
-    <div class="btns"><label class="btn" for="audFile" style="text-align:center">Choose a music file</label><button class="btn" id="micBtn">Use microphone</button></div>
-    <input type="file" id="audFile" accept="audio/*" hidden>
-    <div class="btns" style="margin-top:8px"><button class="btn" id="audPlay" disabled>Play</button><button class="btn" id="audStop" disabled>Stop</button></div>
-    <div style="height:6px;border-radius:3px;background:#0e1118;border:1px solid var(--line);margin-top:10px;overflow:hidden"><div id="audBar" style="height:100%;width:0;background:var(--accent);transition:width .08s"></div></div>
-    <label class="check"><input type="checkbox" id="audReact" checked> Make the fractal react to the sound</label>
-    <div class="row"><span style="width:74px">Strength</span><input type="range" id="audAmt" min="0" max="2" step="0.05" value="1"><output id="audAmto">1.0×</output></div>
-    <p class="note" id="audNote">Bass pulses the colours (and the 3D shapes), louder passages speed up dives and growth, and treble sparkles the colour cycle. Inside Claude the microphone is blocked, so choose a file there.</p>
-  </div>
 </div></details>
 
 <details class="grp" id="g-info"><summary><span class="gt">Numbers</span><span class="gv" id="gv-info"></span></summary><div class="gb">
@@ -261,6 +251,7 @@
 <details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
   <div class="sec"><table class="keys">
     <tr><td><kbd>Space</kbd></td><td>Pause / resume whatever is moving</td></tr>
+    <tr><td><kbd>M</kbd></td><td>Play / pause the music</td></tr>
     <tr><td><kbd>1 – 5</kbd></td><td>Explore, Grow, Julia link, Orbit, 3D · 4D</td></tr>
     <tr><td><kbd>← →</kbd></td><td>Previous / next fractal</td></tr>
     <tr><td><kbd>+ −</kbd></td><td>Zoom in / out</td></tr>

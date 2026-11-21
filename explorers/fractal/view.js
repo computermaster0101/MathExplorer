@@ -14,7 +14,9 @@ shared.dirty = true; let hqDone=false, lastChange=0;
 export function touch(){ shared.dirty=true; hqDone=false; lastChange=performance.now(); }
 export function sizeBuffers(){
   const r=glc.parentElement.getBoundingClientRect(); cssW=Math.max(1,r.width); cssH=Math.max(1,r.height);
-  const b=baseDpr(), s= st.mode==='grow' ? 1 : (st.mode==='d3' ? Math.min(b,1.5) : b)*st.q, w=Math.max(1,Math.round(cssW*s)), h=Math.max(1,Math.round(cssH*s));
+  const b=baseDpr(); let s= st.mode==='grow' ? 1 : (st.mode==='d3' ? Math.min(b,1.5) : b)*st.q;
+  if (shared.recCapH && st.mode!=='grow') s=Math.min(s, shared.recCapH/cssH);   // recording at 720p/1080p: no need to draw more pixels than the video keeps
+  const w=Math.max(1,Math.round(cssW*s)), h=Math.max(1,Math.round(cssH*s));
   if (glc.width!==w || glc.height!==h){ glc.width=w; glc.height=h; shared.dirty=true; hqDone=false; }
   bufScale=glc.width/cssW;
   const ow=Math.round(cssW*b), oh=Math.round(cssH*b); if (ovc.width!==ow || ovc.height!==oh){ ovc.width=ow; ovc.height=oh; } ovScale=ow/cssW;
@@ -75,10 +77,14 @@ function finishGrid(J){ const esc=J.cells.filter(c=>c.n>=0); let mx=0, mn=Infini
   if (deepT() && mx>0) setNeed(mx,mn);
   if (J.kind!=='steer') return;
   st.steerInside=1-esc.length/J.cells.length;
+  { let c0=J.cells[0]; for (const c of J.cells) if (c.r<c0.r) c0=c; st.steerCentreIn = c0.n<0; }   // is the middle of the view in the black?
   if (!esc.length){ st.insideT+=(performance.now()-J.t0)/1000+0.2; return; } st.insideT=0;
   if (st.manualT>0) return;
   // a soft choice: every cell pulls, the busiest (and most central) pull hardest
-  const sc=esc.map(c=>c.n*(1-0.35*c.r)), top=Math.max(...sc), spread=Math.max(1,top*0.06); let wx=0, wy=0, ws=0;
+  // While the middle is in the black, also favour one direction, picked at random for each dive: a symmetric view (the whole
+  // Mandelbrot set is a mirror image top to bottom) would otherwise pull equally both ways and slide straight into the black.
+  const pd=st.steerPref||0, px=Math.cos(pd), py=Math.sin(pd), bias=c=>{ if (!st.steerCentreIn) return 1; const m=Math.hypot(c.off[0],c.off[1])||1; return 1+0.3*(c.off[0]*px+c.off[1]*py)/m; };
+  const sc=esc.map(c=>c.n*(1-0.35*c.r)*bias(c)), top=Math.max(...sc), spread=Math.max(1,top*0.06); let wx=0, wy=0, ws=0;
   esc.forEach((c,i)=>{ const w=Math.exp((sc[i]-top)/spread); wx+=w*c.off[0]; wy+=w*c.off[1]; ws+=w; });
   const dd=centreDiff(J.c0, st.vE), goal=[dd[0]+wx/ws, dd[1]+wy/ws];
   st.steerTo = st.steerTo ? [st.steerTo[0]*0.5+goal[0]*0.5, st.steerTo[1]*0.5+goal[1]*0.5] : goal; }

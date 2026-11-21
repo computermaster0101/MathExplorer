@@ -18,7 +18,6 @@ export const toMath=(type,p)=> type===1 ? [p[0],-p[1]] : p;       // the Burning
 export const toDisp=toMath;
 
 export const isExt=()=>st.precision==='extreme';
-export const aud={ctx:null, an:null, data:null, dest:null, el:null, src:null, mic:null, playing:false, react:true, amt:1, level:0, bass:0, mid:0, treb:0, bassAvg:0, pulse:0};
-export const audOn=()=>aud.react && aud.playing;
-export const effDensity=()=> st.density*(audOn() ? 1+0.35*Math.min(1,aud.pulse+aud.bass*0.4)*aud.amt : 1);
+// colour density (the music flashes brightness instead, through u_flash)
+export const effDensity=()=> st.density;
 export const ptrs=new Map();

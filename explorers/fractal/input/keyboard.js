@@ -13,7 +13,7 @@ export function onKey(e){
   const k=e.key;
   let used=true;
   switch (k){
-    case ' ': if (st.mode==='grow') $('growPlay').click(); else if (st.mode==='orbit') $('orbPlay').click(); else if (st.mode==='explore') $('diveBtn').click(); else if (st.mode==='link') { $('linkAuto').click(); } else if (st.mode==='d3'){ const el=$('turn3'); el.value = +el.value>0 ? 0 : 0.25; el.dispatchEvent(new Event('input')); } if (document.activeElement && document.activeElement!==document.body) document.activeElement.blur(); break;
+    case ' ': if (st.mode==='grow') $('growPlay').click(); else if (st.mode==='orbit') $('orbPlay').click(); else if (st.mode==='explore') $('diveBtn').click(); else if (st.mode==='link') { $('linkAuto').click(); } else if (st.mode==='d3'){ const el=$('turn3'); el.value = +el.value!==0 ? 0 : 0.25; el.dispatchEvent(new Event('input')); } if (document.activeElement && document.activeElement!==document.body) document.activeElement.blur(); break;
     case '1': case '2': case '3': case '4': case '5': setMode(['explore','grow','link','orbit','d3'][+k-1]); break;
     case 'ArrowRight': case 'ArrowLeft': clickNext(st.mode==='grow'?'#growShapes button':st.mode==='d3'?'.sh3 button':'#types button', k==='ArrowRight'?1:-1); break;
     case '+': case '=': zoomBy(0.8, cssW/2, cssH/2); break;

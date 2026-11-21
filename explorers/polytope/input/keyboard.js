@@ -23,7 +23,7 @@ export function onKey(e){
     case '-': case '_': setZoomZ(camera.position.z/0.88); break;
     case ']': nudge('speed', 0.15); break;
     case '[': nudge('speed', -0.15); break;
-    case 't': case 'T': { const el=$('turn'); if (+el.value>0){ lastTurn=+el.value; el.value=0; } else el.value=lastTurn; el.dispatchEvent(new Event('input')); st.turnHold=false; break; }
+    case 't': case 'T': { const el=$('turn'); if (+el.value!==0){ lastTurn=+el.value; el.value=0; } else el.value=lastTurn; el.dispatchEvent(new Event('input')); st.turnHold=false; break; }
     case 'c': case 'C': clickNext('#cmode button', e.shiftKey?-1:1); break;
     case 'v': clickNext('#palettes button', 1); break;
     case 'V': clickNext('#palettes button', -1); break;
