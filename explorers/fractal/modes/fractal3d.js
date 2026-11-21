@@ -294,11 +294,11 @@ export function d3Bound(){ const s=D3().shape; if (s==='nest') return 1.05*Math.
 // The 3D program is built for the shape on screen (and its see-through version only when that's on), when it's first needed.
 // Once it's ready, programs for other shapes are thrown away, and leaving 3D throws away this one too.
 export let f3Ready=false, f3Since=0; shared.f3Err = ''; let f3Key='';   // f3Since: when the program now being built was started (for the caption's timer)
-const key3=()=>'f3:'+st.d3.shape+(st.d3.glass?':glass':'');
+const key3=()=>'f3:'+st.d3.shape+(st.d3.glass?':glass':'')+(st.d3.shadows?':shadows':'');
 export function prog3(){ const k=key3();
   if (k!==f3Key){ f3Key=k; f3Ready=false; f3Since=performance.now(); shared.f3Err=''; }
   if (shared.f3Err) return null;
-  let P; try { P=main.progAsync(k, fs3For(SH3.indexOf(st.d3.shape), st.d3.glass)); } catch(e){ shared.f3Err=String(e.message||e).slice(0,240); showNA(); return null; }
+  let P; try { P=main.progAsync(k, fs3For(SH3.indexOf(st.d3.shape), st.d3.glass, st.d3.shadows)); } catch(e){ shared.f3Err=String(e.message||e).slice(0,240); showNA(); return null; }
   if (P) for (const n of [...Object.keys(main.progs), ...Object.keys(main.pend)]) if (n.startsWith('f3:') && n!==k) main.drop(n);
   return P; }
 export function drop3(){ for (const n of [...Object.keys(main.progs), ...Object.keys(main.pend)]) if (n.startsWith('f3:')) main.drop(n); f3Key=''; f3Ready=false; }

@@ -7,7 +7,7 @@ import { fitV, isExt, qLimits, st, toMath, view } from '../state.js';
 import { escR2, startZ, stepFn } from '../fractals/iterate.js';
 import { PALETTES, css, fmtBig, fmtC, minus, setRamp } from '../color/palettes.js';
 import { octx, ovc, refSlots } from '../render/webgl.js';
-import { cssH, cssW, effIter, minScale, resetViews, toWorld, touch } from '../view.js';
+import { cssH, cssW, effIter, minScale, recolour, resetViews, toWorld, touch } from '../view.js';
 import { notAvail } from './notice.js';
 import { d3Bound, drop3, prog3, snapGap, f3Ready, is4, isKifs, knifeVal, nestReset, r4c, setDive3, start3Warp, syncT3 } from '../modes/fractal3d.js';
 import { GROW, GROW_EXT, GROW_HOLD, fern } from '../modes/grow.js';
@@ -78,7 +78,7 @@ $('diveSpd').addEventListener('input', e=>syncDiveSpd(+e.target.value));
 // Reset view puts the current mode back to how it starts: camera, knife, turns, motion and shape settings (not the fractal or colours)
 function resetSettings(){ const m=st.mode;
   if (m==='d3'){ const D=st.d3;
-    setRange('pw3',8); setCheck('breathe',0); setRange('bs3',-1.8); setCheck('bsBreathe',0); setRange('tw3',0); setCheck('twAnim',0); setCheck('glass3',0); setCheck('hypWalls',0);
+    setRange('pw3',8); setCheck('breathe',0); setRange('bs3',-1.8); setCheck('bsBreathe',0); setRange('tw3',0); setCheck('twAnim',0); setCheck('glass3',0); setCheck('shadow3',0); setCheck('hypWalls',0);
     Object.assign(D,{rxy:0,rxz:0,ryz:0,spin3:false,cut:false}); $('spin3').checked=false; $('cut3').checked=false; syncT3();
     setRange('w3',0); setCheck('sweep3',0); Object.assign(D,{axw:0,ayw:0,azw:0,spin4:false}); $('spin4').checked=false; syncR4(); r4c.key='';
     setRange('lvl3',5); setRange('turn3',0); clickIn('drag3','dm','turn'); D.aim=null; D.needAim=false; D.floating=false; shared.vel3={x:0,y:0}; }
@@ -130,6 +130,7 @@ for (const [k,id] of [['axw','rxw'],['ayw','ryw'],['azw','rzw']]) $(id).addEvent
 $('spin4').addEventListener('change', e=>{ st.d3.spin4=e.target.checked; if (st.d3.spin4) cutOn(); touch(); });
 $('cut3').addEventListener('change', e=>{ st.d3.cut=e.target.checked; syncW(); touch(); });
 $('glass3').addEventListener('change', e=>{ st.d3.glass=e.target.checked; touch(); });
+$('shadow3').addEventListener('change', e=>{ st.d3.shadows=e.target.checked; touch(); });
 segClick('hypKind', d=>{ st.d3.hyp=d.h; touch(); updateLabels(); });
 $('hypWalls').addEventListener('change', e=>{ st.d3.hypW=e.target.checked; touch(); });
 for (const k of ['xy','xz','yz']) $('t3'+k).addEventListener('input', e=>{ st.d3['r'+k]=+e.target.value; $('t3'+k+'o').textContent=e.target.value+'°'; if (st.d3.spin3){ st.d3.spin3=false; $('spin3').checked=false; } touch(); });
@@ -178,19 +179,19 @@ $('prevChk').addEventListener('change', e=>{ st.prevInset=e.target.checked; });
 $('markChk').addEventListener('change', e=>{ st.centreMark=e.target.checked; touch(); });
 $('chartChk').addEventListener('change', e=>{ st.chartInset=e.target.checked; });
 // style
-segClick('cmode', d=>{ st.cmode=+d.c; $('cmodeNote').textContent=CMODE_NOTE[st.cmode]; refreshLegend(); });
+segClick('cmode', d=>{ st.cmode=+d.c; $('cmodeNote').textContent=CMODE_NOTE[st.cmode]; refreshLegend(); shared.recol=true; });
 const palBox=$('palettes');
 for (const [name, stops] of Object.entries(PALETTES)){ const b=document.createElement('button'); b.title=name.replace('_',' & ').replace(/^./,c=>c.toUpperCase()); b.dataset.p=name;
   b.style.background=`linear-gradient(90deg,${stops.map(c=>css(c)).join(',')})`; if (name===st.palette) b.classList.add('on');
-  b.addEventListener('click', ()=>{ st.palette=name; setRamp(); palBox.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); palLabel(); refreshLegend(); updateLabels(); touch(); });
+  b.addEventListener('click', ()=>{ st.palette=name; setRamp(); palBox.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); palLabel(); refreshLegend(); updateLabels(); recolour(); });
   palBox.appendChild(b); }
 $('palName').textContent='Palette: Aurora';
 function palLabel(){ const b=palBox.querySelector('button.on'); $('palName').textContent='Palette: '+(b?b.title:'')+(st.palRev?' (reversed)':''); }
-$('palRev').addEventListener('change', e=>{ st.palRev=e.target.checked; setRamp(); palLabel(); refreshLegend(); updateLabels(); touch(); });
+$('palRev').addEventListener('change', e=>{ st.palRev=e.target.checked; setRamp(); palLabel(); refreshLegend(); updateLabels(); recolour(); });
 $('cyc').addEventListener('input', e=>{ st.cycleSpeed=+e.target.value; $('cyco').textContent=st.cycleSpeed?st.cycleSpeed.toFixed(1)+'×':'off'; touch(); });
-$('dens').addEventListener('input', e=>{ st.density=+e.target.value; $('denso').textContent=st.density.toFixed(1)+'×'; touch(); });
+$('dens').addEventListener('input', e=>{ st.density=+e.target.value; $('denso').textContent=st.density.toFixed(1)+'×'; recolour(); });
 segClick('inside', d=>{ st.inside=+d.i; });
-segClick('bg', d=>{ st.bg=d.b; refreshLegend(); });
+segClick('bg', d=>{ st.bg=d.b; refreshLegend(); shared.recol=true; });
 $('lw').addEventListener('input', e=>{ st.lw=+e.target.value; $('lwo').textContent=st.lw.toFixed(1)+'×'; });
 
 // "While moving": how sharp the picture stays during drags, zooms and dives (see qLimits in state.js)

@@ -39,9 +39,11 @@ export function onKey(e){
     case 'j': case 'J': if (TYPES[st.type].julia && st.mode==='explore') $('juliaChk').click(); else used=false; break;
     case ']': st.iterAuto=false; $('iterAuto').checked=false; st.iter=Math.min(isExt()?100000:30000,Math.round(effIter(st.vE)*1.25)); $('iter').value=st.iter; touch(); updateDynamic(); break;
     case '[': st.iterAuto=false; $('iterAuto').checked=false; st.iter=Math.max(50,Math.round(effIter(st.vE)/1.25)); $('iter').value=st.iter; touch(); updateDynamic(); break;
-    case 'c': case 'C': clickNext('#palettes button',-1); break;   // Z X C V: previous / next shape, previous / next palette
-    case 'v': case 'V': clickNext('#palettes button',1); break;
-    case 'b': case 'B': clickNext('#cmode button', e.shiftKey?-1:1); break;   // colour mode (Shift+B back)
+    case 'c': clickNext('#palettes button',-1); break;   // C / V: previous / next palette; with Shift: previous / next colour mode
+    case 'v': clickNext('#palettes button',1); break;
+    case 'C': clickNext('#cmode button',-1); break;
+    case 'V': clickNext('#cmode button',1); break;
+    case 'b': case 'B': $('palRev').click(); break;   // reverse the palette on / off
     case 'k': case 'K': { const el=$('cyc'); if (+el.value>0){ lastCyc=+el.value; el.value=0; } else el.value=lastCyc; el.dispatchEvent(new Event('input')); break; }
     case 'r': case 'R': resetView(); break;
     case 'n': case 'N': if (st.mode==='orbit') $('orbNew').click(); else if (st.mode==='grow') $('growReplay').click(); else used=false; break;

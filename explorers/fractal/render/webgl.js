@@ -424,7 +424,9 @@ float map(vec3 p, out float tr){ vec3 q=u_rot3*p; bool tw=u_tw!=0.0;
 float mapD(vec3 p){ float t; return map(p,t); }
 #define ZERO min(u_it3,0)
 vec3 calcN(vec3 p, float e){ vec3 n=vec3(0.0); for (int i=ZERO;i<4;i++){ vec3 k=2.0*vec3(float(((i+3)>>1)&1), float((i>>1)&1), float(i&1))-1.0; n+=k*mapD(p+k*e); } return normalize(n); }
+#ifdef SHADOWS
 float shadowRay(vec3 ro, vec3 rd){ float L=min(u_bound,u_view), res=1.0, t=0.002*L; for (int i=ZERO;i<56;i++){ float h=mapD(ro+rd*t); res=min(res,10.0*h/t); t+=clamp(h,0.002*L,0.12*L); if (res<0.02 || t>2.5*L) break; } return clamp(res,0.0,1.0); }
+#endif
 float calcAO(vec3 p, vec3 n){ float o=0.0, s=1.0, u=min(u_bound,u_view)*0.04; for (int i=ZERO+1;i<=5;i++){ float h=u*float(i); o+=(h-mapD(p+n*h))*s; s*=0.6; } return clamp(1.0-1.6*o/u,0.0,1.0); }
 // each shape's orbit-trap value stretched over the whole palette (ranges measured from typical views)
 vec3 baseCol(vec3 p, float tr){
@@ -469,7 +471,10 @@ void main(){
   vec3 p=ro+rd*t, n=calcN(p,max(pixA*t*0.5,1e-6));
   vec3 base=baseCol(p,tr);
   vec3 L=normalize(u_rotM*vec3(0.55,0.7,0.5));
-  float dif=clamp(dot(n,L),0.0,1.0), sh=(u_hq==1 && dif>0.0)?shadowRay(p+n*pixA*t*3.0,L):1.0, ao=calcAO(p,n);
+  float dif=clamp(dot(n,L),0.0,1.0), sh=1.0, ao=calcAO(p,n);
+#ifdef SHADOWS
+  if (dif>0.0) sh=shadowRay(p+n*pixA*t*3.0,L);   // Shadows on: cast in every frame, moving or still, so the colours always match
+#endif
   float spec=pow(clamp(dot(n,normalize(L-rd)),0.0,1.0),40.0)*dif*sh, sky=0.5+0.5*dot(n,u_rotM*vec3(0.0,1.0,0.0));
   float fres=pow(1.0-clamp(dot(n,-rd),0.0,1.0),3.0);
   float lit=(0.38+0.22*sky)*mix(0.6,1.0,ao) + 0.8*dif*sh*mix(0.75,1.0,ao);
@@ -490,9 +495,9 @@ const FS3P=(()=>{ const a=FS3.indexOf('float deBulb('), z=FS3.indexOf('float map
   for (const o of order){ const e=endOf(o.s); chunks[o.n]=body.slice(prev,e); prev=e; }
   return {head, tail, chunks}; })();
 const fs3Cache={};
-/** The 3D fragment shader for one shape (its index in SH3), with or without the see-through part. */
-export function fs3For(i, glass){ const k=i+(glass?'g':''); if (fs3Cache[k]) return fs3Cache[k]; const n=DE3[i]||'deBulb';
-  return fs3Cache[k]='#version 300 es\n'+(glass?'#define GLASS\n':'')+FS3P.head+FS3P.chunks[n]+'float mapRaw(vec3 p, out float tr){ return '+n+'(p,tr); }\n'+FS3P.tail; }
+/** The 3D fragment shader for one shape (its index in SH3), with or without the see-through part and cast shadows. */
+export function fs3For(i, glass, shadows){ const k=i+(glass?'g':'')+(shadows?'s':''); if (fs3Cache[k]) return fs3Cache[k]; const n=DE3[i]||'deBulb';
+  return fs3Cache[k]='#version 300 es\n'+(glass?'#define GLASS\n':'')+(shadows?'#define SHADOWS\n':'')+FS3P.head+FS3P.chunks[n]+'float mapRaw(vec3 p, out float tr){ return '+n+'(p,tr); }\n'+FS3P.tail; }
 function mkCtx(cv){
   const g=cv.getContext('webgl2',{antialias:false, preserveDrawingBuffer:true, alpha:false}); if (!g) return null;
   const buf=g.createBuffer(); g.bindBuffer(g.ARRAY_BUFFER,buf); g.bufferData(g.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),g.STATIC_DRAW);

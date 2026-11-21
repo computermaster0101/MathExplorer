@@ -12,6 +12,9 @@ export let cssW=800, cssH=600, bufScale=1, ovScale=1;
 export const baseDpr=()=>Math.min(window.devicePixelRatio||1,2);
 shared.dirty = true; let hqDone=false, lastChange=0;
 export function touch(){ shared.dirty=true; hqDone=false; lastChange=performance.now(); }
+/** A colour-only change (palette, reverse, density, colour mode, background): nothing moved, so redraw once at full quality
+ * straight away, instead of the softer moving resolution first (that showed as a heavy, blurry flash before it sharpened). */
+export function recolour(){ shared.recol=true; touch(); }
 export function sizeBuffers(){
   const r=glc.parentElement.getBoundingClientRect(); cssW=Math.max(1,r.width); cssH=Math.max(1,r.height);
   const b=baseDpr(); let s= st.mode==='grow' ? 1 : (st.mode==='d3' ? Math.min(b,1.5) : b)*st.q;

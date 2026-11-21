@@ -27,29 +27,48 @@ const release = () => held.clear();
 window.addEventListener('blur', release);
 document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
 
-/** Shared keyboard settings, remembered in this browser. invertY: ↑ ↓ work like an aeroplane (up tips the view down). */
-export const keyPrefs = { invertY: false };
-try { keyPrefs.invertY = localStorage.getItem('mathexplorer.invertY') === '1'; } catch (e) { /* storage blocked: default */ }
-// every explorer's Keyboard shortcuts group has an "Invert up / down" box with this id (only one panel is attached at a time)
+/**
+ * Shared keyboard settings, remembered in this browser. invertY: ↑ ↓ work like an aeroplane (up tips the view down).
+ * navSpeed: how fast the driving keys turn and slide, as a multiple of the explorers' base speeds (0.1–2, default 0.5).
+ */
+export const keyPrefs = { invertY: false, navSpeed: 0.5 };
+try { keyPrefs.invertY = localStorage.getItem('mathexplorer.invertY') === '1';
+  const n = parseFloat(localStorage.getItem('mathexplorer.navSpeed')); if (n >= 0.1 && n <= 2) keyPrefs.navSpeed = n; } catch (e) { /* storage blocked: defaults */ }
+const showNav = root => { const o = root.querySelector('#navSpeedo'); if (o) o.textContent = keyPrefs.navSpeed.toFixed(2) + '×'; };
+// every explorer's Keyboard shortcuts group has these controls with these ids (only one panel is attached at a time)
 document.addEventListener('change', e => {
   if (e.target && e.target.id === 'invertY') {
     keyPrefs.invertY = e.target.checked;
     try { localStorage.setItem('mathexplorer.invertY', keyPrefs.invertY ? '1' : '0'); } catch (err) { /* not saved */ }
   }
 });
-/** Tick the invert box in a freshly attached panel to match the saved setting. */
-export const syncKeyPrefs = root => { const c = root.querySelector('#invertY'); if (c) c.checked = keyPrefs.invertY; };
+document.addEventListener('input', e => {
+  if (e.target && e.target.id === 'navSpeed') {
+    keyPrefs.navSpeed = Math.min(2, Math.max(0.1, +e.target.value)); showNav(document);
+    try { localStorage.setItem('mathexplorer.navSpeed', String(keyPrefs.navSpeed)); } catch (err) { /* not saved */ }
+  }
+});
+/** Set the keyboard controls in a freshly attached panel to match the saved settings. */
+export const syncKeyPrefs = root => { const c = root.querySelector('#invertY'); if (c) c.checked = keyPrefs.invertY;
+  const s = root.querySelector('#navSpeed'); if (s) s.value = keyPrefs.navSpeed; showNav(root); };
 
+// Each axis eases toward the keys over about a fifth of a second, so a quick tap is a small nudge and letting go glides to a stop.
+const sm = { turnX: 0, turnY: 0, rawY: 0, slideX: 0, slideY: 0 };
+let smT = performance.now();
 /**
- * The driving keys held right now, each −1, 0 or 1. turnX/turnY: arrows (turnY follows the invert setting; rawY doesn't).
- * slideX/slideY: D−A and W−S. fast: Shift. any: something is held. recent: driven in the last 1.5 s.
+ * The driving keys, smoothed: each axis runs −1…1. turnX/turnY: arrows (turnY follows the invert setting; rawY doesn't).
+ * slideX/slideY: D−A and W−S. fast: Shift. scale: the Navigation speed setting (explorers multiply their speeds by it).
+ * any: something is held or still gliding to a stop. recent: driven in the last 1.5 s. Call it once per frame.
  */
 export function drive() {
+  const now = performance.now(), dt = Math.min(0.1, (now - smT) / 1000); smT = now;
   const h = k => (held.has(k) ? 1 : 0), up = h('ArrowUp') - h('ArrowDown');
-  const any = h('ArrowUp') + h('ArrowDown') + h('ArrowLeft') + h('ArrowRight') + h('w') + h('a') + h('s') + h('d') > 0;
-  if (any) lastDrive = performance.now();
-  return { turnX: h('ArrowRight') - h('ArrowLeft'), turnY: keyPrefs.invertY ? -up : up, rawY: up,
-    slideX: h('d') - h('a'), slideY: h('w') - h('s'), fast: held.has('Shift'), any, recent: performance.now() - lastDrive < 1500 };
+  const target = { turnX: h('ArrowRight') - h('ArrowLeft'), turnY: keyPrefs.invertY ? -up : up, rawY: up, slideX: h('d') - h('a'), slideY: h('w') - h('s') };
+  const pressed = Object.values(target).some(v => v !== 0), a = 1 - Math.exp(-dt / 0.18);
+  let moving = false;
+  for (const k in sm) { sm[k] += (target[k] - sm[k]) * a; if (Math.abs(sm[k]) < 0.01 && !target[k]) sm[k] = 0; if (sm[k]) moving = true; }
+  if (pressed) lastDrive = now;
+  return { ...sm, fast: held.has('Shift'), scale: keyPrefs.navSpeed, any: moving, recent: now - lastDrive < 1500 };
 }
 
 // ---------- "Paused" tag on the stage (Space) ----------

@@ -9,7 +9,7 @@ export const st = { motionQ:'balanced', paused:false, keyDriveT:0, bla:true, cus
   grow:{shape:'koch', t:0, playing:true, zoom:false, zph:0, angle:{pyth:45, tree:28}, gv:{ox:0,oy:0,z:1}, fit:null},
   link:{auto:true, path:'circle', t:0.9},
   orbit:{data:null, t:0, playing:true, auto:true, step:0.4, style:'stay', circle:true},
-  d3:{axw:0, ayw:0, azw:0, spin4:false, spT:0, shape:'bulb', power:8, breathe:false, boxS:-1.8, w:0, sweep:false, lvl:5, yaw:0.7, pitch:0.32, dist:4.25, dragMode:'turn', floating:false, needAim:false, aimT:0, aim:null, target:null, dive:false, extra:0, twist:0, twAnim:false, rxy:0, rxz:0, ryz:0, spin3:false, cut:false, glass:false, hyp:'534', hypW:false, bsBreathe:false, bsT:0, twT:0, turn:0, t:0, q:0.6, wt:0} };
+  d3:{axw:0, ayw:0, azw:0, spin4:false, spT:0, shape:'bulb', power:8, breathe:false, boxS:-1.8, w:0, sweep:false, lvl:5, yaw:0.7, pitch:0.32, dist:4.25, dragMode:'turn', floating:false, needAim:false, aimT:0, aim:null, target:null, dive:false, extra:0, twist:0, twAnim:false, rxy:0, rxz:0, ryz:0, spin3:false, cut:false, glass:false, shadows:false, hyp:'534', hypW:false, bsBreathe:false, bsT:0, twT:0, turn:0, t:0, q:0.6, wt:0} };
 export const view = (a,extraRot=0) => ({cx:a[0], cy:a[1], lx:0, ly:0, bx:dblToFix(a[0]), by:dblToFix(a[1]), scale:a[2], rot:a[3]+extraRot, def:a[2]});
 export function juliaView(){ const T=TYPES[st.type], j=T.jview||[0,0,1.5]; return view([j[0],j[1],j[2],T.view[3]]); }
 export function fitV(v, a){ v.scale=Math.max(v.scale, v.scale*1.18/a); v.def=v.scale; return v; }

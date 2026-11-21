@@ -34,9 +34,11 @@ export function onKey(e){
     case ']': nudge('speed', 0.15); break;
     case '[': nudge('speed', -0.15); break;
     case 't': case 'T': { const el=$('turn'); if (+el.value!==0){ lastTurn=+el.value; el.value=0; } else el.value=lastTurn; el.dispatchEvent(new Event('input')); st.turnHold=false; break; }
-    case 'c': case 'C': clickNext('#palettes button',-1); break;   // Z X C V: previous / next shape, previous / next palette
-    case 'v': case 'V': clickNext('#palettes button',1); break;
-    case 'b': case 'B': clickNext('#cmode button', e.shiftKey?-1:1); break;   // colour mode (Shift+B back)
+    case 'c': clickNext('#palettes button',-1); break;   // C / V: previous / next palette; with Shift: previous / next colour mode
+    case 'v': clickNext('#palettes button',1); break;
+    case 'C': clickNext('#cmode button',-1); break;
+    case 'V': clickNext('#cmode button',1); break;
+    case 'b': case 'B': $('palRev').click(); break;   // reverse the palette on / off
     case 'r': case 'R': resetAll(); break;
     case 'k': case 'K': { const el=$('cyc'); if (+el.value>0){ lastCyc=+el.value; el.value=0; } else el.value=lastCyc; el.dispatchEvent(new Event('input')); break; }
     case 'n': case 'N': if (st.mode==='ping') $('pingNew').click(); else if (st.mode==='build' && !notAvail()) resetBuild(); else if (st.mode==='unfold' && !notAvail()) resetUnfold(); else used=false; break;

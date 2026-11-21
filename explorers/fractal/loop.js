@@ -65,12 +65,12 @@ function advance3D(dt){ const D=st.d3; let moving=ptrs.size>0;
   return moving; }
 // The driving keys (see drive() in js/shell/keys.js), every frame while held. 3D: arrows turn (round the shape, or in place
 // while diving) and W A S D slide. 2D: both pan. Shift is three times faster. Steering a 2D dive pauses its own steering.
-function driveKeys(dt){ const k=drive(); if (!k.any || notAvail()) return false; const f=k.fast?3:1;
-  if (st.mode==='d3'){ const D=st.d3;
-    if ((k.turnX||k.turnY) && !D.warp) turn3(-k.turnX*1.1*f*dt, -k.turnY*0.9*f*dt, !!D.dive);
-    if (k.slideX||k.slideY){ const px=0.55*cssH*f*dt; pan3(-k.slideX*px, k.slideY*px); }
+function driveKeys(dt){ const k=drive(); if (!k.any || notAvail()) return false; const f=(k.fast?3:1)*k.scale;   // scale: the Navigation speed setting
+  if (st.mode==='d3'){ const D=st.d3, g=D.dive?0.45:1;   // gentler while diving: the view is close and moving already
+    if ((k.turnX||k.turnY) && !D.warp) turn3(-k.turnX*1.1*f*g*dt, -k.turnY*0.9*f*g*dt, !!D.dive);
+    if (k.slideX||k.slideY){ const px=0.55*cssH*f*g*dt; pan3(-k.slideX*px, k.slideY*px); }
     return true; }
-  const x=Math.sign(k.slideX+k.turnX), y=Math.sign(k.slideY+k.rawY), px=0.5*cssH*f*dt; if (!x && !y) return false;
+  const cl=v=>Math.max(-1,Math.min(1,v)), x=cl(k.slideX+k.turnX), y=cl(k.slideY+k.rawY), px=0.5*cssH*f*(st.dive?0.5:1)*dt; if (!x && !y) return false;
   if (st.mode==='grow'){ st.grow.gv.ox-=x*px; st.grow.gv.oy+=y*px; touch(); return true; }
   if (st.mode==='explore' || st.mode==='orbit'){ const d=viewDescs()[0]; if (!d) return false; panBy(d, -x*px, y*px); if (st.dive) st.keyDriveT=1.5; return true; }
   return false; }
@@ -136,7 +136,9 @@ export function loop(now){
   let goHQ=false;
   if (st.mode!=='grow' && !notAvail()){      // drop resolution while moving if frames get slow; full quality once still
     const L=qLimits(), qMax=L.max; if (st.q<L.floor) st.q=L.floor;   // see "While moving" in View & detail
-    if (anim || shared.dirty){ if (shared.hqShown || st.prog){ st.q=Math.min(qMax, st.qMove||qMax); shared.hqShown=false; } st.prog=null;
+    const recol=shared.recol && !anim && !ptrs.size; shared.recol=false;
+    if (recol && !st.prog){ if (!shared.hqShown) st.qMove=st.q; st.q=1; goHQ=true; }   // colours only: straight to the sharp picture
+    else if (anim || shared.dirty){ if (shared.hqShown || st.prog){ st.q=Math.min(qMax, st.qMove||qMax); shared.hqShown=false; } st.prog=null;
       if (anim){ dtAvg=dtAvg*0.9+dt*1000*0.1; adjustPace(now, qMax, dt*1000); }
       lastStill=now; }
     else if (!shared.hqShown && !st.prog && now-lastStill>240){ st.qMove=st.q; st.q=1; goHQ=true; pace.every=1; pace.probeN=0; } }

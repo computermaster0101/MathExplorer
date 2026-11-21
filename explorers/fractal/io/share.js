@@ -27,7 +27,7 @@ export function getState(){ const v=st.vE, dg=clamp(Math.ceil(-Math.log10(v.scal
   ly:st.lyaSeq, bm:st.budMode, bl:st.bla?1:0, ed:st.endless?1:0, sd:st.steer?1:0,
   g:[sh.shape, growStage(GROW[sh.shape],sh.t).k, sh.playing?1:0, sh.zoom?1:0, sh.angle.pyth, sh.angle.tree],
   l:[st.link.auto?1:0, st.link.path], o:st.orbit.data?[r6(st.orbit.data.p0[0]), r6(st.orbit.data.p0[1]), st.orbit.auto?1:0]:null,
-  d:[D.shape, r6(D.power), r6(D.boxS), r6(D.w), D.lvl, r6(D.twist), r6(D.yaw), r6(D.pitch), +D.dist.toPrecision(9), D.target?D.target.map(r6):0, r6(D.turn), D.breathe?1:0, D.sweep?1:0, D.twAnim?1:0, D.dragMode, r6(D.axw), r6(D.ayw), r6(D.azw), D.spin4?1:0, D.nestM||0, r6(D.rxy), r6(D.rxz), r6(D.ryz), D.spin3?1:0, D.cut?1:0, D.bsBreathe?1:0, D.glass?1:0, D.hyp||'534', D.hypW?1:0] };
+  d:[D.shape, r6(D.power), r6(D.boxS), r6(D.w), D.lvl, r6(D.twist), r6(D.yaw), r6(D.pitch), +D.dist.toPrecision(9), D.target?D.target.map(r6):0, r6(D.turn), D.breathe?1:0, D.sweep?1:0, D.twAnim?1:0, D.dragMode, r6(D.axw), r6(D.ayw), r6(D.azw), D.spin4?1:0, D.nestM||0, r6(D.rxy), r6(D.rxz), r6(D.ryz), D.spin3?1:0, D.cut?1:0, D.bsBreathe?1:0, D.glass?1:0, D.hyp||'534', D.hypW?1:0, D.shadows?1:0] };
   if (typeof customState==='function') S.f=customState();
   return S; }
 export function encodeState(){ return 'f4-'+b32enc(new TextEncoder().encode(JSON.stringify(getState()))); }
@@ -52,7 +52,7 @@ export function applyState(S){ if (!S) return;
     setCheck('endlessChk',S.ed); setCheck('steerChk',S.sd);
     if (S.l){ setCheck('linkAuto',S.l[0]); if (S.l[1]) { st.link.path=S.l[1]; setSeg($('linkPath'), document.querySelector(`#linkPath [data-p="${S.l[1]}"]`)); } }
     if (S.d){ const d=S.d; d[0]=({box4:'box',apo4:'apo'})[d[0]]||d[0]; { const b=document.querySelector(`.sh3 [data-s3="${d[0]}"]`); if (b) b.click(); } setRange('pw3',d[1]); setRange('bs3',d[2]); setRange('lvl3',d[4]); setRange('tw3',d[5]); setRange('turn3',d[10]);
-      setCheck('cut3',d[24]?1:0); setCheck('breathe',d[11]); setCheck('bsBreathe',d[25]?1:0); setCheck('glass3',d[26]?1:0); clickIn('hypKind','h',['435','534','535','353'].includes(String(d[27]))?String(d[27]):'534'); setCheck('hypWalls',d[28]?1:0); setCheck('sweep3',d[12]); setCheck('twAnim',d[13]); setCheck('spin3',d[23]?1:0); if (d[14]) clickIn('drag3','dm',d[14]);
+      setCheck('cut3',d[24]?1:0); setCheck('breathe',d[11]); setCheck('bsBreathe',d[25]?1:0); setCheck('glass3',d[26]?1:0); clickIn('hypKind','h',['435','534','535','353'].includes(String(d[27]))?String(d[27]):'534'); setCheck('hypWalls',d[28]?1:0); setCheck('shadow3',d[29]?1:0); setCheck('sweep3',d[12]); setCheck('twAnim',d[13]); setCheck('spin3',d[23]?1:0); if (d[14]) clickIn('drag3','dm',d[14]);
       Object.assign(st.d3,{w:clamp(+d[3]||0,-1,1), yaw:d[6], pitch:d[7], dist:d[8], target:d[9]?d[9].slice():null, axw:+d[15]||0, ayw:+d[16]||0, azw:+d[17]||0, spin4:!!d[18], nestM:d[0]==='nest'?(+d[19]||0):0, rxy:+d[20]||0, rxz:+d[21]||0, ryz:+d[22]||0, spin3:!!d[23], cut:!!d[24], bsBreathe:!!d[25]}); syncT3(); $('cut3').checked=st.d3.cut; $('spin4').checked=st.d3.spin4; syncR4(); syncW(); }
     if (S.g){ const g=S.g; clickIn('growShapes','g',g[0]); st.grow.angle.pyth=g[4]||45; st.grow.angle.tree=g[5]||28; }
     if (S.m) setMode(S.m);
@@ -85,7 +85,7 @@ export function viewCode(){ const S=getState(), P=new URLSearchParams(), on2D=['
     if (d[0]==='box') P.set('box',n6(d[2]));
     if (d[5]) P.set('twist',n6(d[5])); if (d[13]) P.set('twanim','1');
     if (d[20]||d[21]||d[22]) P.set('turn3d',_j([d[20],d[21],d[22]])); if (d[23]) P.set('spin3','1'); if (d[25]) P.set('bbreathe','1');
-    if (d[24]) P.set('cut','1'); if (d[26]) P.set('glass','1'); if (d[0]==='hyp'){ P.set('hyp',String(d[27])); if (d[28]) P.set('hw','1'); }
+    if (d[24]) P.set('cut','1'); if (d[26]) P.set('glass','1'); if (d[29]) P.set('shadow','1'); if (d[0]==='hyp'){ P.set('hyp',String(d[27])); if (d[28]) P.set('hw','1'); }
     if (S3[d[0]] && (S3[d[0]].four || d[24])){ if (d[3]) P.set('w',n6(d[3])); if (d[12]) P.set('sweep','1'); if (d[15]||d[16]||d[17]) P.set('knife',_j([d[15],d[16],d[17]])); if (d[18]) P.set('spin4','1'); }
     P.set('lvl',String(d[4])); P.set('cam',_j([d[6],d[7],d[8]])); if (d[9]) P.set('tgt',_j(d[9])); if (d[10]) P.set('turn',n6(d[10])); if (d[14]!=='turn') P.set('drag',d[14]); if (d[19]) P.set('nl',String(d[19])); if (!S.ed) P.set('endless','0'); }
   P.set('pal',S.p); if (S.rv) P.set('rev','1'); if (S.bg!=='0b0d12') P.set('bg',S.bg); if (S.dn!==1) P.set('dn',n6(S.dn)); if (S.cy) P.set('cy',n6(S.cy));
@@ -110,7 +110,7 @@ export function parseView(code){
   else { const old=!has('v'), s3n=({box4:'box',apo4:'apo'})[g('s3')]||g('s3'), sh=S3[s3n]?s3n:'bulb', D=st.d3, cam=nums('cam'), tg=has('tgt')?nums('tgt'):null, kn=has('knife')?nums('knife'):[0,0,0];
     const ok=a=>a&&a.every(isFinite);
     S.d=[sh, num('pow3',8), num('box',-1.8), num('w',0), num('lvl',5), num('twist',!has('v')&&(sh==='kifs'||sh==='kifs4')?20:0), ok(cam)&&cam.length===3?cam[0]:0.7, ok(cam)&&cam.length===3?cam[1]:0.32, ok(cam)&&cam.length===3?cam[2]:0,
-      ok(tg)&&tg.length===3?tg:0, num('turn',old?0.25:0), g('breathe')==='1'?1:0, old?(g('sweep')==='0'||!S3[sh].four?0:1):(g('sweep')==='1'?1:0), old?(g('twanim')==='0'||!(sh==='kifs'||sh==='kifs4')?0:1):(g('twanim')==='1'?1:0), g('drag')==='move'?'move':'turn', ok(kn)?kn[0]:0, ok(kn)?kn[1]:0, ok(kn)?kn[2]:0, g('spin4')==='1'?1:0, Math.max(0,Math.round(num('nl',0))), ...(()=>{ const t=has('turn3d')?nums('turn3d'):[0,0,0]; return ok(t)&&t.length===3?t:[0,0,0]; })(), g('spin3')==='1'?1:0, g('cut')==='1'?1:0, g('bbreathe')==='1'?1:0, g('glass')==='1'?1:0, g('hyp')||'534', g('hw')==='1'?1:0];
+      ok(tg)&&tg.length===3?tg:0, num('turn',old?0.25:0), g('breathe')==='1'?1:0, old?(g('sweep')==='0'||!S3[sh].four?0:1):(g('sweep')==='1'?1:0), old?(g('twanim')==='0'||!(sh==='kifs'||sh==='kifs4')?0:1):(g('twanim')==='1'?1:0), g('drag')==='move'?'move':'turn', ok(kn)?kn[0]:0, ok(kn)?kn[1]:0, ok(kn)?kn[2]:0, g('spin4')==='1'?1:0, Math.max(0,Math.round(num('nl',0))), ...(()=>{ const t=has('turn3d')?nums('turn3d'):[0,0,0]; return ok(t)&&t.length===3?t:[0,0,0]; })(), g('spin3')==='1'?1:0, g('cut')==='1'?1:0, g('bbreathe')==='1'?1:0, g('glass')==='1'?1:0, g('hyp')||'534', g('hw')==='1'?1:0, g('shadow')==='1'?1:0];
     if (!(S.d[8]>0)) S.d[8]=null; }
   return S; }
 // a pasted link, a #code, or an old f3-/f4- code

@@ -21,17 +21,17 @@ export const toggleFly=()=>(fly.on ? stopFly() : startFly());
 export function flySpeed(f){ fly.speed=Math.min(6, Math.max(0.2, fly.speed*f)); }
 /** Every frame: apply the held keys, and move forward while flying (not while paused). Returns true if anything moved. */
 export function driveStep(dt){
-  const k=drive(), f=k.fast?3:1;
+  const k=drive(), f=(k.fast?3:1)*k.scale;   // scale: the Navigation speed setting
   if (!fly.on){ if (!k.any) return false;
     if (k.turnX||k.turnY) rotatePivot(k.turnX*1.3*f*dt, -k.turnY*1.1*f*dt);   // like dragging: → turns it right, ↑ tips it up
     if (k.slideX||k.slideY){ const z=camera.position.z, v=0.45*z*f*dt, lim=0.6*z;
       camera.position.x=Math.max(-lim, Math.min(lim, camera.position.x+k.slideX*v)); camera.position.y=Math.max(-lim, Math.min(lim, camera.position.y+k.slideY*v)); }
     return true; }
-  const r=camera.position.length(), v=fly.speed*(0.12+0.28*r)*f;   // slower near the middle
-  if (k.turnX) camera.rotateY(-k.turnX*1.1*f*dt);
-  if (k.turnY) camera.rotateX(k.turnY*0.9*f*dt);
-  if (k.slideX) camera.translateX(k.slideX*v*dt*1.2);
-  if (k.slideY) camera.translateY(k.slideY*v*dt*1.2);
+  const r=camera.position.length(), v=fly.speed*(0.12+0.28*r);   // forward speed (+ and −), slower near the middle; the keys only steer
+  if (k.turnX) camera.rotateY(-k.turnX*0.65*f*dt);   // turning in flight is gentler: the whole view swings
+  if (k.turnY) camera.rotateX(k.turnY*0.55*f*dt);
+  if (k.slideX) camera.translateX(k.slideX*v*f*dt*1.2);
+  if (k.slideY) camera.translateY(k.slideY*v*f*dt*1.2);
   if (st.paused) return k.any;
   camera.translateZ(-v*dt);
   // flown out the far side and not steering: turn back toward a spot near the middle

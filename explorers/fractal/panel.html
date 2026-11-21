@@ -139,6 +139,7 @@
     <div id="wRow" style="margin-top:12px">
       <label class="check" id="cutRow" style="margin-top:0"><input type="checkbox" id="cut3"> Cut with the knife (shows the inside)</label>
       <label class="check"><input type="checkbox" id="glass3"> See-through bubbles (every surface a soap film)</label>
+      <label class="check"><input type="checkbox" id="shadow3"> Shadows (a deeper look; slower, so the picture is softer while moving)</label>
       <div class="lbl" style="margin-top:8px"><span id="knifeLbl">Knife position (W)</span> <b id="w3o">0.00</b></div>
       <input type="range" id="w3" min="-100" max="100" value="0" step="1" style="width:100%">
       <label class="check"><input type="checkbox" id="sweep3"> <span id="sweepLbl">Sweep the knife through 4D</span></label>
@@ -289,7 +290,8 @@
     <tr><td><kbd>J</kbd></td><td>Julia set on / off</td></tr>
     <tr><td><kbd>[ ]</kbd></td><td>Fewer / more iterations</td></tr>
     <tr><td><kbd>C V</kbd></td><td>Previous / next palette</td></tr>
-    <tr><td><kbd>B</kbd></td><td>Next colour mode (Shift+B back)</td></tr>
+    <tr><td><kbd>Shift + C V</kbd></td><td>Previous / next colour mode</td></tr>
+    <tr><td><kbd>B</kbd></td><td>Reverse the palette on / off</td></tr>
     <tr><td><kbd>K</kbd></td><td>Colour cycling on / off</td></tr>
     <tr><td><kbd>R</kbd></td><td>Reset view</td></tr>
     <tr><td><kbd>N</kbd></td><td>New orbit point / replay growth</td></tr>
@@ -298,5 +300,6 @@
     <tr><td><kbd>E / Q</kbd></td><td>Expand / collapse all sections</td></tr>
     <tr><td><kbd>?</kbd></td><td>Open this list</td></tr>
   </table></div>
-  <div class="sec"><label class="check" style="margin-top:0"><input type="checkbox" id="invertY"> Invert up / down (aeroplane style: ↑ tips the view down)</label><p class="note">Shared by both explorers and remembered in this browser. Only the arrow keys flip; dragging stays as it is.</p></div>
+  <div class="sec"><label class="check" style="margin-top:0"><input type="checkbox" id="invertY"> Invert up / down (aeroplane style: ↑ tips the view down)</label>
+    <div class="row" style="margin-top:8px"><span style="width:110px">Navigation speed</span><input type="range" id="navSpeed" min="0.1" max="2" step="0.05" value="0.5"><output id="navSpeedo">0.50×</output></div><p class="note">Both are shared by the two explorers and remembered in this browser. Invert only flips the arrow keys (dragging stays as it is). Navigation speed sets how fast the arrows and W A S D turn and slide; steering during a dive or a flight is gentler still.</p></div>
 </div></details>
