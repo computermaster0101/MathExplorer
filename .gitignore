@@ -1,0 +1,9 @@
+# Music and recordings are for local testing only: songs are copyrighted, and recordings are large.
+*.mp3
+*.wav
+*.m4a
+*.aac
+*.ogg
+*.flac
+*.webm
+*.mp4
