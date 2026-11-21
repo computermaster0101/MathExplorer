@@ -69,7 +69,7 @@ function setStats(a,la,b,lb,c,lc){ $('s1').textContent=a; $('s1l').textContent=l
 export const curName=()=> st.mode==='grow' ? GROW[st.grow.shape].name : st.mode==='d3' ? S3[st.d3.shape].name : TYPES[st.type].name;
 export function updateLabels(){
   $('gv-shapes').textContent=curName(); $('gv-style').textContent=st.palette.replace('_',' & ');
-  $('g-ctl').querySelector('.gt').textContent={explore:'Explore',grow:'Grow',link:'Julia link',orbit:'Orbit',d3:'3D · 4D'}[st.mode]+' controls';
+  $('g-ctl').querySelector('.gt').textContent={explore:'Explore',grow:'Grow',link:'Julia link',orbit:'Orbit',d3:'3D'}[st.mode]+' controls';
   const T=TYPES[st.type], jv=st.julia||T.juliaOnly; let about='', more='';
   if (st.mode==='grow'){ const sh=GROW[st.grow.shape]; $('title').textContent=sh.name; $('subtitle').textContent=`fractal dimension ${sh.dim?sh.dim.toFixed(3)+' = '+sh.dimTxt:sh.dimTxt}`;
     about=`<strong>${sh.name}.</strong> ${sh.info}`; more=guideHTML('grow'); }
