@@ -5,9 +5,10 @@ import { dotN } from '../geometry/common.js';
 import { SHAPES, makeDuo } from '../geometry/polytopes.js';
 import { HD_MAKE } from '../geometry/higher-dim.js';
 import { WY_STOPS, makeMorph } from '../geometry/wythoff.js';
-import { HOME, pivot } from '../render/scene.js';
+import { HOME, camera, pivot } from '../render/scene.js';
 import { setStereo } from '../render/stereo.js';
 import { setZoomZ, vel } from '../input/orbit.js';
+import { stopFly } from '../input/fly.js';
 import { getBuild, stageStart } from '../modes/build.js';
 import { newPing } from '../modes/ping.js';
 import { notAvail, updateCellLabel, updateEuler, updateFaceNote, updateLabels } from './text.js';
@@ -55,6 +56,7 @@ $('play').addEventListener('click', togglePlay);
 // Reset view: everything about how the shape is shown goes back to how the page starts (the shape and the colours stay)
 function setCheckP(id, on){ const e=$(id); if (e && e.checked!==!!on) e.click(); }
 export function resetAll(){
+  stopFly(); camera.position.x=camera.position.y=0; st.paused=false;   // back to the normal outside view
   st.hdA=0; for (const k of ['xy','xw','yw','zw']) st[k]=0; syncAngles();
   pivot.quaternion.setFromEuler(HOME); setZoomZ(8.5); vel.x=vel.y=0; shared.fitScale=null;
   clickData('#spinstyle','y','tumble'); if (st.spin) togglePlay(); st.turnHold=false;   // Reset view stops all motion, like the Fractal Explorer

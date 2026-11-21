@@ -40,6 +40,7 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 .sbtn{background:rgba(19,22,30,.82);border:1px solid var(--line);color:var(--text);font:500 12px Inter,sans-serif;padding:6px 10px;border-radius:8px;cursor:pointer}
 .sbtn:hover{border-color:#36405a}
 #zenExit{position:absolute;top:12px;right:12px;display:none;z-index:6;transition:opacity .5s}
+#pausedTag{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:6;padding:5px 12px;border-radius:999px;background:rgba(10,12,18,.72);border:1px solid rgba(255,255,255,.14);color:#e8ecf4;font-size:12px;letter-spacing:.02em;pointer-events:none}
 
 /* ---------- panel controls ---------- */
 .sec{margin-bottom:18px}

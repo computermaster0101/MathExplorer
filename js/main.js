@@ -18,7 +18,7 @@
 // element ids never clash and their own document queries only ever see their own controls.
 import { parseRoute, DEFAULT_EXPLORER, setActiveExplorer } from './shell/route.js';
 import { onLayoutChange } from './shell/layout.js';
-import { setKeyHandler } from './shell/keys.js';
+import { setKeyHandler, syncKeyPrefs } from './shell/keys.js';
 import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
 
 const EXPLORERS = {
@@ -46,7 +46,7 @@ async function mount(name) {
 
 // shared panel groups (Music & sound) sit inside the active explorer's panel, right after its Colour & style group
 function attach({ stageEl, panelEl }) {
-  stage.insertBefore(stageEl, $('stageBtns')); panel.append(panelEl);
+  stage.insertBefore(stageEl, $('stageBtns')); panel.append(panelEl); syncKeyPrefs(panelEl);
   const ctl = panelEl.querySelector('#g-style');
   panelEl.insertBefore(soundGroup, ctl ? ctl.nextSibling : null);
 }

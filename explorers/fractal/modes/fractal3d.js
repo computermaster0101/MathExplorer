@@ -244,6 +244,14 @@ export function retarget3(){ const h=raycast3(); if (!h) return false; const D=s
 // slide the camera sideways (and the point it looks at) by a screen drag, then re-aim at whatever surface is straight ahead
 export function pan3(dx, dy){ const D=st.d3, C=cam3(), k=D.dist/(cssH*1.6); if (!D.target) D.target=[0,0,0]; D.aim=null;
   D.target=[0,1,2].map(i=>D.target[i]-C.r[i]*dx*k+C.u[i]*dy*k); D.needAim=true; shared.vel3={x:0,y:0}; touch(); }
+/** Keyboard turning: round the shape, like dragging; or, while diving, in place (the camera stays put and looks round, then
+ * the dive heads for whatever surface is now straight ahead). */
+export function turn3(dyaw, dpitch, inPlace){ const D=st.d3; D.aim=null;
+  if (inPlace && D.target){ const C=cam3(); D.yaw+=dyaw; D.pitch=clamp(D.pitch+dpitch,-1.45,1.45);
+    const cp=Math.cos(D.pitch), bz=[cp*Math.sin(D.yaw), Math.sin(D.pitch), cp*Math.cos(D.yaw)];
+    D.target=C.pos.map((x,i)=>x-D.dist*bz[i]); D.needAim=true; }
+  else { D.yaw+=dyaw; D.pitch=clamp(D.pitch+dpitch,-1.45,1.45); }
+  touch(); }
 // tap a spot: swing round to face it and dive toward it
 export let tap3Miss=-1e9;
 export function tap3(x, y){ const D=st.d3, C=cam3(), ux=(x-cssW/2)/cssH, uy=(cssH/2-y)/cssH;

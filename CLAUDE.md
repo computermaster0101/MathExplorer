@@ -18,7 +18,7 @@ css/app.css                shared theme, layout and panel controls
 js/main.js                 explorer registry, routing, mount/start/stop lifecycle
 js/shell/route.js          #/<explorer>/<view-code> parsing, setViewCode, shareLink, activeExplorer
 js/shell/layout.js         hide panel / full screen (zen)
-js/shell/keys.js           shared keys (h f m Esc e q ?) and dispatch to the active explorer's onKey
+js/shell/keys.js           shared keys (h f m Esc e q ?), held driving keys (drive()), the Paused tag, dispatch to onKey
 js/shell/audio/            the one music player for the whole app (see "Music" below)
 explorers/<name>/          one folder per explorer: stage.html, panel.html, style.css, index.js + modules
 vendor/three/              three.js r128 ES module build
@@ -32,6 +32,11 @@ vendor/three/              three.js r128 ES module build
 - Explorer CSS must be scoped as `.app[data-explorer="<name>"] …`. Both explorer stylesheets are always loaded.
 - Explorers never touch `location.hash` or `history` directly. They use `setViewCode(name, code)` (ignored unless that explorer is active), `shareLink`, `codeFromText` (accepts pasted links or bare codes) and `parseRoute().code` at boot. Old fractal codes (`f3-…`, `f4-…`) still load through `codeFromText`.
 - Shell-owned controls (`#panelBtn`, `#zenBtn`, `#zenExit`, `#resetBtn`) and the shared keys are not bound by explorers. Each panel's keyboard group must keep the id `g-keys`, which `?` opens.
+- Keys are the same in both explorers: Space pauses and resumes everything moving (`st.paused`, gating every motion in the loop; with nothing moving it starts the mode's main motion), G dives or flies in, R resets, Z / X change shape (`,` / `.` too; Shift + Z / X change the number of dimensions on the polytopes), C / V change palette, B changes colour mode.
+  - The driving keys (arrows and W A S D, Shift for faster) never reach `onKey`. The shell keeps them in a held set, cleared on blur, and each explorer reads `drive()` every frame. The arrows turn and W A S D slides; in 2D both pan.
+  - `turnY` follows the shared "Invert up / down" box (`#invertY` in each `g-keys` group, saved in localStorage); `rawY` ignores it.
+  - Space is also blocked on key-up, and auto-repeat is ignored. After a mouse click, buttons, checkboxes and sliders give up focus. Otherwise Space also pressed the last-clicked button, and holding it flipped the pause on and off.
+  - Each loop calls `setPausedTag(st.paused)`.
 
 ## Music (js/shell/audio/)
 
@@ -98,4 +103,9 @@ These modules came from splitting large single-file apps, and they keep that cod
   - **Bubble foam:** `render/foam.js` pushes each face onto the 3-sphere, where it lies on a great sphere, so it projects to an exact sphere. Normals come from that sphere's centre. The subdivided points are built once per shape; each frame only turns and projects them with plain arithmetic (allocating per point cost 40+ ms a frame), then re-sorts whole faces back to front.
   - Both views force stereographic projection (`roundView`).
 - The "Bubble" finish is `bubbleMaterial()` in `render/scene.js`: a thin-film ShaderMaterial that works on instanced balls (instance colour) and on vertex-coloured meshes. Transparent balls are sorted back to front each frame.
+- Flying (`input/fly.js`, G): the camera leaves its spot on the z axis and moves freely. Normally it never rotates, and the shape group (`pivot`) turns instead.
+  - Speed eases down near the middle.
+  - After drifting out without steering, it turns back toward a random point near the middle.
+  - Stopping, or Reset view, restores the axis camera.
+  - Not flying, the arrows turn `pivot` like a drag and W A S D slide the camera sideways.
 - The modes (`modes/build.js`, `modes/unfold.js`, `modes/ping.js`, plus slice and explore) decide what to draw. `render/scene.js` owns the three.js scene, and `loop.js` holds the per-frame update. The inset canvases are drawn by `panels/`.

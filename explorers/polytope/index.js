@@ -20,6 +20,7 @@ import './render/stereo.js';
 import './render/packing.js';
 import './render/foam.js';
 import './input/orbit.js';
+import './input/fly.js';
 import './modes/build.js';
 import './modes/unfold.js';
 import './modes/ping.js';

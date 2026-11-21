@@ -2,13 +2,14 @@ import { shared } from './shared.js';
 import { $, clamp, lerp, smooth } from './util.js';
 import { TYPES } from './fractals/types.js';
 import { isExt, ptrs, qLimits, st } from './state.js';
+import { drive, setPausedTag } from '../../js/shell/keys.js';
 import { hexRGB, minus } from './color/palettes.js';
 import { ctxLost, gl, glc, octx, refSlots } from './render/webgl.js';
-import { cssH, cssW, deepT, extT, minScale, moveCentre, ovScale, runGrid, sizeBuffers, startGrid, touch } from './view.js';
+import { cssH, cssW, deepT, extT, minScale, moveCentre, ovScale, panBy, runGrid, sizeBuffers, startGrid, touch, viewDescs } from './view.js';
 import { drawBlit, grabFrame, render2DAll } from './render/bla.js';
 import { notAvail } from './ui/notice.js';
 import { budDraw, budStep } from './modes/buddhabrot.js';
-import { d3Extra, d3MinDist, dive3UI, f3Ready, nestDive, nestIn, nestOut, nestStraight, render3D, retarget3, setDive3, start3Warp, syncT3 } from './modes/fractal3d.js';
+import { d3Bound, d3Extra, d3MinDist, dive3UI, f3Ready, pan3, turn3, nestDive, nestIn, nestOut, nestStraight, render3D, retarget3, setDive3, start3Warp, syncT3 } from './modes/fractal3d.js';
 import { GROW, GROW_END, drawGrow, fern, growTotal } from './modes/grow.js';
 import { drawOrbit, newOrbit, orbitIdx } from './modes/orbit.js';
 import { drawCentreMark, drawLink, drawTapMark, pathC } from './modes/julia-link.js';
@@ -32,11 +33,19 @@ function advance3D(dt){ const D=st.d3; let moving=ptrs.size>0;
     while (D.dist<0.4 && Math.hypot(...D.target)<1.2 && g++<8) nestIn();
     while (D.dist>1.0 && (D.nestM||0)>0 && g++<16) nestOut(); }
   if (!ptrs.size && Math.abs(shared.vel3.x)+Math.abs(shared.vel3.y)>0.05){ D.yaw-=shared.vel3.x*0.008; D.pitch=clamp(D.pitch+shared.vel3.y*0.008,-1.45,1.45); shared.vel3.x*=0.9; shared.vel3.y*=0.9; moving=true; }
+  if (st.paused){   // Space: everything holds still; dragging, the keys and re-aiming after them still work
+    if (D.needAim){ D.aimT-=dt; if (!ptrs.size || D.aimT<=0){ D.aimT=0.15; D.needAim=false; if (!retarget3()) D.floating=true; } moving=true; }
+    return moving; }
   if (D.turn && !D.target){ D.yaw+=clk.yaw.delta(dt, 0.3*D.turn, 0.15*D.turn); moving=true; }
   if (D.aim){ const A=D.aim; A.t+=dt/0.8; const u=clamp(A.t,0,1), e=smooth(u); moving=true;
     D.target=[0,1,2].map(i=>lerp(A.T0[i],A.T1[i],e)); D.yaw=lerp(A.y0,A.y1,e); D.pitch=lerp(A.p0,A.p1,e); D.dist=Math.exp(lerp(A.l0,A.l1,e));
     if (u>=1){ D.aim=null; if (st.endless || D.dive){ D.dive=true; D.extra=d3Extra(); dive3UI(); } } }
   if (D.needAim){ D.aimT-=dt; if (!ptrs.size || D.aimT<=0){ D.aimT=0.15; D.needAim=false; const ok=retarget3(); if (!ok) D.floating=true; } moving=true; }
+  if (D.dive && D.floating && !D.aim && D.target && !D.warp){   // steered toward empty space: keep flying forward, looking for a surface ahead
+    const cp=Math.cos(D.pitch), bz=[cp*Math.sin(D.yaw), Math.sin(D.pitch), cp*Math.cos(D.yaw)], step=D.dist*(1-Math.exp(-dt*st.diveSpeed*0.3*diveEnergy()));
+    D.target=D.target.map((x,i)=>x-bz[i]*step); D.aimT-=dt; if (D.aimT<=0){ D.aimT=0.3; if (retarget3()) D.floating=false; }
+    if (Math.hypot(...D.target)>d3Bound()*4){ if (st.endless) start3Warp('floor'); else setDive3(false); }   // flown right out of it
+    moving=true; }
   if (D.dive && !D.floating && !D.aim){ const mn=d3MinDist(); D.dist=Math.max(mn, D.dist*Math.exp(-dt*st.diveSpeed*0.3*diveEnergy())); moving=true;
     const x=d3Extra(); if (x!==D.extra){ D.extra=x; retarget3(); }
     if (D.dist<=mn*1.0001){ if (st.endless) start3Warp('floor'); else setDive3(false); } }
@@ -54,6 +63,17 @@ function advance3D(dt){ const D=st.d3; let moving=ptrs.size>0;
   if (D.spin4){ D.spT+=dt; const wrap=a=>((a+180)%360+360)%360-180, g=clk.spin4.delta(dt, 1, 0.5); D.axw=wrap(D.axw+g*11); D.ayw=wrap(D.ayw+g*7); D.azw=wrap(D.azw+g*4.5); if (frameN%3===0) syncR4(); moving=true; }
   if (reacting()) moving=true;   // the music bends the shape every frame (see render3D)
   return moving; }
+// The driving keys (see drive() in js/shell/keys.js), every frame while held. 3D: arrows turn (round the shape, or in place
+// while diving) and W A S D slide. 2D: both pan. Shift is three times faster. Steering a 2D dive pauses its own steering.
+function driveKeys(dt){ const k=drive(); if (!k.any || notAvail()) return false; const f=k.fast?3:1;
+  if (st.mode==='d3'){ const D=st.d3;
+    if ((k.turnX||k.turnY) && !D.warp) turn3(-k.turnX*1.1*f*dt, -k.turnY*0.9*f*dt, !!D.dive);
+    if (k.slideX||k.slideY){ const px=0.55*cssH*f*dt; pan3(-k.slideX*px, k.slideY*px); }
+    return true; }
+  const x=Math.sign(k.slideX+k.turnX), y=Math.sign(k.slideY+k.rawY), px=0.5*cssH*f*dt; if (!x && !y) return false;
+  if (st.mode==='grow'){ st.grow.gv.ox-=x*px; st.grow.gv.oy+=y*px; touch(); return true; }
+  if (st.mode==='explore' || st.mode==='orbit'){ const d=viewDescs()[0]; if (!d) return false; panBy(d, -x*px, y*px); if (st.dive) st.keyDriveT=1.5; return true; }
+  return false; }
 // Choose between full rate and every other refresh, and nudge render quality only when clearly needed, in small steps,
 // so the picture doesn't keep sharpening and softening. Quality is the render scale (cost grows with its square).
 function adjustPace(now, qMax, dtMs){
@@ -86,14 +106,15 @@ export function loop(now){
   if (pace.every===2 && now-pace.lastDraw < pace.vsync*1.5){ requestAnimationFrame(loop); return; }   // skip this refresh
   pace.lastDraw=now; if (pace.simulate) pace.simulate();
   const dt=clamp((now-tPrev)/1000,0,0.12); tPrev=now;   // the first frame's timestamp can be slightly earlier than start-up
-  let anim=false;
+  let anim=false; setPausedTag(st.paused);
   { const c=colourStep(dt); if (c){ st.cycle=(st.cycle+c)%1; if (frameN%10===0) refreshLegend(); } if (reacting() && st.mode!=='grow') anim=true; }
-  if (st.cycleSpeed>0){ st.cycle=(st.cycle+dt*st.cycleSpeed*0.06)%1; anim=true; if (frameN%10===0) refreshLegend(); }
+  if (st.cycleSpeed>0 && !st.paused){ st.cycle=(st.cycle+dt*st.cycleSpeed*0.06)%1; anim=true; if (frameN%10===0) refreshLegend(); }
   if (ptrs.size) anim=true;
-  if (st.mode==='explore'){ if (st.fly){ advanceFly(dt); anim=true; } else if (st.dive){ const v=st.vE, ms=minScale(st.type);
-    st.manualT-=dt;
-    if (st.steer){ if (!shared.gridJob) startGrid('steer'); runGrid(5); }
-    if (st.steerTo){ const sc=v.scale, man=st.manualT>0, gain=man?1.8:0.9, mxv=man?1.0:st.steerCentreIn?0.9:0.45; let tx=st.steerTo[0]/sc*gain, ty=st.steerTo[1]/sc*gain; const m=Math.hypot(tx,ty); if (m>mxv){ tx*=mxv/m; ty*=mxv/m; }
+  st.keyDriveT-=dt;
+  if (st.mode==='explore' && !st.paused){ if (st.fly){ advanceFly(dt); anim=true; } else if (st.dive){ const v=st.vE, ms=minScale(st.type);
+    st.manualT-=dt; const keys=st.keyDriveT>0;   // steering with the keys: the automatic steering waits
+    if (st.steer && !keys){ if (!shared.gridJob) startGrid('steer'); runGrid(5); }
+    if (st.steerTo && !keys){ const sc=v.scale, man=st.manualT>0, gain=man?1.8:0.9, mxv=man?1.0:st.steerCentreIn?0.9:0.45; let tx=st.steerTo[0]/sc*gain, ty=st.steerTo[1]/sc*gain; const m=Math.hypot(tx,ty); if (m>mxv){ tx*=mxv/m; ty*=mxv/m; }
       const k=1-Math.exp(-dt/(man?0.3:0.6)); st.vel=[st.vel[0]+(tx-st.vel[0])*k, st.vel[1]+(ty-st.vel[1])*k];
       const mx=st.vel[0]*sc*dt, my=st.vel[1]*sc*dt; moveCentre(v,mx,my); st.steerTo=[st.steerTo[0]-mx, st.steerTo[1]-my]; }
     // Zoom: at the default 0.5× the picture doubles in size about every 3.5 s. While the middle is still in the black, ease
@@ -102,15 +123,16 @@ export function loop(now){
     if (v.scale<=ms){ if (st.endless) endlessWarp('floor'); else { st.dive=false; diveUI(); } }
     else if (st.endless && st.insideT>2.2) endlessWarp('inside');
     anim=true; } }
-  if (st.mode==='link' && st.link.auto && !notAvail()){ st.link.t=clk.link.step(st.link.t, dt, 2*Math.PI, cycleBeats(4), 0.15); const c=pathC(st.link.t), k=1+0.035*pulse()+0.015*voice(); st.jc=[c[0]*k, c[1]*k]; anim=true; }
+  if (st.mode==='link' && st.link.auto && !notAvail() && !st.paused){ st.link.t=clk.link.step(st.link.t, dt, 2*Math.PI, cycleBeats(4), 0.15); const c=pathC(st.link.t), k=1+0.035*pulse()+0.015*voice(); st.jc=[c[0]*k, c[1]*k]; anim=true; }
   if (st.mode==='explore' && TYPES[st.type].cpu) budStep();
   if (st.mode==='explore' && deepT() && !(st.dive && st.steer)){ st.probeT-=dt;
     if (st.probeT<=0 && !shared.gridJob){ st.probeT=0.6; if (st.vE.scale<=1e-5 && refSlots[0].d64) startGrid('probe'); else if (st.iterNeed){ st.iterNeed=0; touch(); } }
     runGrid(4); }
-  if (st.mode==='orbit' && st.orbit.playing && st.orbit.data && !notAvail()){ st.orbit.t+=clk.orbit.delta(dt, 1, st.orbit.step, true); const D=st.orbit.data, onBeat=clk.orbitGate.crossed();   // with the music: one step per beat, and a new point starts on a beat
+  if (st.mode==='orbit' && st.orbit.playing && st.orbit.data && !notAvail() && !st.paused){ st.orbit.t+=clk.orbit.delta(dt, 1, st.orbit.step, true); const D=st.orbit.data, onBeat=clk.orbitGate.crossed();   // with the music: one step per beat, and a new point starts on a beat
     if (st.orbit.auto && orbitIdx(st.orbit.t)>D.show+8 && (onBeat || clk.orbitGate.last===null)) newOrbit(); }
-  if (st.mode==='grow'){ const sh=GROW[st.grow.shape]; if (st.grow.zoom && sh.zoom){ st.grow.zph=(st.grow.zph+dt*0.35)%1; } else if (st.grow.playing){ st.grow.t+=clk.grow.delta(dt, 1, 0.5); if (st.grow.t>growTotal(sh)+GROW_END){ st.grow.t=0; fern.n=1e12; } } }
+  if (st.mode==='grow' && !st.paused){ const sh=GROW[st.grow.shape]; if (st.grow.zoom && sh.zoom){ st.grow.zph=(st.grow.zph+dt*0.35)%1; } else if (st.grow.playing){ st.grow.t+=clk.grow.delta(dt, 1, 0.5); if (st.grow.t>growTotal(sh)+GROW_END){ st.grow.t=0; fern.n=1e12; } } }
   if (st.mode==='d3') anim=advance3D(dt)||anim;
+  if (driveKeys(dt)) anim=true;
   let goHQ=false;
   if (st.mode!=='grow' && !notAvail()){      // drop resolution while moving if frames get slow; full quality once still
     const L=qLimits(), qMax=L.max; if (st.q<L.floor) st.q=L.floor;   // see "While moving" in View & detail

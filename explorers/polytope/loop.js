@@ -7,6 +7,8 @@ import { SHAPES } from './geometry/polytopes.js';
 import { camera, canvas, pivot, renderer, setFlash } from './render/scene.js';
 import { renderView } from './render/stereo.js';
 import { UP, pointers, rotatePivot, vel } from './input/orbit.js';
+import { driveStep } from './input/fly.js';
+import { setPausedTag } from '../../js/shell/keys.js';
 import { newPing, pingData, pingPhase, updateGeometry } from './modes/ping.js';
 import { drawInset, drawShadow } from './panels/cousin-inset.js';
 import { drawFlat, drawSliceView } from './panels/extra-panels.js';
@@ -27,8 +29,8 @@ export function startLoop(){ if (running) return; running=true; t0=performance.n
 export function stopLoop(){ running=false; }
 export function loop(now){
   if (!running) return;
-  const dt=Math.min(0.05,(now-t0)/1000); t0=now;
-  if ((st.mode==='explore' || st.mode==='ping' || (st.mode==='slice' && st.sliceSpin)) && st.spin){
+  const dt=Math.min(0.05,(now-t0)/1000); t0=now; setPausedTag(st.paused); const go=!st.paused;   // Space pauses every motion below
+  if (go && (st.mode==='explore' || st.mode==='ping' || (st.mode==='slice' && st.sliceSpin)) && st.spin){
     const g=clk.spin.delta(dt, 1, 0.5);   // seconds' worth of turning: real seconds, or half a second per beat with the music
     if (st.spinStyle==='double'){ st.xy=wrap(st.xy+20*st.speed*g); st.zw=wrap(st.zw+20*st.speed*g); }
     else { st.xw=wrap(st.xw+22*st.speed*g); st.zw=wrap(st.zw+13*st.speed*g); }
@@ -37,16 +39,17 @@ export function loop(now){
     if (SHAPES[st.shape].highD && st.mode!=='slice') st.hdA+=g*st.speed*0.35;   // and through the higher dimensions
     syncAngles();
   }
-  const cs=colourStep(dt);   // the music: treble shimmer, and a shift of the palette on each new bar
-  if (st.cycleSpeed>0 || cs){ st.cycle=(st.cycle+dt*st.cycleSpeed*0.06+cs)%1; shared.DIRCOL=[0,1,2,3].map(i=>wColor(-0.92+i*0.613)); shared.SOLID=wColor(0.35); shared.CELLCOL=[0,1,2,3,4,5,6,7].map(i=>wColor(-1+2*i/7)); if (st.ping.cache) st.ping.cache.RC=new Map(); if (frameN%10===0) refreshColours(); }
+  const cs=go ? colourStep(dt) : 0;   // the music: treble shimmer, and a shift of the palette on each new bar
+  if ((go && st.cycleSpeed>0) || cs){ st.cycle=(st.cycle+dt*st.cycleSpeed*0.06+cs)%1; shared.DIRCOL=[0,1,2,3].map(i=>wColor(-0.92+i*0.613)); shared.SOLID=wColor(0.35); shared.CELLCOL=[0,1,2,3,4,5,6,7].map(i=>wColor(-1+2*i/7)); if (st.ping.cache) st.ping.cache.RC=new Map(); if (frameN%10===0) refreshColours(); }
   if (shared.knifeAnim) shared.knifeAnim.t+=dt/1.1;
-  if (st.mode==='slice' && st.sweep){ st.sweepT=clk.sweep.step(st.sweepT, dt, 2*Math.PI, cycleBeats(1), 0.6); st.knifeU=Math.sin(st.sweepT); $('knife').value=Math.round(st.knifeU*100); }
-  if (st.mode==='build' && st.build.playing) st.build.t+=clk.build.delta(dt, 1, 0.5);
-  if (st.mode==='ping' && st.ping.playing){ st.ping.t+=clk.ping.delta(dt, 1, st.ping.step, true); const D=pingData(), onBeat=clk.pingGate.crossed();   // with the music: one step per beat, new pings start on a beat
+  if (go && st.mode==='slice' && st.sweep){ st.sweepT=clk.sweep.step(st.sweepT, dt, 2*Math.PI, cycleBeats(1), 0.6); st.knifeU=Math.sin(st.sweepT); $('knife').value=Math.round(st.knifeU*100); }
+  if (go && st.mode==='build' && st.build.playing) st.build.t+=clk.build.delta(dt, 1, 0.5);
+  if (go && st.mode==='ping' && st.ping.playing){ st.ping.t+=clk.ping.delta(dt, 1, st.ping.step, true); const D=pingData(), onBeat=clk.pingGate.crossed();   // with the music: one step per beat, new pings start on a beat
     if (st.ping.auto && st.ping.t/st.ping.step > pingPhase().end && (onBeat || clk.pingGate.last===null)) newPing(); }
-  if (st.mode==='unfold' && st.unf.playing){ st.unf.t+=clk.unf.delta(dt, 1, 0.5); [st.unf.u, st.unf.f]=unfCurve(st.unf.t); unfLabel(); }
-  if (st.turn && !st.turnHold && !pointers.size) pivot.rotateOnWorldAxis(UP, clk.turn.delta(dt, 0.35*st.turn, 0.175*st.turn));
+  if (go && st.mode==='unfold' && st.unf.playing){ st.unf.t+=clk.unf.delta(dt, 1, 0.5); [st.unf.u, st.unf.f]=unfCurve(st.unf.t); unfLabel(); }
+  if (go && st.turn && !st.turnHold && !pointers.size) pivot.rotateOnWorldAxis(UP, clk.turn.delta(dt, 0.35*st.turn, 0.175*st.turn));
   if (!pointers.size && (Math.abs(vel.x)+Math.abs(vel.y)>1e-5)){ rotatePivot(vel.x,vel.y); vel.x*=0.93; vel.y*=0.93; }
+  driveStep(dt);   // the arrows and W A S D, and flying
   pivot.scale.setScalar(1+0.05*pulse()); setFlash(flash());   // on each beat: pulse the shape, or flash the lights
   if (notAvail()){ pivot.visible=false; for (const c of document.querySelectorAll('#insets canvas')) c.style.display='none'; }
   else { pivot.visible=true; updateGeometry(); drawSliceView(); drawFlat(); drawInset(); drawShadow(); }

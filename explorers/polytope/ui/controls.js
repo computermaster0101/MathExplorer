@@ -10,6 +10,7 @@ import { renderView } from '../render/stereo.js';
 import { capsFor, kissOK } from '../render/packing.js';
 import { foamOK } from '../render/foam.js';
 import { vel } from '../input/orbit.js';
+import { toggleFly } from '../input/fly.js';
 import { I4, KNIFE_NOTES, KNIFE_TURN, knifeNow, newPing } from '../modes/ping.js';
 import { panelFit } from '../panels/extra-panels.js';
 import { notAvail, refreshColours, updateCellLabel, updateLabels } from './text.js';
@@ -25,6 +26,7 @@ export function unfLabel(){ const v=st.unf.u+st.unf.f; $('unf').value=Math.round
 export function resetUnfold(){ st.unf.t=0; st.unf.u=0; st.unf.f=0; st.unf.playing=true; $('unfPlay').textContent='Pause'; unfLabel(); shared.fitScale=null; }
 export function shapeChanged(keepView){ shared.vfigOn=false; if (st.mode==='slice' && !keepView) sliceHome(); st.cell=0; shared.fitScale=null; shared.sliceCen=null; panelFit.slice=null; const na=notAvail(); if (st.mode==='build' && !na) resetBuild(); if (st.mode==='unfold' && !na) resetUnfold(); if (st.mode==='ping') newPing(); shared.lastCap=''; updateCellLabel(); refreshColours(); updateLabels(); }
 export function setMode(m){
+  st.paused=false;
   st.mode=m; setSeg($('modes'), document.querySelector(`#modes [data-m="${m}"]`));
   document.querySelectorAll('[data-show]').forEach(el=>el.hidden=!el.dataset.show.split(' ').includes(m));
   document.querySelectorAll('details.grp').forEach(g=>{ const secs=g.querySelectorAll(':scope > .gb > .sec, :scope > .gb > .explain'); g.hidden = ![...secs].some(s=>!s.hidden); });
@@ -95,3 +97,5 @@ export function togglePlay(){ st.spin=!st.spin; st.turnHold=!st.spin; $('play').
 export function sliceHome(){   // Slice always starts the same way: no 4D turn, the home camera angle, and the knife at the end that meets the shape first
   st.hdA=0; for (const k of ['xy','xw','yw','zw']) st[k]=0; syncAngles(); pivot.quaternion.setFromEuler(HOME); vel.x=vel.y=0;
   st.sweepT=Math.PI/2; st.knifeU=1; $('knife').value=100; shared.sliceCen=null; panelFit.slice=null; shared.fitScale=null; }
+
+$('flyBtn').addEventListener('click', ()=>{ toggleFly(); st.paused=false; });   // the same as G
