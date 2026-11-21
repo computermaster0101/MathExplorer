@@ -10,7 +10,7 @@ import { symbolFor } from '../geometry/schlafli.js';
 import { pivot } from '../render/scene.js';
 import { buildStage, cellSummary, getBuild } from '../modes/build.js';
 import { flatData, unfoldData } from '../modes/unfold.js';
-import { echoAlpha, pingData, pingPhase, sliceInfo } from '../modes/ping.js';
+import { echoAlpha, pingData, pingPhase, roundView, sliceInfo } from '../modes/ping.js';
 import { sliceFaces } from '../panels/extra-panels.js';
 
 // ---------- text ----------
@@ -41,7 +41,7 @@ export function updateLabels(){
   updateEuler(); if (st.faceFill) updateFaceNote(); $('sym').textContent=symbolFor(SHAPES[st.shape]);
   { const shN=SHAPES[st.shape]; $('gv-shapes').textContent = shN.name + (st.shape==='hcube' ? '' : ''); }
   if (showNA()) return;
-  const sh=SHAPES[st.shape], pj=sh.packing ? 'stereographic' : {stereo:'stereographic',persp:'perspective',ortho:'orthographic'}[st.proj];
+  const sh=SHAPES[st.shape], pj=roundView(sh) ? 'stereographic' : {stereo:'stereographic',persp:'perspective',ortho:'orthographic'}[st.proj];
   if (st.mode==='explore'){ $('title').textContent=sh.name; $('subtitle').textContent=`${sh.alt} · ${pj} projection`;
     $('about').innerHTML=`<strong>${sh.name}.</strong> ${sh.info||''}`; if (sh.packing) setStats(sh.verts.length.toLocaleString(), sh.edges.length.toLocaleString(), sh.gens, 'balls', 'touching points', 'rounds of filling'); else if (sh.round) setStats(sh.verts.length, sh.edges.length, '—', 'mesh points', 'mesh lines', 'flat cells'); else if (sh.highD) setStats(sh.verts.length.toLocaleString(), sh.edges.length.toLocaleString(), sh.cells.toLocaleString(), 'corners', 'connections', sh.cellWord); else setStats(sh.verts.length, sh.edges.length, sh.cells); }
   else if (st.mode==='ping'){ $('title').textContent=`${sh.name}: ping`; $('subtitle').textContent='a pulse spreading edge by edge';

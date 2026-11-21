@@ -33,6 +33,24 @@ function cachedAux(name, key, P, o){
   return c.cv;
 }
 const styleKey=()=>[st.palette,st.palRev?1:0,st.cmode,st.density.toFixed(2),st.inside,st.bg,Math.round(st.cycle*50),st.power.toFixed(2)].join('|');
+// 2D cousin of a hyperbolic honeycomb: the disc tiling {p,r} (r polygons round each corner), drawn by folding each pixel with
+// two mirror lines through the middle and one mirror circle, the flat version of the 3D folding. {3,5,3} has no hyperbolic
+// flat cousin of that kind ({3,3} closes up into a tetrahedron), so it shows the triangles seven round a corner instead.
+let hypImg=null, hypKey='';
+function drawHypTiling(P){ const g=P.g, k=st.d3.hyp||'534', [p,r]= k==='353' ? [3,7] : [+k[0], +k[2]], pad=26, R=Math.min(P.W-24, P.H-pad-24)/2, cx=P.W/2, cy=pad+(P.H-pad-20)/2;
+  const key=[k,P.W,P.H,st.palette,st.cycle.toFixed(2)].join('|');
+  if (key!==hypKey){ hypKey=key; const W=Math.ceil(2*R), cv=document.createElement('canvas'); cv.width=cv.height=W; const c2=cv.getContext('2d'), im=c2.createImageData(W,W);
+    const a=Math.PI/p, d=Math.cos(Math.PI/r)/Math.sqrt(Math.cos(Math.PI/r)**2-Math.sin(a)**2), rho=Math.sqrt(d*d-1), n1=[Math.sin(a), -Math.cos(a)];
+    for (let j=0;j<W;j++) for (let i=0;i<W;i++){ let x=(i+0.5-R)/R, y=(R-j-0.5)/R; if (x*x+y*y>=1) continue; let inv=0, ds=1;
+      for (let n=0;n<60;n++){ let moved=false; if (y<0){ y=-y; moved=true; }
+        const t=x*n1[0]+y*n1[1]; if (t<0){ x-=2*t*n1[0]; y-=2*t*n1[1]; moved=true; }
+        const vx=x-d, vy=y, r2=vx*vx+vy*vy; if (r2<rho*rho){ const f=rho*rho/r2; x=d+vx*f; y=vy*f; ds*=f; inv++; moved=true; }
+        if (!moved) break; }
+      const edge=Math.abs(Math.hypot(x-d,y)-rho)/ds*R, col=palM(inv*0.17+0.05+st.cycle), o=(j*W+i)*4, e=Math.min(1, edge/1.2), sh=0.35+0.65*e;
+      im.data[o]=col[0]*255*sh; im.data[o+1]=col[1]*255*sh; im.data[o+2]=col[2]*255*sh; im.data[o+3]=255; }
+    c2.putImageData(im,0,0); hypImg=cv; }
+  g.drawImage(hypImg, cx-R, cy-R);
+  panelTitle(P, `2D cousin: {${p},${r}} tiling`, k==='353' ? 'triangles, seven round each corner' : `${({3:'triangles',4:'squares',5:'pentagons'})[p]}, ${r} round each corner`); }
 export function drawInsets(){
   const show=(cv,on)=>{ cv.style.display=on?'block':'none'; return on; }, T=TYPES[st.type], na=notAvail();
   if (na){ show(in1,false); show(in2,false); return; }
@@ -86,6 +104,7 @@ function drawCousin(P){
     g.drawImage(img,0,0,P.W,P.H); g.restore(); panelTitle(P,'2D cousin: Julia set', 'same recipe, c = −0.2 + 0.6i', true); return; }
   if (s==='mosely'){ const sh=GROW.vicsek, B=sh.build(4,1), pad=26, S=Math.min((P.W-24)/2,(P.H-pad-24)/2), cx=P.W/2, cy=pad+(P.H-pad-20)/2;
     B.draw({g, tf:p=>[cx+p[0]*S, cy-p[1]*S], s:S, lw:1}); panelTitle(P,'Each face: Vicsek fractal','centre and edge squares, corners gone'); return; }
+  if (s==='hyp'){ drawHypTiling(P); return; }
   if (s==='nest' || s==='flake' || s==='jcube'){ const W=P.W, H=P.H, cx=W/2, cy=26+(H-46)/2, R=Math.min(W-24,H-56)/2, col=(t,a)=>css(palM(t+st.cycle),a); g.lineCap='round';
     if (s==='nest'){ for (let k=0;k<9;k++){ const r=R*Math.pow(0.5,k), rot=k*Math.PI/4; if (r<1.2) break; g.strokeStyle=col(k*0.12); g.lineWidth=Math.max(0.8,2.2*Math.pow(0.8,k));
         for (let q=0;q<4;q++){ const a0=rot+q*Math.PI/2+0.42, a1=rot+(q+1)*Math.PI/2-0.42; g.beginPath(); g.arc(cx,cy,r,-a1,-a0); g.stroke(); } }

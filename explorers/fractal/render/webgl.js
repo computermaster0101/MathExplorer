@@ -215,13 +215,18 @@ precision highp float; precision highp int;
 uniform vec2 u_res; uniform vec3 u_cam; uniform mat3 u_rotM; uniform float u_fov;
 uniform int u_s3, u_it3, u_hq; uniform float u_power, u_boxS, u_w, u_density, u_cycle, u_bound, u_twist, u_view, u_flash;
 uniform vec4 u_qc; uniform vec3 u_pal[8]; uniform int u_npal; uniform vec3 u_bg;
-uniform mat4 u_r4; uniform vec2 u_rg; uniform int u_nest0, u_nestM; uniform mat3 u_rot3; uniform float u_tw, u_twS; uniform int u_cut; uniform vec4 u_cutP;
+uniform mat4 u_r4; uniform vec2 u_rg; uniform int u_nest0, u_nestM; uniform mat3 u_rot3; uniform float u_tw, u_twS; uniform int u_cut; uniform vec4 u_cutP; uniform int u_glass;
+uniform mat3 u_hN; uniform vec3 u_hC; uniform vec4 u_hE; uniform float u_hR; uniform int u_hW;
 out vec4 outC;
 // a point of the 3D picture, placed in 4D: the knife sits at W = u_w, turned by u_r4
 vec4 to4(vec3 p){ return u_r4*vec4(p,u_w); }
 vec2 cm2(vec2 a, vec2 b){ return vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x); }
 vec3 pal(float t){ t=fract(t); float s=1.0-abs(2.0*t-1.0); float x=s*float(u_npal-1); int i=min(int(x),u_npal-2); return mix(u_pal[i],u_pal[i+1],x-float(i)); }
 float sdBox(vec3 p, vec3 b){ vec3 q=abs(p)-b; return length(max(q,0.0))+min(max(q.x,max(q.y,q.z)),0.0); }
+vec3 rotYv(vec3 p, float a){ float c=cos(a), s=sin(a); return vec3(c*p.x+s*p.z, p.y, -s*p.x+c*p.z); }
+float mDE2(vec2 c, out float tr){ vec2 z=vec2(0.0), dz=vec2(0.0); tr=1e9;
+  for (int i=0;i<48;i++){ if (i>=u_it3) break; dz=2.0*cm2(z,dz)+vec2(1.0,0.0); z=cm2(z,z)+c; float m=dot(z,z); tr=min(tr,m); if (m>1e4){ float r=sqrt(m); return 0.5*r*log(r)/max(length(dz),1e-30); } }
+  return 0.0; }
 float deBulb(vec3 p, out float trap){
   p=p.xzy; vec3 z=p; float dr=1.0, r=0.0; trap=1e9;
   for (int i=0;i<16;i++){ if (i>=u_it3) break;
@@ -274,9 +279,6 @@ float deKIFS(vec3 z, out float trap){
   return (length(z)-1.0)*pow(2.0,-float(n));
 }
 // ---- 4D shapes: each works on the 4D point to4(p); a 4D distance is a safe step inside the 3D slice too ----
-float mDE2(vec2 c, out float tr){ vec2 z=vec2(0.0), dz=vec2(0.0); tr=1e9;
-  for (int i=0;i<48;i++){ if (i>=u_it3) break; dz=2.0*cm2(z,dz)+vec2(1.0,0.0); z=cm2(z,z)+c; float m=dot(z,z); tr=min(tr,m); if (m>1e4){ float r=sqrt(m); return 0.5*r*log(r)/max(length(dz),1e-30); } }
-  return 0.0; }
 float deMJ(vec3 p, out float trap){   // x, y = c and z, w = the starting z of z -> z^2 + c
   vec4 q=to4(p); vec2 c=q.xy, z=q.zw, a=vec2(1.0,0.0), b=vec2(0.0); trap=1e9; float cut=length(c)-2.0;
   for (int i=0;i<48;i++){ if (i>=u_it3) break; a=2.0*cm2(z,a); b=2.0*cm2(z,b)+vec2(1.0,0.0); z=cm2(z,z)+c; float m=dot(z,z); trap=min(trap,m);
@@ -306,7 +308,6 @@ float deKIFS4(vec3 p, out float trap){
     z=z*2.0-vec4(1.0); trap=min(trap,dot(z,z)); n++; }
   return (length(z)-1.0)*pow(2.0,-float(n)); }
 // ---- spheres inside spheres, pearls, halls, flakes and sponges ----
-vec3 rotYv(vec3 p, float a){ float c=cos(a), s=sin(a); return vec3(c*p.x+s*p.z, p.y, -s*p.x+c*p.z); }
 // a hollow sphere with six round windows; layer k is half the size of layer k-1 and turned 45° about the vertical
 float nestShell(vec3 q){ float sh=abs(length(q)-1.0)-0.035, h=min(length(q.yz),min(length(q.xz),length(q.xy)))-0.55; return max(sh,-h); }
 float deNest(vec3 p, out float trap){
@@ -331,27 +332,57 @@ float deKlein(vec3 p, out float trap){ float ds=1.0, w=1.0; trap=0.0; int last=-
 // gives every nearby ball's real centre and size exactly: balls smaller than rmin are left out whole, distances are exact
 // (no seams between flips), and the outer sphere drops out by itself (its curvature is negative until a flip turns it into a ball).
 const float SDA=0.317837245;
-const vec4 SBA[6]=vec4[6](vec4(0.22474487,2.22474487,0.7071067804,0.7071067804),vec4(0.22474487,2.22474487,0.7071067804,-0.7071067804),vec4(0.22474487,2.22474487,-0.7071067804,0.7071067804),vec4(0.22474487,2.22474487,-0.7071067804,-0.7071067804),vec4(-0.1010205143,9.898979498,0.0,0.0),vec4(1.0,-1.0,0.0,0.0));
-const float SBE[6]=float[6](0.7071067804,-0.7071067804,-0.7071067804,0.7071067804,0.0,0.0);
-const vec4 SDDA[5]=vec4[5](vec4(-0.317837245,3.146264372,0.0,0.0),vec4(0.3535533906,0.3535533906,-0.6123724357,-0.6123724357),vec4(0.3535533906,0.3535533906,-0.6123724357,0.6123724357),vec4(0.3535533906,0.3535533906,0.6123724357,-0.6123724357),vec4(0.3535533906,0.3535533906,0.6123724357,0.6123724357));
-const float SDDE[5]=float[5](0.0,-0.6123724357,0.6123724357,0.6123724357,-0.6123724357);
-const vec4 SDGA[5]=vec4[5](vec4(-1.573132186,0.1589186225,0.0,0.0),vec4(-0.1767766953,-0.1767766953,-0.6123724357,-0.6123724357),vec4(-0.1767766953,-0.1767766953,-0.6123724357,0.6123724357),vec4(-0.1767766953,-0.1767766953,0.6123724357,-0.6123724357),vec4(-0.1767766953,-0.1767766953,0.6123724357,0.6123724357));
-const float SDGE[5]=float[5](0.0,-0.6123724357,0.6123724357,0.6123724357,-0.6123724357);
-const vec3 SDC[5]=vec3[5](vec3(0.0),vec3(-1.732050808),vec3(-1.732050808,1.732050808,1.732050808),vec3(1.732050808,-1.732050808,1.732050808),vec3(1.732050808,1.732050808,-1.732050808));
-float deSoddy(vec3 p, out float trap){ vec3 p0=p; float ds=1.0, best=1e9, rmin=0.025*pow(0.55,float(u_it3-5)); int last=-1; trap=0.0;
-  vec4 Ma[5]; float Me[5]; for (int i=0;i<5;i++){ Ma[i]=vec4(0.0); Me[i]=0.0; } Ma[0].x=1.0; Ma[1].y=1.0; Ma[2].z=1.0; Ma[3].w=1.0; Me[4]=1.0;
-  for (int n=0;n<49;n++){
-    for (int b=0;b<6;b++){ float k=dot(Ma[1],SBA[b])+Me[1]*SBE[b]; if (k<=0.0 || k*rmin>1.0) continue;   // inside out, or too small to draw
-      vec3 c=vec3(dot(Ma[2],SBA[b])+Me[2]*SBE[b], dot(Ma[3],SBA[b])+Me[3]*SBE[b], dot(Ma[4],SBA[b])+Me[4]*SBE[b])/k; float e=length(p0-c)-1.0/k;
-      if (e<best){ best=e; trap=fract(0.3*log2(k)); } }   // colour by size
-    if (best<0.0 || ds*rmin>4.0 || n==48) break;   // inside a ball, or everything deeper is too small to draw
-    int hit=-1; float R2=8.0;
-    if (last!=0 && dot(p,p)<SDA*SDA){ hit=0; R2=SDA*SDA; }
-    else for (int i=1;i<5;i++){ if (i==last) continue; vec3 v=p-SDC[i]; if (dot(v,v)<8.0){ hit=i; break; } }
-    if (hit<0) break;
-    vec3 v=p-SDC[hit]; float f=R2/max(dot(v,v),1e-30); p=SDC[hit]+v*f; ds*=f; last=hit;
-    for (int i=0;i<5;i++){ float s=2.0*(dot(Ma[i],SDDA[hit])+Me[i]*SDDE[hit]); Ma[i]-=s*SDGA[hit]; Me[i]-=s*SDGE[hit]; } }
-  return max(best, length(p0)-1.0); }
+// The five numbers of each starting ball (co-curvature, curvature, curvature × centre): the four big balls, the middle
+// ball (the outer sphere turned inside out) and the outer sphere (curvature −1: solid outside it).
+const vec4 SB0=vec4(0.22474487,2.22474487,0.7071067804,0.7071067804); const float SE0=0.7071067804;
+const vec4 SB1=vec4(0.22474487,2.22474487,0.7071067804,-0.7071067804); const float SE1=-0.7071067804;
+const vec4 SB2=vec4(0.22474487,2.22474487,-0.7071067804,0.7071067804); const float SE2=-0.7071067804;
+const vec4 SB3=vec4(0.22474487,2.22474487,-0.7071067804,-0.7071067804); const float SE3=0.7071067804;
+const vec4 SB4=vec4(-0.1010205143,9.898979498,0.0,0.0); const vec4 SB5=vec4(1.0,-1.0,0.0,0.0);
+// The flip chain is kept as four named rows (curvature and curvature × centre; the co-curvature row is never needed) and
+// the partner sphere's numbers are chosen with ifs: arrays picked by index while the shader runs are very slow on some
+// graphics cards, and this shape once took 2.8 s a frame because of it.
+#define SDCAND(BA,BE) { float k=dot(r1,BA)+e1*(BE); if (k>0.0 && k*rmin<=1.0){ vec3 c=vec3(dot(r2,BA)+e2*(BE), dot(r3,BA)+e3*(BE), dot(r4,BA)+e4*(BE))/k; float e=length(p0-c)-1.0/k; if (e<best){ best=e; kb=k; } } }
+float deSoddy(vec3 p, out float trap){ vec3 p0=p; float L0=length(p0); trap=0.0;
+  if (L0>1.05) return L0-1.0;   // outside the whole packing
+  float ds=1.0, best=1e9, kb=1.0, rmin=0.025*pow(0.55,float(u_it3-5)); int last=-1;
+  vec4 r1=vec4(0.0,1.0,0.0,0.0), r2=vec4(0.0,0.0,1.0,0.0), r3=vec4(0.0,0.0,0.0,1.0), r4=vec4(0.0); float e1=0.0, e2=0.0, e3=0.0, e4=1.0;
+  SDCAND(SB0,SE0) SDCAND(SB1,SE1) SDCAND(SB2,SE2) SDCAND(SB3,SE3) SDCAND(SB4,0.0)
+  for (int n=0;n<48;n++){
+    if (best<0.0 || ds*rmin>4.0) break;   // inside a ball, or everything deeper is too small to draw
+    vec3 c=vec3(0.0); float R2=8.0, de=0.6123724357; vec4 da=vec4(0.3535533906,0.3535533906,0.6123724357,0.6123724357), ga=vec4(-0.1767766953,-0.1767766953,0.6123724357,0.6123724357); int hit=-1;
+    if (last!=0 && dot(p,p)<SDA*SDA){ hit=0; R2=SDA*SDA; da=vec4(-0.317837245,3.146264372,0.0,0.0); ga=vec4(-1.573132186,0.1589186225,0.0,0.0); de=0.0; }
+    else if (last!=1 && dot(p+vec3(1.732050808),p+vec3(1.732050808))<8.0){ hit=1; c=vec3(-1.732050808); da.zw=-da.zw; ga.zw=-ga.zw; de=-de; }
+    else if (last!=2 && dot(p-vec3(-1.732050808,1.732050808,1.732050808),p-vec3(-1.732050808,1.732050808,1.732050808))<8.0){ hit=2; c=vec3(-1.732050808,1.732050808,1.732050808); da.z=-da.z; ga.z=-ga.z; }
+    else if (last!=3 && dot(p-vec3(1.732050808,-1.732050808,1.732050808),p-vec3(1.732050808,-1.732050808,1.732050808))<8.0){ hit=3; c=vec3(1.732050808,-1.732050808,1.732050808); da.w=-da.w; ga.w=-ga.w; }
+    else if (last!=4 && dot(p-vec3(1.732050808,1.732050808,-1.732050808),p-vec3(1.732050808,1.732050808,-1.732050808))<8.0){ hit=4; c=vec3(1.732050808,1.732050808,-1.732050808); de=-de; }
+    if (hit<0) break;   // outside every partner sphere: beside one of the five
+    vec3 v=p-c; float f=R2/max(dot(v,v),1e-30); p=c+v*f; ds*=f; last=hit;
+    float s=2.0*(dot(r1,da)+e1*de); r1-=s*ga; e1-=s*de; s=2.0*(dot(r2,da)+e2*de); r2-=s*ga; e2-=s*de;
+    s=2.0*(dot(r3,da)+e3*de); r3-=s*ga; e3-=s*de; s=2.0*(dot(r4,da)+e4*de); r4-=s*ga; e4-=s*de;
+    // a flip leaves every ball it crosses at right angles where it was, so only the ball it replaces and the middle ball are new
+    // (the middle partner sphere just swaps the middle ball and the outer sphere, both already seen)
+    if (hit==1){ SDCAND(SB0,SE0) SDCAND(SB4,0.0) } else if (hit==2){ SDCAND(SB1,SE1) SDCAND(SB4,0.0) }
+    else if (hit==3){ SDCAND(SB2,SE2) SDCAND(SB4,0.0) } else if (hit==4){ SDCAND(SB3,SE3) SDCAND(SB4,0.0) }
+    else { SDCAND(SB5,0.0) } }
+  trap=fract(0.3*log2(kb));   // colour by size
+  return max(best, L0-1.0); }
+// Hyperbolic honeycomb {p,q,r} in the Poincaré ball: cells {p,q}, r of them round every edge. Four mirrors: three planes
+// through the centre (u_hN, the symmetry planes of one cell) and a sphere (centre u_hC, radius u_hR) that meets the ball's
+// edge at right angles: one face of the central cell. Folding a point with them until it stops moving brings it into the
+// central cell; there, an edge is the circle u_hE where the face sphere meets the third plane. Every flip through the sphere
+// shrinks things (ds), so cells get smaller towards the rim; cells smaller than 1/dsMax of the central one aren't opened up.
+float deHyp(vec3 p, out float trap){ vec3 p0=p; float ds=1.0, dsMax=4.0*pow(1.5,float(u_it3-5)); int inv=0;
+  for (int n=0;n<64;n++){ bool moved=false;
+    for (int j=0;j<3;j++){ float d=dot(p,u_hN[j]); if (d<0.0){ p-=2.0*d*u_hN[j]; moved=true; } }
+    vec3 v=p-u_hC; float r2=dot(v,v);
+    if (r2<u_hR*u_hR && ds<dsMax){ float f=u_hR*u_hR/r2; p=u_hC+v*f; ds*=f; inv++; moved=true; }
+    if (!moved) break; }
+  trap=fract(float(inv)*0.17+0.05);
+  vec3 n2=u_hN[2]; float h=dot(p,n2); vec3 q=p-h*n2;
+  float d=length(vec2(h, length(q-u_hE.xyz)-u_hE.w))-0.012;            // the edges, as tubes
+  if (u_hW==1 && ds<2.5) d=min(d, abs(length(p-u_hC)-u_hR)-0.004);     // the walls of the middle cell and its neighbours, as thin films
+  return max(d/ds, length(p0)-0.985); }
 // pseudo-Kleinian (Knighty, 2011): fold into a box, invert through a ball, repeat; a round chunk of its endless halls
 float dePK(vec3 p, out float trap){ const vec3 CS=vec3(0.92436,0.90756,0.92436); vec3 q=p*1.6; float df=1.0, mr=1e9;
   for (int i=0;i<20;i++){ if (i>=u_it3) break; q=2.0*clamp(q,-CS,CS)-q; float r2=dot(q,q); mr=min(mr,r2); float k=max(1.0/max(r2,1e-12),1.0); q*=k; df*=k; }
@@ -384,7 +415,7 @@ float deMosely(vec3 p, out float trap){ const float T=0.33333333; float sc=1.0, 
   return min(d, sdBox(p,vec3(1.0))/sc); }
 float mapRaw(vec3 p, out float tr){ if (u_s3==0) return deBulb(p,tr); if (u_s3==1) return deBox(p,tr); if (u_s3==2) return deMenger(p,tr); if (u_s3==3) return deTet(p,tr); if (u_s3==4) return deQJ(p,tr); if (u_s3==5) return deApo(p,tr); if (u_s3==6) return deKIFS(p,tr);
   if (u_s3==7) return deMJ(p,tr); if (u_s3==8) return deTetra(p,tr); if (u_s3==9) return deSier5(p,tr); if (u_s3==10) return deMenger4(p,tr); if (u_s3==11) return deKIFS4(p,tr);
-  if (u_s3==12) return deNest(p,tr); if (u_s3==13) return deKlein(p,tr); if (u_s3==14) return dePK(p,tr); if (u_s3==15) return deFlake(p,tr); if (u_s3==16) return deJcube(p,tr); if (u_s3==18) return deSoddy(p,tr); return deMosely(p,tr); }
+  if (u_s3==12) return deNest(p,tr); if (u_s3==13) return deKlein(p,tr); if (u_s3==14) return dePK(p,tr); if (u_s3==15) return deFlake(p,tr); if (u_s3==16) return deJcube(p,tr); if (u_s3==18) return deSoddy(p,tr); if (u_s3==19) return deHyp(p,tr); return deMosely(p,tr); }
 // the same controls for every shape: turn it, twist it round its vertical axis, and (3D shapes) cut it with a flat knife
 float map(vec3 p, out float tr){ vec3 q=u_rot3*p; bool tw=u_tw!=0.0;
   float d=mapRaw(tw ? rotYv(q,u_tw*q.y) : q, tr)*(tw ? u_twS : 1.0);   // one call: a twist stretches distances, so steps shrink to stay safe
@@ -395,6 +426,13 @@ float mapD(vec3 p){ float t; return map(p,t); }
 vec3 calcN(vec3 p, float e){ vec3 n=vec3(0.0); for (int i=ZERO;i<4;i++){ vec3 k=2.0*vec3(float(((i+3)>>1)&1), float((i>>1)&1), float(i&1))-1.0; n+=k*mapD(p+k*e); } return normalize(n); }
 float shadowRay(vec3 ro, vec3 rd){ float L=min(u_bound,u_view), res=1.0, t=0.002*L; for (int i=ZERO;i<56;i++){ float h=mapD(ro+rd*t); res=min(res,10.0*h/t); t+=clamp(h,0.002*L,0.12*L); if (res<0.02 || t>2.5*L) break; } return clamp(res,0.0,1.0); }
 float calcAO(vec3 p, vec3 n){ float o=0.0, s=1.0, u=min(u_bound,u_view)*0.04; for (int i=ZERO+1;i<=5;i++){ float h=u*float(i); o+=(h-mapD(p+n*h))*s; s*=0.6; } return clamp(1.0-1.6*o/u,0.0,1.0); }
+// each shape's orbit-trap value stretched over the whole palette (ranges measured from typical views)
+vec3 baseCol(vec3 p, float tr){
+  float ct= u_s3==0 ? tr*0.75 : u_s3==1 ? sqrt(tr)*0.3 : u_s3==3 ? sqrt(tr)*0.16 : u_s3==4 ? sqrt(tr)*0.32 : u_s3==5 ? sqrt(tr)*0.45 : sqrt(tr)*0.14;
+  vec2 rg = u_s3==0 ? vec2(0.76-0.37/u_power)+vec2(-0.5,0.5)*min(0.5,2.0/u_power) : u_s3==1 ? vec2(0.04,0.27) : u_s3==3 ? vec2(0.09,0.18) : u_s3==4 ? vec2(0.15,0.36) : u_s3==5 ? vec2(0.15,0.48) : vec2(0.199,0.24);
+  if (u_s3>=7){ ct=u_s3>=12?tr:sqrt(tr); rg=u_rg; }
+  float tn = (u_s3==2||u_s3==10) ? 0.6*clamp(0.5+0.5*p.y/u_bound*1.4,0.0,1.0)+0.4*clamp(tr/max(1.0,float(u_it3)),0.0,1.0) : clamp((ct-rg.x)/(rg.y-rg.x),0.0,1.0);
+  return pal(tn*0.5*u_density+u_cycle); }
 void main(){
   vec2 uv=(gl_FragCoord.xy-0.5*u_res)/u_res.y;
   vec3 rd=normalize(u_rotM*vec3(uv,-u_fov)), ro=u_cam;
@@ -405,16 +443,31 @@ void main(){
   float pixA=1.0/(u_res.y*u_fov), tr=0.0; bool hit=false;
   float k=(u_s3==1)?0.7:(u_s3==0?(u_power<0.0?0.22:clamp(5.0/u_power,0.3,0.8)):(u_s3==5?0.8:(u_s3==4?0.7:0.92)));
   if (u_s3>=7) k=(u_s3==7||u_s3==8)?0.7:0.9;
-  if (u_s3>=12) k=(u_s3==13||u_s3==18)?0.6:(u_s3==14?0.8:(u_s3==15?0.85:0.9));
+  if (u_s3>=12) k=(u_s3==13||u_s3==18)?0.6:u_s3==19?0.8:(u_s3==14?0.8:(u_s3==15?0.85:0.9));
+#ifdef GLASS
+  if (u_glass==1){
+    // See-through: every surface the ray crosses is a soap film, nearly clear face-on and bright at a slant, with a
+    // thin film's rainbow sheen. Films are blended front to back and the ray carries on through, up to six crossings
+    // (each ball is crossed twice, so it reads as a bubble). Marching on |distance| also finds the way out of a solid.
+    vec3 acc=vec3(0.0); float A=0.0; vec3 L=normalize(u_rotM*vec3(0.35,0.75,0.55));
+    for (int layer=0;layer<6;layer++){
+      float t0=t; hit=false;
+      for (int i=0;i<300;i++){ float d=abs(map(ro+rd*t,tr)); if (d<pixA*t*0.8 && t>t0){ hit=true; break; } t+=max(d*k, pixA*t*0.25); if (t>tmax) break; }
+      if (!hit) break;
+      vec3 p=ro+rd*t, n=calcN(p,max(pixA*t*0.5,1e-6)), nf=dot(n,rd)<0.0?n:-n;
+      float c=abs(dot(n,rd)), fr=pow(1.0-c,2.5), th=1.15/max(c,0.12)+0.35*dot(n,u_rotM*vec3(0.3,0.8,0.2));
+      vec3 film=0.55+0.45*cos(6.2831*(th+vec3(0.0,0.33,0.67)));
+      float sp=pow(max(dot(nf,normalize(L-rd)),0.0),90.0);
+      vec3 col=mix(baseCol(p,tr), film, 0.5)*(0.25+1.1*fr)*(1.0+0.4*u_flash)+vec3(sp);
+      float a=clamp(0.07+0.8*fr+sp,0.0,1.0);
+      acc+=(1.0-A)*a*col; A+=(1.0-A)*a; if (A>0.97) break;
+      t+=pixA*t*3.0; }   // step through the film before looking for the next one
+    outC=vec4(clamp(acc+(1.0-A)*bgc,0.0,1.0),1.0); return; }
+#endif
   for (int i=0;i<500;i++){ float d=map(ro+rd*t,tr); if (d<pixA*t*0.8){ hit=true; break; } t+=d*k; if (t>tmax) break; }
   if (!hit){ outC=vec4(bgc,1.0); return; }
   vec3 p=ro+rd*t, n=calcN(p,max(pixA*t*0.5,1e-6));
-  // stretch each shape's orbit-trap value over the whole palette (ranges measured from typical views)
-  float ct= u_s3==0 ? tr*0.75 : u_s3==1 ? sqrt(tr)*0.3 : u_s3==3 ? sqrt(tr)*0.16 : u_s3==4 ? sqrt(tr)*0.32 : u_s3==5 ? sqrt(tr)*0.45 : sqrt(tr)*0.14;
-  vec2 rg = u_s3==0 ? vec2(0.76-0.37/u_power)+vec2(-0.5,0.5)*min(0.5,2.0/u_power) : u_s3==1 ? vec2(0.04,0.27) : u_s3==3 ? vec2(0.09,0.18) : u_s3==4 ? vec2(0.15,0.36) : u_s3==5 ? vec2(0.15,0.48) : vec2(0.199,0.24);
-  if (u_s3>=7){ ct=u_s3>=12?tr:sqrt(tr); rg=u_rg; }
-  float tn = (u_s3==2||u_s3==10) ? 0.6*clamp(0.5+0.5*p.y/u_bound*1.4,0.0,1.0)+0.4*clamp(tr/max(1.0,float(u_it3)),0.0,1.0) : clamp((ct-rg.x)/(rg.y-rg.x),0.0,1.0);
-  vec3 base=pal(tn*0.5*u_density+u_cycle);
+  vec3 base=baseCol(p,tr);
   vec3 L=normalize(u_rotM*vec3(0.55,0.7,0.5));
   float dif=clamp(dot(n,L),0.0,1.0), sh=(u_hq==1 && dif>0.0)?shadowRay(p+n*pixA*t*3.0,L):1.0, ao=calcAO(p,n);
   float spec=pow(clamp(dot(n,normalize(L-rd)),0.0,1.0),40.0)*dif*sh, sky=0.5+0.5*dot(n,u_rotM*vec3(0.0,1.0,0.0));
@@ -423,6 +476,23 @@ void main(){
   vec3 col=(base*lit + vec3(spec*0.35) + fres*0.3*ao*base)*(1.0+0.4*u_flash) + fres*0.3*u_flash*base;   // beat flash: brighter, with a glow at the rim
   outC=vec4(clamp(col,0.0,1.0),1.0);
 }`;
+// The 3D program is put together per shape: the shared header, that one shape's code (with the constants and helpers just
+// above it), a mapRaw that calls it, and the shared drawing code; the see-through part only when it's on. One program with
+// every shape in it took the graphics card a long time to build (Windows' shader compiler is slow on long loops), and could
+// fail outright. FS3 itself is never compiled; it's the source the pieces are cut from.
+const DE3=['deBulb','deBox','deMenger','deTet','deQJ','deApo','deKIFS','deMJ','deTetra','deSier5','deMenger4','deKIFS4','deNest','deKlein','dePK','deFlake','deJcube','deMosely','deSoddy','deHyp'];   // in SH3's order
+const FS3P=(()=>{ const a=FS3.indexOf('float deBulb('), z=FS3.indexOf('float mapRaw('), head=FS3.slice(0,a).replace('#version 300 es\n',''), tail=FS3.slice(FS3.indexOf('// the same controls for every shape'));
+  const body=FS3.slice(a,z), ends=[], starts=DE3.map(n=>body.indexOf('float '+n+'('));
+  if (starts.some(i=>i<0)) throw new Error('3D shader: a shape function is missing');
+  // where each function ends: its closing brace (skipping // comments), then the rest of that line
+  const endOf=i=>{ let d=0, j=body.indexOf('{',i); for (;j<body.length;j++){ const ch=body[j]; if (ch==='/' && body[j+1]==='/'){ j=body.indexOf('\n',j); continue; } if (ch==='{') d++; else if (ch==='}' && --d===0) break; } const nl=body.indexOf('\n',j); return nl<0 ? body.length : nl+1; };
+  const order=DE3.map((n,k)=>({n,k,s:starts[k]})).sort((x,y)=>x.s-y.s), chunks={}; let prev=0;
+  for (const o of order){ const e=endOf(o.s); chunks[o.n]=body.slice(prev,e); prev=e; }
+  return {head, tail, chunks}; })();
+const fs3Cache={};
+/** The 3D fragment shader for one shape (its index in SH3), with or without the see-through part. */
+export function fs3For(i, glass){ const k=i+(glass?'g':''); if (fs3Cache[k]) return fs3Cache[k]; const n=DE3[i]||'deBulb';
+  return fs3Cache[k]='#version 300 es\n'+(glass?'#define GLASS\n':'')+FS3P.head+FS3P.chunks[n]+'float mapRaw(vec3 p, out float tr){ return '+n+'(p,tr); }\n'+FS3P.tail; }
 function mkCtx(cv){
   const g=cv.getContext('webgl2',{antialias:false, preserveDrawingBuffer:true, alpha:false}); if (!g) return null;
   const buf=g.createBuffer(); g.bindBuffer(g.ARRAY_BUFFER,buf); g.bufferData(g.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),g.STATIC_DRAW);
@@ -440,9 +510,10 @@ function mkCtx(cv){
     if (!Q){ const p=g.createProgram(), shs=[]; for (const [t,src] of [[g.VERTEX_SHADER,VS],[g.FRAGMENT_SHADER,fs]]){ const sh=g.createShader(t); g.shaderSource(sh,src); g.compileShader(sh); g.attachShader(p,sh); shs.push(sh); }
       g.bindAttribLocation(p,0,'a'); g.linkProgram(p); Q=C.pend[name]={p, shs, t0:performance.now()}; if (C.pcs) return null; }
     if (C.pcs && !g.getProgramParameter(Q.p, C.pcs.COMPLETION_STATUS_KHR)) return null;
-    delete C.pend[name];
+    delete C.pend[name]; for (const sh of Q.shs){ g.detachShader(Q.p,sh); g.deleteShader(sh); }
     if (!g.getProgramParameter(Q.p, g.LINK_STATUS)){ const log=Q.shs.map(sh=>g.getShaderInfoLog(sh)).join(' ')+' '+g.getProgramInfoLog(Q.p); throw new Error(log.trim()||'the graphics driver gave up building it'); }
     const loc={}; return C.progs[name]={p:Q.p, u:n=> n in loc ? loc[n] : (loc[n]=g.getUniformLocation(Q.p,n)), ms:Math.round(performance.now()-Q.t0)}; };
+  C.drop=name=>{ const P=C.progs[name]; if (P){ g.deleteProgram(P.p); delete C.progs[name]; } const Q=C.pend[name]; if (Q){ g.deleteProgram(Q.p); delete C.pend[name]; } };
   C.newTex=()=>{ const t=g.createTexture(); g.bindTexture(g.TEXTURE_2D,t);
     for (const [k,v] of [[g.TEXTURE_MIN_FILTER,g.NEAREST],[g.TEXTURE_MAG_FILTER,g.NEAREST],[g.TEXTURE_WRAP_S,g.CLAMP_TO_EDGE],[g.TEXTURE_WRAP_T,g.CLAMP_TO_EDGE]]) g.texParameteri(g.TEXTURE_2D,k,v);
     g.texImage2D(g.TEXTURE_2D,0,g.RG32F,1,1,0,g.RG,g.FLOAT,new Float32Array(2)); return t; };

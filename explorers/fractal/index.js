@@ -35,7 +35,7 @@ import { st } from './state.js';
 import { gl, glc, refSlots } from './render/webgl.js';
 import { moveCentre, resetViews, sizeBuffers, touch } from './view.js';
 import { auxRender, render2DAll } from './render/bla.js';
-import { nestIn, nestOut, nestReset, render3D } from './modes/fractal3d.js';
+import { drop3, nestIn, nestOut, nestReset, render3D } from './modes/fractal3d.js';
 import { newOrbit } from './modes/orbit.js';
 import { buildPlaces, d3Rows, flyTo, resetView, setMode, typeChanged } from './ui/controls.js';
 import { applyState, applyView, decodeState, encodeState, getState, parseView, readView, showView, viewCode, writeHash } from './io/share.js';
@@ -51,7 +51,7 @@ window.__fx={st, pace, render3D, nestIn, nestOut, nestReset, render2DAll, refSlo
 
 // ---------- lifecycle (see js/main.js) ----------
 export function start(){ touch(); writeHash(true); startLoop(); }
-export function stop(){ stopLoop(); }
+export function stop(){ stopLoop(); drop3(); }   // leaving the explorer lets the 3D program go; it's rebuilt when needed
 export const reset = resetView;
 export const layoutChanged = touch;
 export { onKey, showView };

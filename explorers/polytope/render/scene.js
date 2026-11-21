@@ -24,11 +24,43 @@ export const fit = new THREE.Group(); pivot.add(fit);
 export const HOME = new THREE.Euler(0.38, -0.62, 0);
 pivot.quaternion.setFromEuler(HOME);
 
+/**
+ * A soap-film look: nearly clear where you look straight through, bright at the rim, with the rainbow sheen of a thin film
+ * (the colour shifts with the viewing angle, because the light's path through the film gets longer at a slant). Works on
+ * instanced balls (their colour tints the film) and on ordinary meshes with a vertex colour. Drawn see-through from both sides.
+ */
+export function bubbleMaterial(vertexColors){
+  return new THREE.ShaderMaterial({ transparent:true, depthWrite:false, side:THREE.DoubleSide, vertexColors:!!vertexColors,
+    uniforms:{ uGain:{value:1} },
+    vertexShader:`varying vec3 vN, vV, vC;
+      void main(){
+        mat4 m=modelMatrix; vec3 nn=normal; vec4 p=vec4(position,1.0);
+        #ifdef USE_INSTANCING
+          p=instanceMatrix*p; nn=mat3(instanceMatrix)*nn;
+        #endif
+        vec4 wp=m*p; vN=normalize(mat3(m)*nn); vV=cameraPosition-wp.xyz; vC=vec3(1.0);
+        #ifdef USE_INSTANCING_COLOR
+          vC=instanceColor;
+        #endif
+        #ifdef USE_COLOR
+          vC=color;
+        #endif
+        gl_Position=projectionMatrix*viewMatrix*wp; }`,
+    fragmentShader:`uniform float uGain; varying vec3 vN, vV, vC;
+      void main(){
+        vec3 n=normalize(vN), v=normalize(vV); float c=abs(dot(n,v)), fr=pow(1.0-c,2.5);
+        float t=1.15/max(c,0.12)+0.35*dot(n,vec3(0.3,0.8,0.2));          // film path length: longer at a slant
+        vec3 film=0.55+0.45*cos(6.2831*(t+vec3(0.0,0.33,0.67)));
+        vec3 col=mix(vC, film, 0.5);
+        vec3 L=normalize(vec3(0.35,0.75,0.55)); float sp=pow(max(dot(n,normalize(L+v)),0.0),90.0)+0.5*pow(max(dot(-n,normalize(L+v)),0.0),90.0);
+        gl_FragColor=vec4(col*(0.25+1.1*fr)*uGain+vec3(sp), clamp(0.07+0.8*fr+sp,0.0,1.0)); }` });
+}
 export const FINISH = {
   satin:{ tube:new THREE.MeshStandardMaterial({vertexColors:true, roughness:0.38, metalness:0.08}), ball:new THREE.MeshStandardMaterial({roughness:0.3, metalness:0.1}) },
   gloss:{ tube:new THREE.MeshPhongMaterial({vertexColors:true, shininess:120, specular:0x666666}), ball:new THREE.MeshPhongMaterial({shininess:140, specular:0x777777}) },
   metal:{ tube:new THREE.MeshStandardMaterial({vertexColors:true, roughness:0.22, metalness:0.75}), ball:new THREE.MeshStandardMaterial({roughness:0.18, metalness:0.8}) },
   flat:{ tube:new THREE.MeshBasicMaterial({vertexColors:true}), ball:new THREE.MeshBasicMaterial() },
+  bubble:{ tube:new THREE.MeshPhongMaterial({vertexColors:true, shininess:140, specular:0x888888, transparent:true, opacity:0.45, depthWrite:false}), ball:bubbleMaterial(false) },
 };
 shared.tubeMat = FINISH.satin.tube; shared.ballMat = FINISH.satin.ball;
 const tmpM = new THREE.Matrix4(), tmpC = new THREE.Color();

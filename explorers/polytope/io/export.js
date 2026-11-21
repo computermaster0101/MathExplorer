@@ -17,7 +17,7 @@ function exportTriangles(fr){
       tris.push([rings[k][m],rings[k][m2],rings[k+1][m2]],[rings[k][m],rings[k+1][m2],rings[k+1][m]]); }
     for (let m=0;m<RX;m++){ const m2=(m+1)%RX; tris.push([t.P[0],rings[0][m2],rings[0][m]]); tris.push([t.P[n-1],rings[n-1][m],rings[n-1][m2]]); }
   }
-  const U=20, Vn=12;
+  const few=!fr.tubes.length && fr.balls.length<400, U=few?48:20, Vn=few?28:12;   // balls on their own get smoother spheres
   for (const b of fr.balls){ if (b.r<=0) continue;
     const pt=(i,j)=>{ const u=Math.PI*i/Vn, v=2*Math.PI*j/U; return [b.c[0]+b.r*Math.sin(u)*Math.cos(v), b.c[1]+b.r*Math.sin(u)*Math.sin(v), b.c[2]+b.r*Math.cos(u)]; };
     for (let i=0;i<Vn;i++) for (let j=0;j<U;j++){ const a=pt(i,j), bb=pt(i,j+1), c=pt(i+1,j+1), d=pt(i+1,j); if (i>0) tris.push([a,c,bb]); if (i<Vn-1) tris.push([a,d,c]); }
@@ -36,7 +36,7 @@ export function updatePrintNote(){
   const fr=exportFrame(); const pn=$('printnote');
   if (notAvail()){ pn.textContent=`Nothing to print: this mode isn't available for the ${SHAPES[st.shape].name}.`; pn.className='note'; return; }
   if (fr && fr.packing){ const ex=extents(fr); if (!(ex.span>0)) return; const r=Math.min(...fr.balls.map(b=>b.r))*2*st.mm/ex.span;
-    pn.textContent=`Smallest ball: ${r.toFixed(1)} mm across. Each ball is printed 4% bigger so the touching ones fuse into one piece; the glass container is left out.`+(r<1.5?' Some balls are very small: print bigger, or use less detail.':''); pn.className='note'+(r<1.5?' warn':''); return; }
+    pn.textContent=`Smallest ball: ${r.toFixed(1)} mm across. Each ball is printed 4% bigger so the touching ones fuse into one piece; the glass container and any giant balls near the projection point are left out.`+(r<1.5?' Some balls are very small: print bigger, or use less detail.':''); pn.className='note'+(r<1.5?' warn':''); return; }
   if (!fr || !fr.tubes.length){ pn.textContent = st.mode==='slice' ? 'Move the knife into the shape to get something to print.' : (mainLines.vis ? 'Too many connections to print as tubes. Pick 10D or fewer to export an STL.' : 'Thinnest tube: –'); pn.className='note'; return; }
   const ex=extents(fr); if (!(ex.span>0)) return;
   const dia=2*ex.minR*st.mm/ex.span;

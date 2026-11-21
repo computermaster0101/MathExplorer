@@ -8,7 +8,8 @@ import { axisHue, hdProjectAll } from '../geometry/higher-dim.js';
 import { facePolys } from '../geometry/faces.js';
 import { mulM, project, rot4 } from '../math/rotate4d.js';
 import { LINE_LIMIT, drawSource, faceFill, fit, mainLayer, mainLines, makeFrames, pingLayer, pingLines, sliceFill, sliceLayer } from '../render/scene.js';
-import { drawPacking, hidePacking } from '../render/packing.js';
+import { drawPacking, hidePacking, kissOK } from '../render/packing.js';
+import { drawFoam, foamOK, hideFoam } from '../render/foam.js';
 import { buildSource, getBuild } from './build.js';
 import { unfoldSource } from './unfold.js';
 
@@ -95,14 +96,16 @@ export const KNIFE_NOTES={free:'Free: the shape sits square to the knife, the wa
   edge:'Edge first: one edge faces the knife, lying across its path, so the first cut is a line segment.',
   face:'Face first: one face meets the knife flat on, so the first cut is that flat polygon, which then thickens. For mixed shapes it\'s one of the biggest faces.',
   cell:'Cell first: a whole 3D cell meets the knife flat on, so the first cut is a copy of that cell. On a tesseract it\'s a cube the whole way through. For mixed shapes it\'s one of the biggest cells.'};
-// the Apollonian packing is always stereographic: the only projection that keeps balls round
+// the Apollonian packing, and any shape drawn as balls or foam, is always stereographic: the only projection that keeps balls round
+export const foamView=sh=>st.mode==='explore' && st.drawAs==='foam' && !sh.packing && foamOK(sh);
+export const roundView=sh=>sh.packing || foamView(sh) || (st.mode==='explore' && st.drawAs==='balls' && kissOK(sh));
 export function getSource(){
   if (st.mode==='build') return buildSource();
   if (st.mode==='unfold') return unfoldSource();
   const sh=shapeCtx(SHAPES[st.shape]), KA=st.mode==='slice' ? knifeMatrix(SHAPES[st.shape]) : null, M=KA ? mat4mul(KA, rot4()) : rot4();
   const V4 = sh.highD && sh.n>4 && st.hdA ? hdProjectAll(sh, st.hdA) : sh.verts;
   const src={ O:sh.verts, V:V4.map(v=>mulM(M,v)), edges:sh.edges, fam:sh.fam, amax:sh.amax, wmax:sh.wmax, tk:sh.tk,
-    proj: sh.packing ? 'stereo' : st.mode==='slice' && st.proj==='stereo' ? 'persp' : st.proj, curved: (st.mode==='explore' || st.mode==='ping') && st.edges==='curved' && !sh.noCurve };
+    proj: roundView(sh) ? 'stereo' : st.mode==='slice' && st.proj==='stereo' ? 'persp' : st.proj, curved: (st.mode==='explore' || st.mode==='ping') && st.edges==='curved' && !sh.noCurve };
   if (sh.edgeColor && st.mode!=='ping') src.edgeCol=sh.edgeColor;
   if (sh.highD && st.cmode==='dir' && st.mode!=='ping') src.edgeCol=i=>axisHue(sh.axis[i], sh.n);   // one colour per direction
   const E=sh.edges.length, NV=sh.verts.length;
@@ -112,6 +115,9 @@ export function getSource(){
   else if (st.hl && !sh.round && !sh.highD && !sh.star && !sh.compound){ topo(sh); const c=Math.min(st.cell, sh._cells.length-1), inV=new Set(sh._cells[c]), inE=new Set(sh._cellEdges[c]);
     src.edgeMul=sh.edges.map((_,e)=>inE.has(e)?1.9:0.55); src.edgeDim=sh.edges.map((_,e)=>inE.has(e)?1:0.13);
     src.ballMul=sh.verts.map((_,n)=>inV.has(n)?1.5:0.55); src.ballDim=sh.verts.map((_,n)=>inV.has(n)?1:0.13); }
+  if (foamView(sh)){   // bubble foam: fine curved edges where the films meet, none running off towards infinity
+    src.curved=true; const far=src.V.map(v=>v[3]>0.96);
+    src.edgeMul=sh.edges.map(([a,b])=>far[a]||far[b] ? 0 : 0.45); src.ballMul=src.V.map((v,n)=>far[n] ? 0 : 0.35); }
   if (sh.round){   // round meshes: small corners, and in stereographic drop the lines that run off towards infinity
     src.ballMul=(src.ballMul||new Array(NV).fill(1)).map(x=>x*sh.ballScale);
     if (src.proj==='stereo'){ const far=src.V.map(v=>v[3]>0.9);
@@ -169,16 +175,17 @@ export function updateGeometry(){
   // (dragging and the turntable only turn the camera, so they don't need it either)
   const key = st.mode==='unfold' ? [st.shape+(SHAPES[st.shape].ver||'')+'n'+shared.netSeed, $('dp').value, $('dq').value, st.unf.u, st.unf.f, st.thk, st.conf, st.palette, st.palRev, st.cycle, st.density, st.bg].join('|') : '';
   let bound;
-  const pk=SHAPES[st.shape].packing && st.packView==='balls' && st.mode==='explore';
+  const sh0=SHAPES[st.shape], pk=st.mode==='explore' && (sh0.packing ? st.packView==='balls' : st.drawAs==='balls' && kissOK(sh0));
   if (pk){ const r=drawPacking(SHAPES[st.shape]); mainLayer.setVisible(false); mainLines.setVisible(false); lastFrame={tubes:[], balls:r.balls, packing:true}; bound=r.bound; }
   else hidePacking();
-  if (pk){}
+  if (pk){ hideFoam(); }
   else if (key && key===stillKey && lastFrame){ bound=stillBound; }
   else {
-    const r=drawSource(getSource(), mainLayer, mainLines); lastFrame=r.frame; bound=r.bound; stillKey=key; stillBound=bound;
+    const src=getSource(), r=drawSource(src, mainLayer, mainLines); lastFrame=r.frame; bound=r.bound; stillKey=key; stillBound=bound;
+    if (foamView(SHAPES[st.shape])) bound=Math.max(bound, drawFoam(SHAPES[st.shape], src.V, [st.palette, st.palRev, st.cycle.toFixed(3), st.density].join('|'))); else hideFoam();
   }
   { const sh=SHAPES[st.shape];   // see-through faces (Explore and Ping)
-    if (st.faceFill && (st.mode==='explore'||st.mode==='ping') && !sh.round && !sh.highD){
+    if (st.faceFill && (st.mode==='explore'||st.mode==='ping') && !sh.round && !sh.highD && !foamView(sh)){
       const src=getSource(), P=src.V.map(v=>project(v,src.proj)), F=facePolys(sh);
       faceFill.update(F.map(f=>f.map(i=>({p:P[i], i}))), q=>colorOf(src.O[q.i], src.V[q.i][3], -1, src)); }
     else faceFill.hide(); }

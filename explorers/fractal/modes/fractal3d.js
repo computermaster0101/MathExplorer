@@ -3,7 +3,7 @@ import { $, clamp } from '../util.js';
 import { effDensity, st } from '../state.js';
 import { flash, pulse, voice } from '../../../js/shell/audio/react.js';
 import { hexRGB } from '../color/palettes.js';
-import { FS3, gl, glc, main, setPal } from '../render/webgl.js';
+import { fs3For, gl, glc, main, setPal } from '../render/webgl.js';
 import { cssH, cssW, touch } from '../view.js';
 import { showNA } from '../ui/notice.js';
 
@@ -47,12 +47,14 @@ Object.assign(S3, {
     info:'Eric Haines, 1987, made as a test scene for ray tracers. Every sphere sprouts nine spheres a third its size: six around its middle and three on top, leaving the side facing its parent clear. Each new sphere does the same. The whole thing never grows past twice the first sphere\'s size, and with nine copies at a third the size its dimension is exactly 2.' },
   jcube:{ name:'Jerusalem cube', alt:'a cube carved by cross-shaped tunnels, made of smaller Jerusalem cubes', bound:1.75, dim:'≈ 2.529', rg:[0,1],
     info:'Eric Baird, 2011. Keep eight corner cubes, each √2 − 1 ≈ 0.414 times the size, and twelve smaller cubes along the edges, each (√2 − 1)² ≈ 0.172 times the size, and each piece is a Jerusalem cube again. The gaps between them form cross-shaped tunnels through every face. Using √2 − 1 makes the corner and edge cubes fit edge to edge exactly.' },
+  hyp:{ name:'Hyperbolic honeycomb', alt:'cells that never run out, shrinking towards the rim of a ball', bound:1.0, dim:'3 (it fills curved space)', rg:[0,1],
+    info:'Cubes fit together to fill ordinary space, four round every edge. Squeeze in a fifth round each edge and they no longer fit flat: they need space that curves the other way from a sphere, called hyperbolic space. In it, cubes five to an edge fill everything and never run out. This is the Poincaré ball picture of that space: the whole endless space shrunk into a ball, with every cell the same true size, but drawn smaller and smaller towards the rim, which is infinitely far away. The names are the same Schläfli symbols as 4D polytopes: {5,3,3} is the 120-cell (dodecahedra three to an edge, closing up into a ball in 4D), while {5,3,4}, with four to an edge, can only fill hyperbolic space. Turn on See-through bubbles and the walls to see the cells as soap films.' },
   soddy:{ name:'Apollonian packing', alt:'a ball filled with balls: every gap holds the biggest ball that fits, forever', bound:1.02, dim:'≈ 2.47', rg:[0,1],
     info:'Start with five balls that all touch each other: one big outer ball and four inside it. Fill every gap with the biggest ball that fits, then fill the new gaps, forever. The sizes follow a rule found by Frederick Soddy in 1936 (and Thorold Gosset): for any five balls that all touch, the sum of their curvatures squared, times three, equals the square of their sum (curvature is one over the radius). The balls end up filling the whole ball, leaving only a dust of points between them, so here each one is drawn a little smaller to keep them apart. It\'s the ball-shaped cousin of Apollonian foam: blow the outer ball up until it\'s infinitely big and from inside it looks like two flat walls, which gives the foam\'s slab.' },
   mosely:{ name:'Mosely snowflake', alt:'cut a cube into 27, keep 18: drop the 8 corners and the middle', bound:1.75, dim:'log 18 ÷ log 3 ≈ 2.631', rg:[0,1],
     info:'Jeannine Mosely, 2006, who also built a Menger sponge out of 66,048 business cards. Like the Menger sponge, cut a cube into 27 and keep some: here the 12 edge cubes and 6 face cubes, dropping the 8 corners and the centre. Repeat in each of the 18. The Menger sponge does the opposite (it keeps the corners and drops the face middles), so here the faces stay solid in the middle while the corners erode, and from along a diagonal the outline looks like a snowflake. Keeping 18 instead of 20 also makes its dimension a little lower: log 18 ÷ log 3 ≈ 2.631, against the sponge\'s 2.727.' },
 });
-export const QC=[-0.2,0.6,0.2,0.2], SH3=['bulb','box','menger','tet','qj','apo','kifs','mj','tetra','sier5','menger4','kifs4','nest','klein','pk','flake','jcube','mosely','soddy'];
+export const QC=[-0.2,0.6,0.2,0.2], SH3=['bulb','box','menger','tet','qj','apo','kifs','mj','tetra','sier5','menger4','kifs4','nest','klein','pk','flake','jcube','mosely','soddy','hyp'];
 // nested spheres: how many layers we've swapped in (each one: ×2 bigger, turned 45° back), and up to 3 outer layers kept in view
 // While a 3D print is built (over many frames) the shape's distance functions read a frozen copy of the settings, so a
 // Breathe or Keep twisting going on meanwhile can't change the shape halfway through. Everything else reads st.d3.
@@ -111,8 +113,8 @@ function de4(q, sh, it){ const D=D3(), [x,y,z,w]=q;
   for (let i=0;i<it;i++){ dz=qm(Z,dz).map(v=>2*v); Z=qm(Z,Z).map((v,k)=>v+QC[k]); m=Z.reduce((sm,v)=>sm+v*v,0); if (m>16) break; }
   return 0.25*Math.log(Math.max(m,1e-12))*Math.sqrt(m)/Math.hypot(...dz); }
 export function d3Extra(){ const D=D3(); if (D.shape==='nest') return 0; return D.target ? Math.max(0, Math.floor(Math.log2(d3Bound()*3.4/D.dist)*0.7)) : 0; }
-export function d3Iter(x=d3Extra()){ const l=D3().lvl, s=D3().shape; return Math.min({bulb:16,box:20,menger:12,tet:20,qj:16,apo:20,kifs:20,mj:48,tetra:48,sier5:12,menger4:7,kifs4:20,nest:1,klein:24,pk:20,flake:10,jcube:12,mosely:10,soddy:40}[s],
-  {bulb:3+l, box:7+l, menger:Math.min(l,6), tet:4+l, qj:4+l, apo:3+l, kifs:6+l, mj:10+3*l, tetra:10+3*l, sier5:Math.max(2,l-1), menger4:Math.min(l,5), kifs4:6+l, nest:1, klein:l>>1, pk:5+l, flake:1+l, jcube:1+l, mosely:l, soddy:l}[s]+(s==='soddy'?Math.round(1.66*x):x)); }   // the packing's smallest ball keeps pace with the zoom
+export function d3Iter(x=d3Extra()){ const l=D3().lvl, s=D3().shape; return Math.min({bulb:16,box:20,menger:12,tet:20,qj:16,apo:20,kifs:20,mj:48,tetra:48,sier5:12,menger4:7,kifs4:20,nest:1,klein:24,pk:20,flake:10,jcube:12,mosely:10,soddy:40,hyp:30}[s],
+  {bulb:3+l, box:7+l, menger:Math.min(l,6), tet:4+l, qj:4+l, apo:3+l, kifs:6+l, mj:10+3*l, tetra:10+3*l, sier5:Math.max(2,l-1), menger4:Math.min(l,5), kifs4:6+l, nest:1, klein:l>>1, pk:5+l, flake:1+l, jcube:1+l, mosely:l, soddy:l, hyp:l}[s]+(s==='soddy'?Math.round(1.66*x):s==='hyp'?Math.round(2.44*x):x)); }   // the packing's smallest ball keeps pace with the zoom
 export const d3MinDist=()=>d3Bound()*2e-4;
 export const d3Mag=()=>{ const D=st.d3; return D.shape==='nest' ? 1.05*3.4/D.dist*Math.pow(2,(D.nestM||0)) : d3Bound()*3.4/D.dist; };
 function cam3(){ const D=st.d3, T=D.target||[0,0,0], cp=Math.cos(D.pitch), bz=[cp*Math.sin(D.yaw), Math.sin(D.pitch), cp*Math.cos(D.yaw)];
@@ -131,6 +133,19 @@ const SB=[[0.22474487,2.22474487,0.7071067804,0.7071067804,0.7071067804],[0.2247
   SDG=[[-1.573132186,0.1589186225,0,0,0],[-0.1767766953,-0.1767766953,-0.6123724357,-0.6123724357,-0.6123724357],[-0.1767766953,-0.1767766953,-0.6123724357,0.6123724357,0.6123724357],[-0.1767766953,-0.1767766953,0.6123724357,-0.6123724357,0.6123724357],[-0.1767766953,-0.1767766953,0.6123724357,0.6123724357,-0.6123724357]];
 /** The smallest ball drawn in the Apollonian packing, as a share of the outer radius, from its detail level (the shader uses the same formula). */
 export const soddyMin=it=>0.025*Math.pow(0.55,it-5);
+// Hyperbolic honeycombs {p,q,r}: the four mirrors (see deHyp in render/webgl.js). The cell's symmetry triangle on the unit
+// sphere has corners F (face centre), E (edge middle) and V (corner), with angles π/p at F, π/q at V and a right angle at E.
+// The face sphere is centred along F and meets the ball's edge at right angles (d² = 1 + ρ²), tilted π/r from the plane
+// through O, E and V: that fixes d = cos(π/r) / √(cos²(π/r) − sin²FE). It only exists when the honeycomb is hyperbolic.
+export const HYP={ 435:'{4,3,5}: cubes, five round each edge', 534:'{5,3,4}: dodecahedra, four round each edge', 535:'{5,3,5}: dodecahedra, five round each edge', 353:'{3,5,3}: icosahedra, three round each edge' };
+const hypCache={};
+export function hypMirrors(kind){ if (hypCache[kind]) return hypCache[kind];
+  const [p,q,r]=String(kind).split('').map(Number), PI=Math.PI, FE=Math.acos(Math.cos(PI/q)/Math.sin(PI/p)), FV=Math.acos(1/(Math.tan(PI/p)*Math.tan(PI/q)));
+  const F=[0,0,1], E=[Math.sin(FE),0,Math.cos(FE)], V=[Math.sin(FV)*Math.cos(PI/p), Math.sin(FV)*Math.sin(PI/p), Math.cos(FV)];
+  const cr=(a,b)=>[a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]], nz=v=>{ const l=Math.hypot(...v); return v.map(x=>x/l); }, dt=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  const G=nz([F[0]+E[0]+V[0], F[1]+E[1]+V[1], F[2]+E[2]+V[2]]), N=[cr(E,F), cr(V,F), cr(V,E)].map(nz).map(n=>dt(n,G)<0 ? n.map(x=>-x) : n);
+  const k=Math.sin(FE), cq=Math.cos(PI/r), d=cq/Math.sqrt(cq*cq-k*k), rho=Math.sqrt(d*d-1), C=F.map(x=>x*d), h=dt(C,N[2]);
+  return hypCache[kind]={ N, C, rho, Ec:[C[0]-h*N[2][0], C[1]-h*N[2][1], C[2]-h*N[2][2]], Er:Math.sqrt(rho*rho-h*h) }; }
 const dot5=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4];
 const len3=v=>Math.hypot(v[0],v[1],v[2]), sub3=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
 const sdBox3=(p,h)=>{ const q=p.map(x=>Math.abs(x)-h); return Math.hypot(Math.max(q[0],0),Math.max(q[1],0),Math.max(q[2],0))+Math.min(Math.max(q[0],q[1],q[2]),0); };
@@ -167,6 +182,15 @@ function deNew(p, sh, it){
       const v=sub3(q,c), f=R2/Math.max(v[0]*v[0]+v[1]*v[1]+v[2]*v[2],1e-300); q=c.map((x,i)=>x+v[i]*f); ds*=f; last=hit;
       for (const row of M){ const s=2*dot5(row,SDD[hit]); for (let i=0;i<5;i++) row[i]-=s*SDG[hit][i]; } }
     return Math.max(best, len3(p)-1); }
+  if (sh==='hyp'){ const H=hypMirrors(D3().hyp||'534'), dsMax=4*Math.pow(1.5,it-5); let q=p.slice(), ds=1;   // the shader's deHyp
+    for (let n=0;n<64;n++){ let moved=false;
+      for (const nj of H.N){ const d=q[0]*nj[0]+q[1]*nj[1]+q[2]*nj[2]; if (d<0){ q=[q[0]-2*d*nj[0], q[1]-2*d*nj[1], q[2]-2*d*nj[2]]; moved=true; } }
+      const v=sub3(q,H.C), r2=v[0]*v[0]+v[1]*v[1]+v[2]*v[2];
+      if (r2<H.rho*H.rho && ds<dsMax){ const f=H.rho*H.rho/r2; q=H.C.map((c,i)=>c+v[i]*f); ds*=f; moved=true; }
+      if (!moved) break; }
+    const n2=H.N[2], h=q[0]*n2[0]+q[1]*n2[1]+q[2]*n2[2], qq=[q[0]-h*n2[0], q[1]-h*n2[1], q[2]-h*n2[2]];
+    let d=Math.hypot(h, len3(sub3(qq,H.Ec))-H.Er)-0.012; if (D3().hypW && ds<2.5) d=Math.min(d, Math.abs(len3(sub3(q,H.C))-H.rho)-0.004);
+    return Math.max(d/ds, len3(p)-0.985); }
   if (sh==='jcube'){ const K=Math.SQRT2-1, K2=K*K; let q=p.slice(), sc=1, d=Infinity;
     for (let n=0;n<it;n++){ q=sortDesc(q); const ca=[1-K,1-K,1-K], cb=[1-K2,1-K2,0], ba=sdBox3(sub3(q,ca),K), bb=sdBox3(sub3(q,cb),K2);
       if (Math.min(ba,bb)/sc>d) return d;
@@ -259,10 +283,19 @@ export function boxBound(S){ return S<0 ? clamp((-S+1)/(-S-1)*1.05,2.2,3.7) : 2*
 // The gaps where these shapes fall apart (power between −2 and 2, box scale between −1.1 and 1.5): snap to the nearer end.
 export const snapGap=(v,lo,hi)=> v>lo && v<hi ? (v-lo < hi-v ? lo : hi) : v;
 export function d3Bound(){ const s=D3().shape; if (s==='nest') return 1.05*Math.pow(2,nestOuter()); if (s==='box') return boxBound(D3().boxS); if (s==='bulb') return bulbBound(D3().power); return S3[s].bound; }
-export let f3Ready=false; shared.f3Err = '';
+// The 3D program is built for the shape on screen (and its see-through version only when that's on), when it's first needed.
+// Once it's ready, programs for other shapes are thrown away, and leaving 3D throws away this one too.
+export let f3Ready=false, f3Since=0; shared.f3Err = ''; let f3Key='';   // f3Since: when the program now being built was started (for the caption's timer)
+const key3=()=>'f3:'+st.d3.shape+(st.d3.glass?':glass':'');
+export function prog3(){ const k=key3();
+  if (k!==f3Key){ f3Key=k; f3Ready=false; f3Since=performance.now(); shared.f3Err=''; }
+  if (shared.f3Err) return null;
+  let P; try { P=main.progAsync(k, fs3For(SH3.indexOf(st.d3.shape), st.d3.glass)); } catch(e){ shared.f3Err=String(e.message||e).slice(0,240); showNA(); return null; }
+  if (P) for (const n of [...Object.keys(main.progs), ...Object.keys(main.pend)]) if (n.startsWith('f3:') && n!==k) main.drop(n);
+  return P; }
+export function drop3(){ for (const n of [...Object.keys(main.progs), ...Object.keys(main.pend)]) if (n.startsWith('f3:')) main.drop(n); f3Key=''; f3Ready=false; }
 export function render3D(hq){
-  if (shared.f3Err) return false;
-  let P; try { P=main.progAsync('f3',FS3); } catch(e){ shared.f3Err=String(e.message||e).slice(0,240); showNA(); return false; }
+  const P=prog3(); if (shared.f3Err) return false;
   if (!P){ const b=hexRGB(st.bg); gl.viewport(0,0,glc.width,glc.height); gl.clearColor(b[0],b[1],b[2],1); gl.clear(gl.COLOR_BUFFER_BIT); shared.dirty=true; return false; }   // still being built: try again next frame
   if (!f3Ready){ f3Ready=true; shared.lastCap=''; touch(); }
   const g=gl, D=st.d3; g.useProgram(P.p); g.viewport(0,0,glc.width,glc.height);
@@ -272,7 +305,8 @@ export function render3D(hq){
   g.uniform1i(P.u('u_s3'),SH3.indexOf(D.shape));
   { const R=getR4(), cm=new Float32Array(16); for (let j=0;j<4;j++) for (let i=0;i<4;i++) cm[j*4+i]=R[i][j]; g.uniformMatrix4fv(P.u('u_r4'),false,cm); const rg=S3[D.shape].rg||[0,1]; g.uniform2f(P.u('u_rg'),rg[0],rg[1]); g.uniform1i(P.u('u_nest0'),-nestOuter()); g.uniform1i(P.u('u_nestM'),st.d3.nestM||0);
     const T=d3Tf(), M=T.R; g.uniformMatrix3fv(P.u('u_rot3'),false,new Float32Array([M[0][0],M[0][1],M[0][2],M[1][0],M[1][1],M[1][2],M[2][0],M[2][1],M[2][2]]));
-    g.uniform1f(P.u('u_tw'),T.tw); g.uniform1f(P.u('u_twS'),T.twS); g.uniform1i(P.u('u_cut'),T.cut?1:0); if (T.cut) g.uniform4f(P.u('u_cutP'),T.cut.n[0],T.cut.n[1],T.cut.n[2],T.cut.o); } g.uniform1f(P.u('u_twist'),(twistNow()+(!D.target?pulse()*3:0))*Math.PI/180); g.uniform1i(P.u('u_it3'),d3Iter()); g.uniform1i(P.u('u_hq'),hq?1:0);
+    g.uniform1f(P.u('u_tw'),T.tw); g.uniform1f(P.u('u_twS'),T.twS); g.uniform1i(P.u('u_cut'),T.cut?1:0); g.uniform1i(P.u('u_glass'),D.glass?1:0);
+  if (D.shape==='hyp'){ const H=hypMirrors(D.hyp||'534'); g.uniformMatrix3fv(P.u('u_hN'),false,new Float32Array(H.N.flat())); g.uniform3f(P.u('u_hC'),...H.C); g.uniform1f(P.u('u_hR'),H.rho); g.uniform4f(P.u('u_hE'),...H.Ec,H.Er); g.uniform1i(P.u('u_hW'),D.hypW?1:0); } if (T.cut) g.uniform4f(P.u('u_cutP'),T.cut.n[0],T.cut.n[1],T.cut.n[2],T.cut.o); } g.uniform1f(P.u('u_twist'),(twistNow()+(!D.target?pulse()*3:0))*Math.PI/180); g.uniform1i(P.u('u_it3'),d3Iter()); g.uniform1i(P.u('u_hq'),hq?1:0);
   const ab=!D.target ? pulse() : 0, vo=voice();   // music: an optional pulse of the shape on each beat, and the vocal sway (4D slice)
   g.uniform1f(P.u('u_power'),D.power+Math.sign(D.power)*ab*0.8); g.uniform1f(P.u('u_boxS'),D.boxS+Math.sign(D.boxS)*ab*0.06);   // a beat pushes away from zero, never into the gap g.uniform1f(P.u('u_w'),(is4()?wAct()+vo*0.1:0)+ab*0.05);
   g.uniform1f(P.u('u_density'),effDensity()); g.uniform1f(P.u('u_cycle'),st.cycle); g.uniform1f(P.u('u_flash'),flash()); g.uniform1f(P.u('u_bound'),d3Bound()); g.uniform1f(P.u('u_view'),D.dist);

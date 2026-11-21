@@ -14,7 +14,7 @@ const r2=(x,d=2)=>+(+x).toFixed(d);
 function viewCode(){ const sh=SHAPES[st.shape], q=pivot.quaternion, P=new URLSearchParams();
   P.set('s',st.shape); P.set('m',st.mode);
   if (sh.highD) P.set('n',sh.n); if (st.shape==='d'){ P.set('dp',$('dp').value); P.set('dq',$('dq').value); }
-  if (st.shape==='morph'){ P.set('mf',morphFam); P.set('ms',$('morphS').value); } if (sh.round) P.set('dt',sh.detail||3); if (sh.packing && st.packView!=='balls') P.set('pv',st.packView);
+  if (st.shape==='morph'){ P.set('mf',morphFam); P.set('ms',$('morphS').value); } if (sh.round) P.set('dt',sh.detail||3); if (sh.packing && st.packView!=='balls') P.set('pv',st.packView); if (st.drawAs!=='edges') P.set('da',st.drawAs);
   P.set('pal',st.palette); if (st.palRev) P.set('rev',1); if (st.cycleSpeed) P.set('cyc',r2(st.cycleSpeed)); if (st.density!==1) P.set('dn',r2(st.density)); P.set('cm',st.cmode); P.set('fin',st.finish); P.set('bg',st.bg.replace('#','')); P.set('pr',st.proj); P.set('ed',st.edges);
   if (st.faceFill) P.set('ff',1);
   P.set('ss',st.spinStyle); P.set('sp',st.spin?1:0); P.set('spd',r2(st.speed)); P.set('tt',r2(st.turn)); P.set('th',r2(st.thk));
@@ -33,6 +33,7 @@ export function applyView(code){
   if (g('mf')) clickData('#morphFam','f',g('mf')); if (g('ms')) setRange('morphS', g('ms'), 'change');
   if (g('dt') && SHAPES[st.shape].round) setRange('rdet', g('dt'));
   if (SHAPES[st.shape].packing){ const pv=g('pv')==='net'?'net':'balls'; const b=document.querySelector(`#packView [data-pv="${pv}"]`); if (b) b.click(); }
+  clickData('#drawAs','da', ['balls','foam'].includes(g('da')) ? g('da') : 'edges');
   if (g('m')) setMode(g('m'));
   if (g('pal')){ const b=[...document.querySelectorAll('#palettes button')].find(x=>x.dataset.pal===g('pal')); if (b) b.click(); }
   if ((g('rev')==='1')!==st.palRev) $('palRev').click(); setRange('cyc', g('cyc')!=null ? +g('cyc') : 0); setRange('dens', g('dn')!=null ? +g('dn') : 1);

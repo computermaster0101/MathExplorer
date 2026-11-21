@@ -7,6 +7,8 @@ import { SHAPES } from '../geometry/polytopes.js';
 import { HD_MAX } from '../geometry/higher-dim.js';
 import { FINISH, HOME, canvas, mainLayer, pingLayer, pivot, renderer, sliceLayer } from '../render/scene.js';
 import { renderView } from '../render/stereo.js';
+import { capsFor, kissOK } from '../render/packing.js';
+import { foamOK } from '../render/foam.js';
 import { vel } from '../input/orbit.js';
 import { I4, KNIFE_NOTES, KNIFE_TURN, knifeNow, newPing } from '../modes/ping.js';
 import { panelFit } from '../panels/extra-panels.js';
@@ -64,11 +66,21 @@ $('snap').addEventListener('click', ()=>{ if (!downloads) return; renderView();
     catch(e){ if (!e || e.code!=='declined') dlNote.textContent='Couldn\'t save the image.'; } }, 'image/png'); });
 export const shapeBtns=[...document.querySelectorAll('.shapes button')];
 shapeBtns.forEach(b=>b.addEventListener('click', ()=>{ st.shape=b.dataset.s; shapeBtns.forEach(x=>x.classList.toggle('on', x===b));
-  $('duo').hidden = st.shape!=='d'; $('morphRow').hidden = st.shape!=='morph'; syncRoundRow(); syncHdRow(); shapeChanged(); }));
+  $('duo').hidden = st.shape!=='d'; $('morphRow').hidden = st.shape!=='morph'; syncRoundRow(); syncHdRow(); syncDrawAs(); shapeChanged(); }));
 function syncRoundRow(){ const sh=SHAPES[st.shape]; $('roundRow').hidden=!sh.round; if (!sh.round) return; $('rdet').value=sh.detail||3; $('rdeto').textContent=sh.detail||3;
   $('packView').hidden=!sh.packing; $('packView').querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.pv===st.packView));
   $('rdetNote').textContent = sh.packing ? `${sh.gens} round${sh.gens===1?'':'s'} of filling: ${sh.verts.length.toLocaleString()} balls touching at ${sh.edges.length.toLocaleString()} points. Always shown in stereographic projection, the only one that keeps balls round.`
     : (st.shape==='hopf' ? `${sh.nRings} rings of circles, ${sh.fiberInfo.length} circles in all` : `${sh.verts.length.toLocaleString()} mesh points, ${sh.edges.length.toLocaleString()} lines`)+'. More detail draws more of the surface.'; }
+// Draw as: edges, touching balls at the corners, or bubble foam (the faces as curved soap films)
+export function syncDrawAs(){ const sh=SHAPES[st.shape], el=$('drawAsNote'); $('drawAs').querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.da===st.drawAs));
+  if (sh.packing){ el.textContent='The Apollonian packing has its own choice under Shapes: balls, or the touching points joined up.'; return; }
+  if (st.drawAs==='edges'){ el.textContent='Corners joined by edges: the usual picture.'; return; }
+  if (!(st.drawAs==='foam' ? foamOK(sh) : kissOK(sh))){ el.textContent=`Not available for the ${sh.name}: ${sh.round||sh.highD ? 'it is not made of corners on the 3-sphere' : st.drawAs==='foam' ? 'it has no flat faces, or too many' : 'it has too many corners'}. Showing edges.`; return; }
+  if (st.drawAs==='balls'){ capsFor(sh); const k=Math.round(sh._kissN*10)/10;
+    el.textContent=`A ball at each of the ${sh.verts.length.toLocaleString()} corners, just big enough to touch its nearest neighbours (each touches ${k}). Always stereographic, which keeps every ball round; the ball holding the projection point becomes the glass container, so turning in 4D turns it inside out. Try the 24-cell (each ball touches 8) or the 600-cell (each touches 12). Pick Bubble under Colour & style to see through them.`; return; }
+  el.textContent='Every flat face becomes part of a sphere in stereographic projection, so the shape turns into a cluster of soap bubbles stuck together. Try the 120-cell: 120 bubbles. Pick Bubble under Colour & style for rainbow films.'; }
+$('drawAs').addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return; st.drawAs=b.dataset.da; syncDrawAs(); shapeChanged(true); });
+syncDrawAs();
 $('packView').addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return; st.packView=b.dataset.pv; syncRoundRow(); shapeChanged(true); });
 $('rdet').addEventListener('input', e=>{ const sh=SHAPES[st.shape]; if (!sh.round || !sh.remake) return; sh.remake(+e.target.value); syncRoundRow(); shapeChanged(true); });
 $('knifeDir').querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{ if (b.dataset.k!==shared.knifeDir) shared.knifeAnim={from:knifeNow||I4, t:0}; shared.knifeDir=b.dataset.k; setSeg($('knifeDir'), b); $('knifeNote').textContent=KNIFE_NOTES[shared.knifeDir]+KNIFE_TURN;

@@ -3,13 +3,13 @@ import { $, clamp, clickIn, lerp, setCheck, setRange, smooth } from '../util.js'
 import { ddFrom } from '../math/double-double.js';
 import { dblToFix, fixToNum, strToFix } from '../math/big-fixed.js';
 import { JPRESETS, TYPES } from '../fractals/types.js';
-import { fitV, isExt, st, toMath, view } from '../state.js';
+import { fitV, isExt, qLimits, st, toMath, view } from '../state.js';
 import { escR2, startZ, stepFn } from '../fractals/iterate.js';
 import { PALETTES, css, fmtBig, fmtC, minus, setRamp } from '../color/palettes.js';
-import { FS3, main, octx, ovc, refSlots } from '../render/webgl.js';
+import { octx, ovc, refSlots } from '../render/webgl.js';
 import { cssH, cssW, effIter, minScale, resetViews, toWorld, touch } from '../view.js';
 import { notAvail } from './notice.js';
-import { d3Bound, snapGap, f3Ready, is4, isKifs, knifeVal, nestReset, r4c, setDive3, start3Warp, syncT3 } from '../modes/fractal3d.js';
+import { d3Bound, drop3, prog3, snapGap, f3Ready, is4, isKifs, knifeVal, nestReset, r4c, setDive3, start3Warp, syncT3 } from '../modes/fractal3d.js';
 import { GROW, GROW_EXT, GROW_HOLD, fern } from '../modes/grow.js';
 import { newOrbit, orbitIdx } from '../modes/orbit.js';
 import { CMODE_NOTE, refreshLegend, updateDynamic, updateLabels } from './learn.js';
@@ -24,8 +24,8 @@ export function setMode(m){
   st.dive=false; st.endlessRun=false; st.fly=null; diveUI(); if (st.d3.dive||st.d3.warp) setDive3(false);
   if (m==='grow'){ st.grow.t=0; st.grow.playing=true; $('growPlay').textContent='Pause'; st.grow.fit=null; buildGenChips(); }
   if (m==='orbit'){ if (!notAvail()) newOrbit(); st.orbit.playing=true; $('orbPlay').textContent='Pause'; }
-  st.q = m==='d3' ? 0.6 : 1; st.qMove=st.q; shared.hqShown=false;
-  if (m==='d3' && !f3Ready && !shared.f3Err) try { main.progAsync('f3',FS3); } catch(e){ shared.f3Err=String(e.message||e).slice(0,240); }
+  st.q = qLimits().start; st.qMove=st.q; shared.hqShown=false;
+  if (m==='d3') prog3(); else drop3();   // start building the 3D program now, or let it go when leaving 3D
   octx.setTransform(1,0,0,1,0,0); octx.clearRect(0,0,ovc.width,ovc.height);
   $('hint').textContent = m==='d3' ? 'Drag to orbit · scroll / pinch to move closer' : m==='orbit' ? 'Tap a point · drag to move · scroll to zoom' : m==='link' ? 'Drag on the map to move c' : 'Drag to move · scroll / pinch to zoom';
   shared.lastCap=''; touch(); updateLabels();
@@ -78,7 +78,7 @@ $('diveSpd').addEventListener('input', e=>syncDiveSpd(+e.target.value));
 // Reset view puts the current mode back to how it starts: camera, knife, turns, motion and shape settings (not the fractal or colours)
 function resetSettings(){ const m=st.mode;
   if (m==='d3'){ const D=st.d3;
-    setRange('pw3',8); setCheck('breathe',0); setRange('bs3',-1.8); setCheck('bsBreathe',0); setRange('tw3',0); setCheck('twAnim',0);
+    setRange('pw3',8); setCheck('breathe',0); setRange('bs3',-1.8); setCheck('bsBreathe',0); setRange('tw3',0); setCheck('twAnim',0); setCheck('glass3',0); setCheck('hypWalls',0);
     Object.assign(D,{rxy:0,rxz:0,ryz:0,spin3:false,cut:false}); $('spin3').checked=false; $('cut3').checked=false; syncT3();
     setRange('w3',0); setCheck('sweep3',0); Object.assign(D,{axw:0,ayw:0,azw:0,spin4:false}); $('spin4').checked=false; syncR4(); r4c.key='';
     setRange('lvl3',5); setRange('turn3',0); clickIn('drag3','dm','turn'); D.aim=null; D.needAim=false; D.floating=false; shared.vel3={x:0,y:0}; }
@@ -110,7 +110,7 @@ $('orbAuto').addEventListener('change', e=>{ st.orbit.auto=e.target.checked; });
 segClick('orbStyle', d=>{ st.orbit.style=d.s; });
 $('orbCircle').addEventListener('change', e=>{ st.orbit.circle=e.target.checked; });
 // 3D
-export function d3Rows(){ const s=st.d3.shape, f=is4(); $('pwRow').hidden=s!=='bulb'; $('bsRow').hidden=s!=='box'; $('cutRow').hidden=f;
+export function d3Rows(){ const s=st.d3.shape, f=is4(); $('pwRow').hidden=s!=='bulb'; $('bsRow').hidden=s!=='box'; $('hypRow').hidden=s!=='hyp'; $('cutRow').hidden=f;
   $('knifeLbl').textContent=f?'Knife position (W)':'Knife position'; $('sweepLbl').textContent=f?'Sweep the knife through 4D':'Sweep the knife through the shape';
   $('turnKLbl').textContent=f?'Turn the knife in 4D':'Tilt the knife'; [['k1l','XW','XZ'],['k2l','YW','YZ'],['k3l','ZW','XY']].forEach(([id,a,b])=>$(id).textContent=f?a:b);
   $('knifeNote').textContent=f?'Sliding moves the cut along the hidden W direction. Turning it in the XW, YW or ZW plane tilts the cut, so it slices the 4D shape at an angle, the same turns as in the polytope explorer.'
@@ -129,6 +129,9 @@ for (const gid of ['shapes3','shapes3b','shapes4']) $(gid).addEventListener('cli
 for (const [k,id] of [['axw','rxw'],['ayw','ryw'],['azw','rzw']]) $(id).addEventListener('input', e=>{ st.d3[k]=+e.target.value; if (e.isTrusted) cutOn(); $(id+'o').textContent=e.target.value+'°'; if (st.d3.spin4){ st.d3.spin4=false; $('spin4').checked=false; } touch(); });
 $('spin4').addEventListener('change', e=>{ st.d3.spin4=e.target.checked; if (st.d3.spin4) cutOn(); touch(); });
 $('cut3').addEventListener('change', e=>{ st.d3.cut=e.target.checked; syncW(); touch(); });
+$('glass3').addEventListener('change', e=>{ st.d3.glass=e.target.checked; touch(); });
+segClick('hypKind', d=>{ st.d3.hyp=d.h; touch(); updateLabels(); });
+$('hypWalls').addEventListener('change', e=>{ st.d3.hypW=e.target.checked; touch(); });
 for (const k of ['xy','xz','yz']) $('t3'+k).addEventListener('input', e=>{ st.d3['r'+k]=+e.target.value; $('t3'+k+'o').textContent=e.target.value+'°'; if (st.d3.spin3){ st.d3.spin3=false; $('spin3').checked=false; } touch(); });
 $('spin3').addEventListener('change', e=>{ st.d3.spin3=e.target.checked; touch(); });
 $('t3reset').addEventListener('click', ()=>{ Object.assign(st.d3,{rxy:0,rxz:0,ryz:0,spin3:false}); $('spin3').checked=false; syncT3(); touch(); });
@@ -189,3 +192,13 @@ $('dens').addEventListener('input', e=>{ st.density=+e.target.value; $('denso').
 segClick('inside', d=>{ st.inside=+d.i; });
 segClick('bg', d=>{ st.bg=d.b; refreshLegend(); });
 $('lw').addEventListener('input', e=>{ st.lw=+e.target.value; $('lwo').textContent=st.lw.toFixed(1)+'×'; });
+
+// "While moving": how sharp the picture stays during drags, zooms and dives (see qLimits in state.js)
+const MQ_NOTE={ smooth:'Smoothest motion: drawn at lower resolution while anything moves (from 60% in 3D), sharp again once it stops.',
+  balanced:'Sharper while moving, and only softens when the frame rate actually drops. Dives stay a little crisper still.',
+  sharp:'Always full resolution, even while moving. Heavy shapes and deep dives may move less smoothly.' };
+function syncMotionQ(){ document.querySelectorAll('#motionQ button').forEach(b=>b.classList.toggle('on', b.dataset.mq===st.motionQ)); $('motionQNote').textContent=MQ_NOTE[st.motionQ]; }
+$('motionQ').addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return; st.motionQ=b.dataset.mq;
+  try { localStorage.setItem('mathexplorer.motionQ', st.motionQ); } catch(err){ /* not saved */ }
+  const L=qLimits(); st.q=st.qMove=L.start; shared.hqShown=false; syncMotionQ(); touch(); });
+syncMotionQ();

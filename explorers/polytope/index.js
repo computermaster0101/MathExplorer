@@ -18,6 +18,7 @@ import './math/rotate4d.js';
 import './render/scene.js';
 import './render/stereo.js';
 import './render/packing.js';
+import './render/foam.js';
 import './input/orbit.js';
 import './modes/build.js';
 import './modes/unfold.js';

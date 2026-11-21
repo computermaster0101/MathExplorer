@@ -1,14 +1,14 @@
 import { shared } from './shared.js';
 import { $, clamp, lerp, smooth } from './util.js';
 import { TYPES } from './fractals/types.js';
-import { isExt, ptrs, st } from './state.js';
+import { isExt, ptrs, qLimits, st } from './state.js';
 import { hexRGB, minus } from './color/palettes.js';
 import { ctxLost, gl, glc, octx, refSlots } from './render/webgl.js';
 import { cssH, cssW, deepT, extT, minScale, moveCentre, ovScale, runGrid, sizeBuffers, startGrid, touch } from './view.js';
 import { drawBlit, grabFrame, render2DAll } from './render/bla.js';
 import { notAvail } from './ui/notice.js';
 import { budDraw, budStep } from './modes/buddhabrot.js';
-import { d3Extra, d3MinDist, dive3UI, nestDive, nestIn, nestOut, nestStraight, render3D, retarget3, setDive3, start3Warp, syncT3 } from './modes/fractal3d.js';
+import { d3Extra, d3MinDist, dive3UI, f3Ready, nestDive, nestIn, nestOut, nestStraight, render3D, retarget3, setDive3, start3Warp, syncT3 } from './modes/fractal3d.js';
 import { GROW, GROW_END, drawGrow, fern, growTotal } from './modes/grow.js';
 import { drawOrbit, newOrbit, orbitIdx } from './modes/orbit.js';
 import { drawCentreMark, drawLink, drawTapMark, pathC } from './modes/julia-link.js';
@@ -62,7 +62,7 @@ function adjustPace(now, qMax, dtMs){
     if (pace.probeN<=16) pace.probeT+=dtMs; if (--pace.probeN>0) return;
     pace.cost=pace.probeT/16;
     if (pace.cost<full*1.15){ pace.every=1; }
-    else { pace.every=2; if (pace.cost<half*0.75) st.q=Math.min(qMax,st.q*1.05); else if (pace.cost>half*1.05) st.q=Math.max(0.3,st.q*0.92); }
+    else { pace.every=2; if (pace.cost<half*0.75) st.q=Math.min(qMax,st.q*1.05); else if (pace.cost>half*1.05) st.q=Math.max(qLimits().floor,st.q*0.92); }
     pace.probeAt=now+8000; dtAvg=pace.every===1?full:half; return;
   }
   if (frameN%10) return;
@@ -71,7 +71,7 @@ function adjustPace(now, qMax, dtMs){
     // seen here; quality only rises after a half-rate check has measured real headroom.)
     if (dtAvg>full*1.3){ pace.every=2; dtAvg=half; pace.probeAt=now+4000; }
   } else {
-    if (dtAvg>half*1.2) st.q=Math.max(0.3,st.q*0.92);                              // even half rate is too much: soften a little
+    if (dtAvg>half*1.2) st.q=Math.max(qLimits().floor,st.q*0.92);                  // even half rate is too much: soften a little (not below the chosen floor)
     else if (now>pace.probeAt){ pace.probeN=20; pace.probeT=0; pace.every=1; }      // time to check for headroom
   }
 }
@@ -113,7 +113,7 @@ export function loop(now){
   if (st.mode==='d3') anim=advance3D(dt)||anim;
   let goHQ=false;
   if (st.mode!=='grow' && !notAvail()){      // drop resolution while moving if frames get slow; full quality once still
-    const qMax = st.mode==='d3' ? 0.85 : 1;
+    const L=qLimits(), qMax=L.max; if (st.q<L.floor) st.q=L.floor;   // see "While moving" in View & detail
     if (anim || shared.dirty){ if (shared.hqShown || st.prog){ st.q=Math.min(qMax, st.qMove||qMax); shared.hqShown=false; } st.prog=null;
       if (anim){ dtAvg=dtAvg*0.9+dt*1000*0.1; adjustPace(now, qMax, dt*1000); }
       lastStill=now; }
@@ -134,7 +134,7 @@ export function loop(now){
   octx.setTransform(ovScale,0,0,ovScale,0,0);
   if (st.mode==='grow') drawGrow();
   else { octx.clearRect(0,0,cssW,cssH); if (!notAvail()){ if (st.mode==='orbit') drawOrbit(); else if (st.mode==='link') drawLink(); else if (st.mode==='explore' && TYPES[st.type].cpu) budDraw(); else if (st.mode==='explore'){ drawCentreMark(); drawTapMark(); } else if (st.mode==='d3') drawTapMark(); } }
-  drawInsets(); recFrame(); shared.dirty=false;
+  drawInsets(); recFrame(); shared.dirty = st.mode==='d3' && !f3Ready && !shared.f3Err;   // while a 3D program is still being built, keep asking for the picture so it shows the moment it's ready
   frameN++; if (frameN%6===0) updateDynamic();
   if (now-shared.hashT>1000){ shared.hashT=now; writeHash(false); }
   requestAnimationFrame(loop);
