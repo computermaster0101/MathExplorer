@@ -240,6 +240,37 @@ function raycastRay(ro, rd){ const R=d3Bound(), bb=ro[0]*rd[0]+ro[1]*rd[1]+ro[2]
   if (!hit) return null;
   for (let i=0;i<300;i++){ const d=de3([ro[0]+rd[0]*t, ro[1]+rd[1]*t, ro[2]+rd[2]*t]); if (d<1e-9) break; t+=d*k; }
   return {p:[ro[0]+rd[0]*t, ro[1]+rd[1]*t, ro[2]+rd[2]*t], t}; }
+// ---------- steering a 3D dive toward detail (the same "Steer toward detail" setting as 2D, st.steer) ----------
+// About every half second while diving, a 7×7 fan of rays is cast in a cone round the view, a few each frame (within ~3 ms).
+// Each ray that hits scores how sharply the depth jumps between it and its neighbours: creases, edges and bumps jump a lot,
+// a flat face or open space hardly at all. If somewhere scores clearly better than straight ahead (by a third or more), the dive turns slowly
+// toward it (in place, like the arrow keys). Steering by hand, or dragging, puts it on hold (the loop decides that).
+const S3N=7, S3A=0.32;
+let scan3=null, aim3=null, rest3=0;
+function scanScore(T){ const at=(i,j)=>T[j*S3N+i], mid=(S3N-1)/2; let best=null, centre=null;
+  for (let j=1;j<S3N-1;j++) for (let i=1;i<S3N-1;i++){ const t=at(i,j); if (!isFinite(t)) continue; let s=0;
+    for (const [a,b] of [[1,0],[-1,0],[0,1],[0,-1]]){ const n=at(i+a,j+b); s+= isFinite(n) ? Math.min(1, Math.abs(n-t)/t*4) : 0.5; }
+    const gx=i/(S3N-1)*2-1, gy=j/(S3N-1)*2-1; s*=1-0.25*Math.hypot(gx,gy);   // a little preference for straight ahead
+    if (!best || s>best.s) best={s, i, j}; if (i===mid && j===mid) centre=s; }
+  return {best, centre}; }   // the best spot, and how good straight ahead is
+/** One frame of 3D dive steering; returns true while it's turning. Call only while diving and not on hold. */
+export function steer3Step(dt){ const D=st.d3;
+  if (aim3){ const wrap=a=>Math.atan2(Math.sin(a),Math.cos(a)), dy=wrap(aim3.yaw-D.yaw), dp=aim3.pitch-D.pitch, k=1-Math.exp(-dt/1.8), mx=0.18*dt;   // turns gently: at most about 10° a second
+    const sy=Math.max(-mx,Math.min(mx,dy*k)), sp=Math.max(-mx,Math.min(mx,dp*k)); turn3(sy, sp, true);
+    if (Math.abs(dy)<0.015 && Math.abs(dp)<0.015){ aim3=null; rest3=0.5; } return true; }
+  if (rest3>0){ rest3-=dt; return false; }
+  if (!scan3){ const C=cam3(); scan3={ pos:C.pos, r:C.r, u:C.u, b:C.b, T:new Array(S3N*S3N), i:0 }; }
+  const S=scan3, t0=performance.now();
+  while (S.i<S3N*S3N && performance.now()-t0<3){ const gx=(S.i%S3N)/(S3N-1)*2-1, gy=Math.floor(S.i/S3N)/(S3N-1)*2-1;
+    let d=[0,1,2].map(k=>-S.b[k]+S3A*(gx*S.r[k]+gy*S.u[k])); const l=Math.hypot(...d); d=d.map(x=>x/l);
+    const h=raycastRay(S.pos, d); S.T[S.i]=h ? h.t : Infinity; S.i++; }
+  if (S.i<S3N*S3N) return false;
+  scan3=null; const {best, centre}=scanScore(S.T);
+  if (!best || (centre!=null && best.s<centre*1.35+0.1)){ rest3=0.4; return false; }   // straight ahead is as good: keep going
+  const gx=best.i/(S3N-1)*2-1, gy=best.j/(S3N-1)*2-1; let v=[0,1,2].map(k=>-S.b[k]+S3A*(gx*S.r[k]+gy*S.u[k])); const l=Math.hypot(...v); v=v.map(x=>x/l);
+  aim3={ yaw:Math.atan2(-v[0],-v[2]), pitch:clamp(Math.asin(clamp(-v[1],-1,1)),-1.45,1.45) }; return true; }
+/** Forget any scan or turn in progress (new dive, steering switched off, or the user took over). */
+export function steer3Reset(){ scan3=null; aim3=null; rest3=0.3; }
 export function retarget3(){ const h=raycast3(); if (!h) return false; const D=st.d3; D.target=h.p; D.dist=Math.max(d3MinDist(), h.t); D.floating=false; return true; }
 // slide the camera sideways (and the point it looks at) by a screen drag, then re-aim at whatever surface is straight ahead
 export function pan3(dx, dy){ const D=st.d3, C=cam3(), k=D.dist/(cssH*1.6); if (!D.target) D.target=[0,0,0]; D.aim=null;

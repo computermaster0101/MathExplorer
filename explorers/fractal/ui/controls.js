@@ -69,7 +69,10 @@ buildPresets('jPresets'); buildPresets('jPresets2');
 for (const id of ['jPresets','jPresets2']) $(id).addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return; st.jc=JPRESETS[+b.dataset.i][1].slice();
   if (id==='jPresets2'){ st.link.auto=false; $('linkAuto').checked=false; } $('jco').textContent=fmtC(st.jc); setSeg($(id),b); refSlots[1].key=''; touch(); updateLabels(); });
 $('juliaChk').addEventListener('change', e=>{ st.julia=e.target.checked; if (st.julia && TYPES[st.type].noBounded) st.jc=toMath(st.type,[st.vE.cx,st.vE.cy]); $('jcBox').hidden=!st.julia; $('jco').textContent=fmtC(st.jc); resetViews(); touch(); updateLabels(); });
-$('steerChk').addEventListener('change', e=>{ st.steer=e.target.checked; st.steerTo=null; });
+// "Steer toward detail" is one setting for 2D and 3D dives, with a box in each mode's controls (and T)
+export function setSteer(on){ st.steer=!!on; st.steerTo=null; $('steerChk').checked=st.steer; $('steer3Chk').checked=st.steer; }
+$('steerChk').addEventListener('change', e=>setSteer(e.target.checked));
+$('steer3Chk').addEventListener('change', e=>setSteer(e.target.checked));
 $('endlessChk').addEventListener('change', e=>{ st.endless=e.target.checked; $('endless3Chk').checked=st.endless; });
 $('endless3Chk').addEventListener('change', e=>{ st.endless=e.target.checked; $('endlessChk').checked=st.endless; });
 $('diveBtn').addEventListener('click', ()=>{ if (st.dive||st.endlessRun){ st.dive=false; st.endlessRun=false; st.fly=null; st.steerTo=null; diveUI(); touch(); return; }

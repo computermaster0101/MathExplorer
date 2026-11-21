@@ -49,7 +49,7 @@ export function applyState(S){ if (!S) return;
     clickIn('prec','pr',S.pr?'extreme':'standard');
     if (S.it){ st.iterAuto=false; $('iterAuto').checked=false; st.iter=S.it; $('iter').value=S.it; }
     if (S.bl!=null) setCheck('blaChk',S.bl);
-    setCheck('endlessChk',S.ed); setCheck('steerChk',S.sd);
+    setCheck('endlessChk',S.ed); setCheck('steerChk',S.sd); $('steer3Chk').checked=$('steerChk').checked;
     if (S.l){ setCheck('linkAuto',S.l[0]); if (S.l[1]) { st.link.path=S.l[1]; setSeg($('linkPath'), document.querySelector(`#linkPath [data-p="${S.l[1]}"]`)); } }
     if (S.d){ const d=S.d; d[0]=({box4:'box',apo4:'apo'})[d[0]]||d[0]; { const b=document.querySelector(`.sh3 [data-s3="${d[0]}"]`); if (b) b.click(); } setRange('pw3',d[1]); setRange('bs3',d[2]); setRange('lvl3',d[4]); setRange('tw3',d[5]); setRange('turn3',d[10]);
       setCheck('cut3',d[24]?1:0); setCheck('breathe',d[11]); setCheck('bsBreathe',d[25]?1:0); setCheck('glass3',d[26]?1:0); clickIn('hypKind','h',['435','534','535','353'].includes(String(d[27]))?String(d[27]):'534'); setCheck('hypWalls',d[28]?1:0); setCheck('shadow3',d[29]?1:0); setCheck('sweep3',d[12]); setCheck('twAnim',d[13]); setCheck('spin3',d[23]?1:0); if (d[14]) clickIn('drag3','dm',d[14]);

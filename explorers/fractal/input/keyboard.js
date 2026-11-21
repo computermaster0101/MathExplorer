@@ -3,7 +3,7 @@ import { TYPES } from '../fractals/types.js';
 import { isExt, st } from '../state.js';
 import { cssH, cssW, effIter, touch } from '../view.js';
 import { updateDynamic } from '../ui/learn.js';
-import { flyTo, resetView, setMode } from '../ui/controls.js';
+import { flyTo, resetView, setMode, setSteer } from '../ui/controls.js';
 import { zoomBy } from './pointers.js';
 
 // ---------- keyboard: this explorer's keys (the shell handles h, f, Esc, e, q, ? and skips keys typed into text fields) ----------
@@ -44,6 +44,7 @@ export function onKey(e){
     case 'C': clickNext('#cmode button',-1); break;
     case 'V': clickNext('#cmode button',1); break;
     case 'b': case 'B': $('palRev').click(); break;   // reverse the palette on / off
+    case 't': case 'T': setSteer(!st.steer); break;   // steer dives toward detail on / off (2D and 3D)
     case 'k': case 'K': { const el=$('cyc'); if (+el.value>0){ lastCyc=+el.value; el.value=0; } else el.value=lastCyc; el.dispatchEvent(new Event('input')); break; }
     case 'r': case 'R': resetView(); break;
     case 'n': case 'N': if (st.mode==='orbit') $('orbNew').click(); else if (st.mode==='grow') $('growReplay').click(); else used=false; break;

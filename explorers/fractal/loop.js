@@ -9,7 +9,7 @@ import { cssH, cssW, deepT, extT, minScale, moveCentre, ovScale, panBy, runGrid,
 import { drawBlit, grabFrame, render2DAll } from './render/bla.js';
 import { notAvail } from './ui/notice.js';
 import { budDraw, budStep } from './modes/buddhabrot.js';
-import { d3Bound, d3Extra, d3MinDist, dive3UI, f3Ready, pan3, turn3, nestDive, nestIn, nestOut, nestStraight, render3D, retarget3, setDive3, start3Warp, syncT3 } from './modes/fractal3d.js';
+import { d3Bound, d3Extra, d3MinDist, dive3UI, steer3Reset, steer3Step, f3Ready, pan3, turn3, nestDive, nestIn, nestOut, nestStraight, render3D, retarget3, setDive3, start3Warp, syncT3 } from './modes/fractal3d.js';
 import { GROW, GROW_END, drawGrow, fern, growTotal } from './modes/grow.js';
 import { drawOrbit, newOrbit, orbitIdx } from './modes/orbit.js';
 import { drawCentreMark, drawLink, drawTapMark, pathC } from './modes/julia-link.js';
@@ -46,6 +46,8 @@ function advance3D(dt){ const D=st.d3; let moving=ptrs.size>0;
     D.target=D.target.map((x,i)=>x-bz[i]*step); D.aimT-=dt; if (D.aimT<=0){ D.aimT=0.3; if (retarget3()) D.floating=false; }
     if (Math.hypot(...D.target)>d3Bound()*4){ if (st.endless) start3Warp('floor'); else setDive3(false); }   // flown right out of it
     moving=true; }
+  if (D.dive && !D.aim && !D.warp && D.shape!=='nest'){   // steer toward detail, unless steering by hand (keys or drag)
+    if (st.steer && !(st.keyDriveT>0) && !ptrs.size){ if (steer3Step(dt)) moving=true; } else steer3Reset(); }
   if (D.dive && !D.floating && !D.aim){ const mn=d3MinDist(); D.dist=Math.max(mn, D.dist*Math.exp(-dt*st.diveSpeed*0.3*diveEnergy())); moving=true;
     const x=d3Extra(); if (x!==D.extra){ D.extra=x; retarget3(); }
     if (D.dist<=mn*1.0001){ if (st.endless) start3Warp('floor'); else setDive3(false); } }
@@ -67,6 +69,7 @@ function advance3D(dt){ const D=st.d3; let moving=ptrs.size>0;
 // while diving) and W A S D slide. 2D: both pan. Shift is three times faster. Steering a 2D dive pauses its own steering.
 function driveKeys(dt){ const k=drive(); if (!k.any || notAvail()) return false; const f=(k.fast?3:1)*k.scale;   // scale: the Navigation speed setting
   if (st.mode==='d3'){ const D=st.d3, g=D.dive?0.45:1;   // gentler while diving: the view is close and moving already
+    st.keyDriveT=1.5;   // steering by hand: the automatic steering waits
     if ((k.turnX||k.turnY) && !D.warp) turn3(-k.turnX*1.1*f*g*dt, -k.turnY*0.9*f*g*dt, !!D.dive);
     if (k.slideX||k.slideY){ const px=0.55*cssH*f*g*dt; pan3(-k.slideX*px, k.slideY*px); }
     return true; }

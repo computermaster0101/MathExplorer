@@ -2,7 +2,7 @@ import { dblToFix } from './math/big-fixed.js';
 import { TYPES } from './fractals/types.js';
 
 // ---------- state ----------
-export const st = { motionQ:'balanced', paused:false, keyDriveT:0, bla:true, custom:{src:'z^3 + sin(z) + c', z0:'0', bail:100, js:(z,c)=>{ const r=Math.hypot(z[0],z[1]), t=Math.atan2(z[1],z[0])*3, r3=r*r*r; return [r3*Math.cos(t)+Math.sin(z[0])*Math.cosh(z[1])+c[0], r3*Math.sin(t)+Math.cos(z[0])*Math.sinh(z[1])+c[1]]; }, z0js:c=>[0,0]}, precision:'standard', prog:null, vel:[0,0], endless:true, endlessRun:false, trip:0, manualT:0, insideT:0, iterNeed:0, probeT:0, steer:true, steerT:0, steerTo:null, q:1, qMove:1, lyaSeq:'AB', budMode:'buddha', mode:'explore', type:0, julia:false, jc:[-0.123,0.745], power:3,
+export const st = { motionQ:'balanced', paused:false, keyDriveT:0, bla:true, custom:{src:'z^3 + sin(z) + c', z0:'0', bail:100, js:(z,c)=>{ const r=Math.hypot(z[0],z[1]), t=Math.atan2(z[1],z[0])*3, r3=r*r*r; return [r3*Math.cos(t)+Math.sin(z[0])*Math.cosh(z[1])+c[0], r3*Math.sin(t)+Math.cos(z[0])*Math.sinh(z[1])+c[1]]; }, z0js:c=>[0,0]}, precision:'standard', prog:null, vel:[0,0], endless:true, endlessRun:false, trip:0, manualT:0, insideT:0, iterNeed:0, probeT:0, steer:false, steerT:0, steerTo:null, q:1, qMove:1, lyaSeq:'AB', budMode:'buddha', mode:'explore', type:0, julia:false, jc:[-0.123,0.745], power:3,
   vE:null, vL:null, vR:null, vO:null, rotDeg:0,
   iterAuto:true, iter:300, aa:2, cmode:0, palette:'aurora', cycle:0, cycleSpeed:0, density:1, inside:0, bg:'#0b0d12', lw:1.2,
   dive:false, diveSpeed:0.5, fly:null, hover:null, placeIdx:0, mapInset:true, prevInset:true, centreMark:false, chartInset:true, cousinInset:true,
