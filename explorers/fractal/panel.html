@@ -9,7 +9,66 @@
   </div>
 </div>
 
-<details class="grp" id="g-ctl" open><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+<details class="grp" id="g-shapes"><summary><span class="gt">Shapes</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+  <div class="sec" data-show="explore link orbit">
+    <div class="lbl">Escape-time sets</div>
+    <div class="seg g2" id="types">
+      <button data-t="0" class="on">Mandelbrot</button><button data-t="1">Burning Ship</button>
+      <button data-t="2">Tricorn</button><button data-t="3">Multibrot</button>
+      <button data-t="4">Celtic</button><button data-t="5">Phoenix</button>
+      <button data-t="6">Newton</button><button data-t="7">Magnet</button>
+      <button data-t="8">Nova</button><button data-t="9">Lyapunov</button>
+      <button data-t="10">Buddhabrot</button><button data-t="11">Custom formula…</button>
+    </div>
+    <div id="customBox" hidden style="margin-top:12px">
+      <div class="lbl">Each step: z →</div>
+      <input id="cfInput" spellcheck="false" autocomplete="off" autocapitalize="off" value="z^3 + sin(z) + c" style="width:100%;background:#0e1118;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 9px;font:13px 'JetBrains Mono',monospace">
+      <div class="row" style="margin-top:8px"><span style="width:84px">z starts at</span><input id="cfZ0" spellcheck="false" autocomplete="off" value="0" style="flex:1;min-width:0;background:#0e1118;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px 8px;font:12px 'JetBrains Mono',monospace"></div>
+      <div class="lbl" style="margin-top:8px">Escape radius</div>
+      <div class="seg" id="cfBail"><button data-b="2">2</button><button data-b="10">10</button><button data-b="100" class="on">100</button><button data-b="1000">1000</button></div>
+      <div class="btns" style="margin-top:8px"><button class="btn" id="cfApply">Draw it</button></div>
+      <p class="note" id="cfMsg"></p>
+      <div class="lbl" style="margin-top:10px">Try one</div>
+      <div class="seg g2" id="cfPresets"></div>
+      <p class="note">Use z, c, i, pi, e, numbers, + − * / ^ and brackets. Functions: sin cos tan sinh cosh tanh exp log sqrt abs conj re im arg, and pow(a, b). Writing 2z or z(z + 1) multiplies, and |z| is the size of z. "z starts at" can use c, for example pi/2 or c.</p>
+    </div>
+    <div id="powRow" hidden class="row" style="margin-top:8px"><span style="width:74px">Power d</span><input type="range" id="pow" min="2" max="16" step="0.05" value="3"><output id="powo">3.00</output></div>
+  </div>
+  <div class="sec" data-show="grow">
+    <div class="lbl">Built by a rule</div>
+    <div class="seg g2" id="growShapes">
+      <button data-g="koch" class="on">Koch snowflake</button><button data-g="sier">Sierpinski triangle</button>
+      <button data-g="carpet">Sierpinski carpet</button><button data-g="cantor">Cantor set</button>
+      <button data-g="dragon">Dragon curve</button><button data-g="levy">Lévy C curve</button>
+      <button data-g="hilbert">Hilbert curve</button><button data-g="pyth">Pythagoras tree</button>
+      <button data-g="tree">Branching tree</button><button data-g="fern">Barnsley fern</button>
+      <button data-g="apollo">Apollonian gasket</button><button data-g="vicsek">Vicsek fractal</button>
+      <button data-g="gosper">Gosper curve</button><button data-g="htree">H-tree</button>
+    </div>
+  </div>
+  <div class="sec" data-show="d3">
+    <div class="lbl">In 3D</div>
+    <div class="seg g2 sh3" id="shapes3">
+      <button data-s3="bulb" class="on">Mandelbulb</button><button data-s3="box">Mandelbox</button>
+      <button data-s3="menger">Menger sponge</button><button data-s3="tet">Sierpinski tetrahedron</button>
+      <button data-s3="apo">Apollonian spheres</button><button data-s3="kifs">Kaleidoscopic IFS</button>
+    </div>
+    <div class="lbl" style="margin-top:12px">Spheres in spheres, halls and sponges</div>
+    <div class="seg g2 sh3" id="shapes3b">
+      <button data-s3="nest">Nested spheres</button><button data-s3="klein">Kleinian pearls</button>
+      <button data-s3="pk">Pseudo-Kleinian</button><button data-s3="flake">Sphereflake</button>
+      <button data-s3="jcube">Jerusalem cube</button><button data-s3="mosely">Mosely snowflake</button>
+    </div>
+    <div class="lbl" style="margin-top:12px">In 4D (seen as 3D slices)</div>
+    <div class="seg g2 sh3" id="shapes4">
+      <button data-s3="qj">Quaternion Julia</button><button data-s3="mj">Mandelbrot–Julia</button>
+      <button data-s3="tetra">Tetrabrot</button><button data-s3="sier5">Sierpinski 5-cell</button>
+      <button data-s3="menger4">4D Menger sponge</button><button data-s3="kifs4">4D kaleidoscope</button>
+    </div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
   <div class="sec" data-show="explore">
     <div class="lbl">Famous places</div>
     <div class="seg g2" id="places"></div>
@@ -96,65 +155,6 @@
   </div>
 </div></details>
 
-<details class="grp" id="g-shapes" open><summary><span class="gt">Fractals</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
-  <div class="sec" data-show="explore link orbit">
-    <div class="lbl">Escape-time sets</div>
-    <div class="seg g2" id="types">
-      <button data-t="0" class="on">Mandelbrot</button><button data-t="1">Burning Ship</button>
-      <button data-t="2">Tricorn</button><button data-t="3">Multibrot</button>
-      <button data-t="4">Celtic</button><button data-t="5">Phoenix</button>
-      <button data-t="6">Newton</button><button data-t="7">Magnet</button>
-      <button data-t="8">Nova</button><button data-t="9">Lyapunov</button>
-      <button data-t="10">Buddhabrot</button><button data-t="11">Custom formula…</button>
-    </div>
-    <div id="customBox" hidden style="margin-top:12px">
-      <div class="lbl">Each step: z →</div>
-      <input id="cfInput" spellcheck="false" autocomplete="off" autocapitalize="off" value="z^3 + sin(z) + c" style="width:100%;background:#0e1118;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 9px;font:13px 'JetBrains Mono',monospace">
-      <div class="row" style="margin-top:8px"><span style="width:84px">z starts at</span><input id="cfZ0" spellcheck="false" autocomplete="off" value="0" style="flex:1;min-width:0;background:#0e1118;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px 8px;font:12px 'JetBrains Mono',monospace"></div>
-      <div class="lbl" style="margin-top:8px">Escape radius</div>
-      <div class="seg" id="cfBail"><button data-b="2">2</button><button data-b="10">10</button><button data-b="100" class="on">100</button><button data-b="1000">1000</button></div>
-      <div class="btns" style="margin-top:8px"><button class="btn" id="cfApply">Draw it</button></div>
-      <p class="note" id="cfMsg"></p>
-      <div class="lbl" style="margin-top:10px">Try one</div>
-      <div class="seg g2" id="cfPresets"></div>
-      <p class="note">Use z, c, i, pi, e, numbers, + − * / ^ and brackets. Functions: sin cos tan sinh cosh tanh exp log sqrt abs conj re im arg, and pow(a, b). Writing 2z or z(z + 1) multiplies, and |z| is the size of z. "z starts at" can use c, for example pi/2 or c.</p>
-    </div>
-    <div id="powRow" hidden class="row" style="margin-top:8px"><span style="width:74px">Power d</span><input type="range" id="pow" min="2" max="16" step="0.05" value="3"><output id="powo">3.00</output></div>
-  </div>
-  <div class="sec" data-show="grow">
-    <div class="lbl">Built by a rule</div>
-    <div class="seg g2" id="growShapes">
-      <button data-g="koch" class="on">Koch snowflake</button><button data-g="sier">Sierpinski triangle</button>
-      <button data-g="carpet">Sierpinski carpet</button><button data-g="cantor">Cantor set</button>
-      <button data-g="dragon">Dragon curve</button><button data-g="levy">Lévy C curve</button>
-      <button data-g="hilbert">Hilbert curve</button><button data-g="pyth">Pythagoras tree</button>
-      <button data-g="tree">Branching tree</button><button data-g="fern">Barnsley fern</button>
-      <button data-g="apollo">Apollonian gasket</button><button data-g="vicsek">Vicsek fractal</button>
-      <button data-g="gosper">Gosper curve</button><button data-g="htree">H-tree</button>
-    </div>
-  </div>
-  <div class="sec" data-show="d3">
-    <div class="lbl">In 3D</div>
-    <div class="seg g2 sh3" id="shapes3">
-      <button data-s3="bulb" class="on">Mandelbulb</button><button data-s3="box">Mandelbox</button>
-      <button data-s3="menger">Menger sponge</button><button data-s3="tet">Sierpinski tetrahedron</button>
-      <button data-s3="apo">Apollonian spheres</button><button data-s3="kifs">Kaleidoscopic IFS</button>
-    </div>
-    <div class="lbl" style="margin-top:12px">Spheres in spheres, halls and sponges</div>
-    <div class="seg g2 sh3" id="shapes3b">
-      <button data-s3="nest">Nested spheres</button><button data-s3="klein">Kleinian pearls</button>
-      <button data-s3="pk">Pseudo-Kleinian</button><button data-s3="flake">Sphereflake</button>
-      <button data-s3="jcube">Jerusalem cube</button><button data-s3="mosely">Mosely snowflake</button>
-    </div>
-    <div class="lbl" style="margin-top:12px">In 4D (seen as 3D slices)</div>
-    <div class="seg g2 sh3" id="shapes4">
-      <button data-s3="qj">Quaternion Julia</button><button data-s3="mj">Mandelbrot–Julia</button>
-      <button data-s3="tetra">Tetrabrot</button><button data-s3="sier5">Sierpinski 5-cell</button>
-      <button data-s3="menger4">4D Menger sponge</button><button data-s3="kifs4">4D kaleidoscope</button>
-    </div>
-  </div>
-</div></details>
-
 <details class="grp" id="g-view"><summary><span class="gt">View &amp; detail</span><span class="gv" id="gv-view"></span></summary><div class="gb">
   <div class="sec" data-show="explore link orbit">
     <div class="lbl">Iterations <b id="itero">auto</b></div>
@@ -174,7 +174,8 @@
     <div class="row"><span style="width:74px">Rotate</span><input type="range" id="rot" min="-180" max="180" step="1" value="0"><output id="roto">0°</output></div>
     <label class="check"><input type="checkbox" id="mapChk" checked> Show the map (top right)</label>
     <label class="check"><input type="checkbox" id="prevChk" checked> Show the Julia preview (top right)</label>
-    <p class="note">The map shows where you are on the whole set. The preview shows the Julia set for the point marked + in the middle of the screen (or under your mouse pointer on a computer): every point of the map has one. Drag the map to move the + and watch the Julia set change.</p>
+    <label class="check"><input type="checkbox" id="markChk"> Show a + in the middle of the screen</label>
+    <p class="note">The map shows where you are on the whole set. The preview shows the Julia set for the point in the middle of the screen (or under your mouse pointer on a computer): every point of the map has one. Turn on the + to see exactly which point that is. Drag the map to move it and watch the Julia set change.</p>
   </div>
   <div class="sec" data-show="orbit">
     <label class="check" style="margin-top:0"><input type="checkbox" id="chartChk" checked> Show the step-by-step chart (top right)</label>
@@ -248,6 +249,19 @@
   <div class="explain"><p id="about"></p><div id="aboutMore"></div></div>
 </div></details>
 
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec" data-show="d3">
+    <div class="lbl">Size (longest side)</div>
+    <div class="seg" id="prSize"><button data-mm="60">60 mm</button><button data-mm="80" class="on">80 mm</button><button data-mm="120">120 mm</button></div>
+    <div class="lbl" style="margin-top:12px">Detail</div>
+    <div class="seg" id="prRes"><button data-n="100">Draft</button><button data-n="150" class="on">Fine</button><button data-n="210">Very fine</button></div>
+    <label class="check"><input type="checkbox" id="prThick" checked> Thicken thin parts so nothing is under 0.8 mm</label>
+    <label class="check"><input type="checkbox" id="prOne" checked> Keep only the biggest piece (drop loose crumbs)</label>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="prBtn">Download STL</button></div>
+    <p class="note" id="prNote"></p>
+  </div>
+  <div class="sec" data-show="explore grow link orbit"><p class="note" style="margin-top:0">3D printing works on the 3D and 4D shapes. Choose <strong>3D · 4D</strong> at the top of the panel to print one.</p></div>
+</div></details>
 <details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
   <div class="sec"><table class="keys">
     <tr><td><kbd>Space</kbd></td><td>Pause / resume whatever is moving</td></tr>

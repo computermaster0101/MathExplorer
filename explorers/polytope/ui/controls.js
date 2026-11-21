@@ -26,7 +26,7 @@ export function setMode(m){
   st.mode=m; setSeg($('modes'), document.querySelector(`#modes [data-m="${m}"]`));
   document.querySelectorAll('[data-show]').forEach(el=>el.hidden=!el.dataset.show.split(' ').includes(m));
   document.querySelectorAll('details.grp').forEach(g=>{ const secs=g.querySelectorAll(':scope > .gb > .sec, :scope > .gb > .explain'); g.hidden = ![...secs].some(s=>!s.hidden); });
-  $('g-ctl').querySelector('.gt').textContent = ({build:'Build up',slice:'Slice',unfold:'Unfold',ping:'Ping'}[m]||'')+' controls';
+  $('g-ctl').querySelector('.gt').textContent = ({explore:'Explore',build:'Build up',slice:'Slice',unfold:'Unfold',ping:'Ping'}[m]||'')+' controls';
   const na=notAvail(m);
   if (m==='build' && !na){ resetBuild(); }
   if (m==='unfold' && !na){ resetUnfold(); }

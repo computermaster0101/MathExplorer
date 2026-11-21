@@ -23,7 +23,7 @@ export const S3 = {
 S3.apo={ name:'Apollonian spheres', alt:'a sphere in every gap: a round slab of endless foam', bound:1.5, dim:'≈ 2.47',
   info:'The 3D Apollonian gasket: spheres packed so that every gap between touching spheres holds the biggest sphere that fits, forever. It\'s drawn by folding space into a repeating box and turning it inside out through a sphere, over and over (Inigo Quilez\'s method), and cutting a round slab out of the endless foam. Dive into the rim: the bubbles never stop.' };
 S3.kifs={ name:'Kaleidoscopic IFS', alt:'fold space like a kaleidoscope, twist, scale, repeat', bound:2.1, dim:'—',
-  info:'Knighty\'s kaleidoscopic iterated function systems (2010): fold space into a single wedge with mirrors, the way a kaleidoscope does, turn it a little, scale it up and shift it, and repeat. With no twist it\'s a crisp Sierpinski octahedron; any twist grows crystal spires and cathedral tracery. Keep twisting to watch it morph.' };
+  info:'Knighty\'s kaleidoscopic iterated function systems (2010): fold space into a single wedge with mirrors, the way a kaleidoscope does, turn it a little, scale it up and shift it, and repeat. With no twist the half-size copies fit together exactly and fill a plain solid cube; any twist turns them apart and grows crystal spires and cathedral tracery. Keep twisting to watch it morph.' };
 Object.assign(S3, {
   mj:{ name:'Mandelbrot–Julia object', alt:'every c and every starting z of z → z² + c at once: a 4D shape', bound:2.85, dim:'4D solid, 3D slice', four:true, wR:1.6, rg:[0.2,0.9],
     info:'Every pair of a c and a starting z either stays bounded under z → z² + c or runs away. All the pairs that stay bounded make one shape in 4D: across and up are c, depth and the hidden W direction are the starting z. Cut it at the starting z = 0 and you get the Mandelbrot set; cut it at a fixed c and you get that c\'s Julia set. The 3D slices in between show how one turns into the other. The thin dust that floats out past |c| = 2 (the Julia sets of points outside the Mandelbrot set) is trimmed off.' },
@@ -52,7 +52,11 @@ Object.assign(S3, {
 });
 export const QC=[-0.2,0.6,0.2,0.2], SH3=['bulb','box','menger','tet','qj','apo','kifs','mj','tetra','sier5','menger4','kifs4','nest','klein','pk','flake','jcube','mosely'];
 // nested spheres: how many layers we've swapped in (each one: ×2 bigger, turned 45° back), and up to 3 outer layers kept in view
-const NEST_S=0.5, NEST_TH=Math.PI/4, nestOuter=()=>Math.min(st.d3.nestM||0,3);
+// While a 3D print is built (over many frames) the shape's distance functions read a frozen copy of the settings, so a
+// Breathe or Keep twisting going on meanwhile can't change the shape halfway through. Everything else reads st.d3.
+let frozen=null; const D3=()=>frozen||st.d3;
+export function freeze3(on){ if (on){ const tw=twistNow(); frozen={...st.d3, twNow:tw}; } else frozen=null; }
+const NEST_S=0.5, NEST_TH=Math.PI/4, nestOuter=()=>Math.min(D3().nestM||0,3);
 const rotY=(p,a)=>{ const c=Math.cos(a), s=Math.sin(a); return [c*p[0]+s*p[2], p[1], -s*p[0]+c*p[2]]; };
 export function nestIn(){ const D=st.d3; D.target=rotY(D.target,-NEST_TH).map(x=>x/NEST_S); D.dist/=NEST_S; D.yaw-=NEST_TH; D.nestM=(D.nestM||0)+1; }
 export function nestOut(){ const D=st.d3; D.target=rotY(D.target.map(x=>x*NEST_S),NEST_TH); D.dist*=NEST_S; D.yaw+=NEST_TH; D.nestM--; }
@@ -63,28 +67,28 @@ function rot4(axw, ayw, azw){
   const mul=(A,B)=>A.map((r,i)=>B[0].map((_,j)=>A[i].reduce((sm,_,k)=>sm+A[i][k]*B[k][j],0)));
   return mul(mul(M(0,axw),M(1,ayw)),M(2,azw)); }
 export let r4c={key:'', R:null};
-function getR4(){ const D=st.d3, k=D.axw+'|'+D.ayw+'|'+D.azw; if (r4c.key!==k){ r4c={key:k, R:rot4(D.axw,D.ayw,D.azw)}; } return r4c.R; }
-export const is4=()=>!!S3[st.d3.shape].four;
-export const isKifs=()=>st.d3.shape==='kifs'||st.d3.shape==='kifs4';
+function getR4(){ const D=D3(), k=D.axw+'|'+D.ayw+'|'+D.azw; if (r4c.key!==k){ r4c={key:k, R:rot4(D.axw,D.ayw,D.azw)}; } return r4c.R; }
+export const is4=()=>!!S3[D3().shape].four;
+export const isKifs=()=>D3().shape==='kifs'||D3().shape==='kifs4';
 // the shape's own turn (object → world), built from the XY, XZ and YZ sliders
 let r3c={key:'', R:null};
-function getR3(){ const D=st.d3, k=D.rxy+'|'+D.rxz+'|'+D.ryz; if (r3c.key!==k){ const R=[[1,0,0],[0,1,0],[0,0,1]], rot=(a,b,deg)=>{ const t=deg*Math.PI/180, c=Math.cos(t), s=Math.sin(t);
+function getR3(){ const D=D3(), k=D.rxy+'|'+D.rxz+'|'+D.ryz; if (r3c.key!==k){ const R=[[1,0,0],[0,1,0],[0,0,1]], rot=(a,b,deg)=>{ const t=deg*Math.PI/180, c=Math.cos(t), s=Math.sin(t);
     for (let r=0;r<3;r++){ const x=R[r][a], y=R[r][b]; R[r][a]=c*x-s*y; R[r][b]=s*x+c*y; } }; rot(1,2,D.ryz); rot(0,2,D.rxz); rot(0,1,D.rxy); r3c={key:k, R}; } return r3c.R; }
 // for 3D shapes the knife is a flat cut: its tilt comes from the same three sliders as the 4D knife
-function cutPlane(){ const D=st.d3, t=a=>a*Math.PI/180; let n=[0,0,1];
+function cutPlane(){ const D=D3(), t=a=>a*Math.PI/180; let n=[0,0,1];
   const rp=(v,a,b,deg)=>{ const c=Math.cos(t(deg)), s=Math.sin(t(deg)), o=v.slice(); o[a]=c*v[a]-s*v[b]; o[b]=s*v[a]+c*v[b]; return o; };
   n=rp(n,0,2,D.axw); n=rp(n,1,2,D.ayw); n=rp(n,0,1,D.azw); return {n, o:D.w*d3Bound()*0.95}; }
-export const knifeVal=()=> is4() ? wAct() : st.d3.w*d3Bound()*0.95;
+export const knifeVal=()=> is4() ? wAct() : D3().w*d3Bound()*0.95;
 // the twist actually drawn: the slider, plus a slow sway with the vocals and melody on 3D shapes (4D shapes sway their slice instead)
-export const twistNow=()=>st.d3.twist+(is4()?0:voice()*(isKifs()?6:15));
-function d3Tf(){ const D=st.d3, b=d3Bound(), tw=isKifs()?0:twistNow()*Math.PI/180/b; return {R:getR3(), tw, twS:1/Math.sqrt(1+(tw*b)*(tw*b)), cut:!is4()&&D.cut ? cutPlane() : null}; }
-export const wAct=()=>st.d3.w*(S3[st.d3.shape].wR||0.9);
+export const twistNow=()=>frozen ? frozen.twNow : st.d3.twist+(is4()?0:voice()*(isKifs()?6:15));
+function d3Tf(){ const D=D3(), b=d3Bound(), tw=isKifs()?0:twistNow()*Math.PI/180/b; return {R:getR3(), tw, twS:1/Math.sqrt(1+(tw*b)*(tw*b)), cut:!is4()&&D.cut ? cutPlane() : null}; }
+export const wAct=()=>D3().w*(S3[D3().shape].wR||0.9);
 // 4D distance estimates, in double precision (the shader's twins), for aiming dives
 const S5=1/Math.sqrt(5), V5=[[1,1,1,-S5],[1,-1,-1,-S5],[-1,1,-1,-S5],[-1,-1,1,-S5],[0,0,0,4*S5]];
 function mDE2(cr,ci,it){ let zr=0,zi=0,dr=0,di=0;
   for (let i=0;i<it;i++){ const t=2*(zr*dr-zi*di)+1; di=2*(zr*di+zi*dr); dr=t; const a=zr*zr-zi*zi+cr; zi=2*zr*zi+ci; zr=a; const m=zr*zr+zi*zi; if (m>1e4){ const r=Math.sqrt(m); return 0.5*r*Math.log(r)/Math.max(Math.hypot(dr,di),1e-300); } }
   return 0; }
-function de4(q, sh, it){ const D=st.d3, [x,y,z,w]=q;
+function de4(q, sh, it){ const D=D3(), [x,y,z,w]=q;
   if (sh==='mj'){ let zr=z, zi=w, ar=1,ai=0, br=0,bi=0; const cut=Math.hypot(x,y)-2;
     for (let i=0;i<it;i++){ let t=2*(zr*ar-zi*ai); ai=2*(zr*ai+zi*ar); ar=t; t=2*(zr*br-zi*bi)+1; bi=2*(zr*bi+zi*br); br=t; t=zr*zr-zi*zi+x; zi=2*zr*zi+y; zr=t; const m=zr*zr+zi*zi;
       if (m>1e4){ const r=Math.sqrt(m); return Math.max(0.5*r*Math.log(r)/Math.max(Math.sqrt(ar*ar+ai*ai+br*br+bi*bi),1e-300), cut); } }
@@ -104,8 +108,8 @@ function de4(q, sh, it){ const D=st.d3, [x,y,z,w]=q;
   let Z=q.slice(), dz=[1,0,0,0], m=Z.reduce((sm,v)=>sm+v*v,0);
   for (let i=0;i<it;i++){ dz=qm(Z,dz).map(v=>2*v); Z=qm(Z,Z).map((v,k)=>v+QC[k]); m=Z.reduce((sm,v)=>sm+v*v,0); if (m>16) break; }
   return 0.25*Math.log(Math.max(m,1e-12))*Math.sqrt(m)/Math.hypot(...dz); }
-export function d3Extra(){ const D=st.d3; if (D.shape==='nest') return 0; return D.target ? Math.max(0, Math.floor(Math.log2(d3Bound()*3.4/D.dist)*0.7)) : 0; }
-export function d3Iter(){ const l=st.d3.lvl, s=st.d3.shape, x=d3Extra(); return Math.min({bulb:16,box:20,menger:12,tet:20,qj:16,apo:20,kifs:20,mj:48,tetra:48,sier5:12,menger4:7,kifs4:20,nest:1,klein:24,pk:20,flake:10,jcube:12,mosely:10}[s],
+export function d3Extra(){ const D=D3(); if (D.shape==='nest') return 0; return D.target ? Math.max(0, Math.floor(Math.log2(d3Bound()*3.4/D.dist)*0.7)) : 0; }
+export function d3Iter(x=d3Extra()){ const l=D3().lvl, s=D3().shape; return Math.min({bulb:16,box:20,menger:12,tet:20,qj:16,apo:20,kifs:20,mj:48,tetra:48,sier5:12,menger4:7,kifs4:20,nest:1,klein:24,pk:20,flake:10,jcube:12,mosely:10}[s],
   {bulb:3+l, box:7+l, menger:Math.min(l,6), tet:4+l, qj:4+l, apo:3+l, kifs:6+l, mj:10+3*l, tetra:10+3*l, sier5:Math.max(2,l-1), menger4:Math.min(l,5), kifs4:6+l, nest:1, klein:l>>1, pk:5+l, flake:1+l, jcube:1+l, mosely:l}[s]+x); }
 export const d3MinDist=()=>d3Bound()*2e-4;
 export const d3Mag=()=>{ const D=st.d3; return D.shape==='nest' ? 1.05*3.4/D.dist*Math.pow(2,(D.nestM||0)) : d3Bound()*3.4/D.dist; };
@@ -151,9 +155,9 @@ function deNew(p, sh, it){
       if (bf<=be){ d=Math.min(d,be/sc); q=sub3(q,cf).map(x=>x*3); } else { d=Math.min(d,bf/sc); q=sub3(q,ce).map(x=>x*3); } sc*=3; }
     return Math.min(d, sdBox3(q,1)/sc); }
   return null; }
-function de3(p){ const T=d3Tf(), R=T.R, q=[0,1,2].map(i=>R[0][i]*p[0]+R[1][i]*p[1]+R[2][i]*p[2]);
-  let d = T.tw ? de3raw(rotY(q,T.tw*q[1]))*T.twS : de3raw(q); if (T.cut) d=Math.max(d, q[0]*T.cut.n[0]+q[1]*T.cut.n[1]+q[2]*T.cut.n[2]-T.cut.o); return d; }
-function de3raw(p){ const D=st.d3, it=d3Iter(), sh=D.shape;
+function de3(p, T=d3Tf(), it=d3Iter()){ const R=T.R, q=[0,1,2].map(i=>R[0][i]*p[0]+R[1][i]*p[1]+R[2][i]*p[2]);
+  let d = T.tw ? de3raw(rotY(q,T.tw*q[1]),it)*T.twS : de3raw(q,it); if (T.cut) d=Math.max(d, q[0]*T.cut.n[0]+q[1]*T.cut.n[1]+q[2]*T.cut.n[2]-T.cut.o); return d; }
+function de3raw(p, it){ const D=D3(), sh=D.shape;
   { const n=deNew(p, sh, it); if (n!==null) return n; }
   if (S3[sh].four){ const R=getR4(), w=wAct(), q=[0,1,2,3].map(i=>R[i][0]*p[0]+R[i][1]*p[1]+R[i][2]*p[2]+R[i][3]*w); return de4(q, sh, it); }
   if (sh==='bulb'){ const P=[p[0],p[2],p[1]]; let z=P.slice(), dr=1, r=0;
@@ -179,6 +183,9 @@ function de3raw(p){ const D=st.d3, it=d3Iter(), sh=D.shape;
   for (let i=0;i<it;i++){ x=Math.abs(x); y=Math.abs(y); z=Math.abs(z); if (x<y){ const t=x; x=y; y=t; } if (x<z){ const t=x; x=z; z=t; } if (y<z){ const t=y; y=z; z=t; }
     let t=ca*x-sa*y; y=sa*x+ca*y; x=t; t=cb*y-sb*z; z=sb*y+cb*z; y=t; x=2*x-1; y=2*y-1; z=2*z-1; n++; }
   return (Math.hypot(x,y,z)-1)*Math.pow(2,-n); }
+/** For 3D printing: the distance to the whole shape as it's set now (turn, twist, cut, knife), cut off at the sphere it's
+ * drawn in, at the detail level's own iteration count (no extra for zooming). Call freeze3(true) first. */
+export function printDE(){ const T=d3Tf(), it=d3Iter(0), B=d3Bound(); return p=>Math.max(de3(p,T,it), Math.hypot(p[0],p[1],p[2])-B); }
 function raycast3(){ const C=cam3(); return raycastRay(C.pos, C.b.map(x=>-x)); }
 function raycastRay(ro, rd){ const R=d3Bound(), bb=ro[0]*rd[0]+ro[1]*rd[1]+ro[2]*rd[2], c=ro[0]*ro[0]+ro[1]*ro[1]+ro[2]*ro[2]-R*R, h=bb*bb-c;
   if (h<0) return null; const sq=Math.sqrt(h), tmax=-bb+sq, k=0.8; let t=Math.max(0,-bb-sq), hit=false;
@@ -228,7 +235,7 @@ export function bulbBound(n){ const a=Math.abs(n); if (n>0) return Math.max(1.25
 export function boxBound(S){ return S<0 ? clamp((-S+1)/(-S-1)*1.05,2.2,3.7) : 2*Math.sqrt(3)*(S+1)/(S-1)*1.02; }
 // The gaps where these shapes fall apart (power between −2 and 2, box scale between −1.1 and 1.5): snap to the nearer end.
 export const snapGap=(v,lo,hi)=> v>lo && v<hi ? (v-lo < hi-v ? lo : hi) : v;
-export function d3Bound(){ const s=st.d3.shape; if (s==='nest') return 1.05*Math.pow(2,nestOuter()); if (s==='box') return boxBound(st.d3.boxS); if (s==='bulb') return bulbBound(st.d3.power); return S3[s].bound; }
+export function d3Bound(){ const s=D3().shape; if (s==='nest') return 1.05*Math.pow(2,nestOuter()); if (s==='box') return boxBound(D3().boxS); if (s==='bulb') return bulbBound(D3().power); return S3[s].bound; }
 export let f3Ready=false; shared.f3Err = '';
 export function render3D(hq){
   if (shared.f3Err) return false;

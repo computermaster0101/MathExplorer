@@ -9,68 +9,6 @@
   </div>
 </div>
 
-<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
-<div class="sec" data-show="build">
-  <div class="lbl">Steps</div>
-  <div class="seg" id="buildStages" style="grid-auto-columns:1fr">
-
-  </div>
-  <div class="btns" style="margin-top:10px">
-    <button class="btn" id="buildPlay">Pause</button>
-    <button class="btn" id="buildReplay">Replay</button>
-  </div>
-</div>
-<div class="sec" data-show="unfold">
-  <div class="lbl">Unfold <b id="unfo">4D → 3D: 0%</b></div>
-  <input type="range" id="unf" min="0" max="200" value="0" step="1" style="width:100%">
-  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mute);margin-top:2px"><span>4D</span><span>3D net</span><span>flat 2D</span></div>
-  <div class="btns" style="margin-top:10px"><button class="btn" id="unfPlay">Pause</button><button class="btn" id="netNext">Try another net</button><button class="btn" id="netStd">Standard net</button></div>
-  <p class="note" id="netNote">Net 1: the standard one, grown outward from the biggest cell.</p>
-</div>
-<div class="sec" data-show="slice">
-  <div class="lbl">Slice view</div>
-  <label class="check" style="margin-top:0"><input type="checkbox" id="slicechk" checked> Show the slice on its own (top right)</label>
-  <p class="note">The 3D solid the knife is cutting out right now, by itself and enlarged so you can always see its shape, turned to the same angle as the big view. It names the shape when it can, and lists the polygons its faces are made of.</p>
-</div>
-<div class="sec" data-show="unfold">
-  <div class="lbl">Cousin's net (2D)</div>
-  <label class="check" style="margin-top:0"><input type="checkbox" id="flatchk" checked> Show the 3D cousin's flat net (top right)</label>
-  <p class="note">One dimension down, for comparison: the 3D cousin opens into a flat 2D net of polygons in step with the big 4D → 3D unfold. While the tesseract opens into a cross of 8 cubes, the cube opens into a cross of 6 squares. The big view's second stage (3D → 2D) then takes the 4D shape itself all the way flat.</p>
-</div>
-<div class="sec" data-show="ping">
-  <div class="lbl">Ping <b id="pingo">0.6 s per step</b></div>
-  <input type="range" id="pingSpd" min="0.2" max="1.5" value="0.6" step="0.05" style="width:100%">
-  <div class="btns" style="margin-top:10px">
-    <button class="btn" id="pingNew">Ping a new corner</button>
-    <button class="btn" id="pingPlay">Pause</button>
-  </div>
-  <label class="check"><input type="checkbox" id="pingAuto" checked> Ping again automatically</label>
-  <div class="seg" id="pingstyle" style="margin-top:10px">
-    <button data-ps="stay" class="on">Stay lit</button>
-    <button data-ps="echo">Echo</button>
-  </div>
-  <label class="check" id="pingBackRow"><input type="checkbox" id="pingBack" checked> Then unlight from the start, the same way it lit</label>
-  <p class="note" id="pingnote">Stay lit: every corner the pulse reaches stays on, so the lit region grows until the whole shape glows. With unlighting on, a wave of darkness then starts from the same corner and follows the light outward along the same paths.</p>
-</div>
-<div class="sec" data-show="slice">
-  <div class="lbl">Knife position: slide it through the shape <b id="knifeo">0.00</b></div>
-  <input type="range" id="knife" min="-100" max="100" value="0" step="1" style="width:100%">
-  <label class="check"><input type="checkbox" id="sweep" checked> Sweep the knife back and forth</label>
-  <label class="check"><input type="checkbox" id="sliceSpin"> Keep spinning in 4D while slicing</label>
-  <label class="check"><input type="checkbox" id="sliceFillChk" checked> Fill the slice's faces, so it reads as one solid</label>
-  <div class="lbl" style="margin-top:12px">Which part of the shape faces the knife</div>
-  <div class="seg g5" id="knifeDir">
-    <button data-k="free" class="on">Free</button>
-    <button data-k="vert">Corner</button>
-    <button data-k="edge">Edge</button>
-    <button data-k="face">Face</button>
-    <button data-k="cell">Cell</button>
-  </div>
-  <div class="btns" style="margin-top:8px"><button class="btn" id="vfBtn">Show the vertex figure</button></div>
-  <p class="note" id="vfNote">One click: a corner faces the knife and the knife stops just inside it.</p>
-  <p class="note" id="knifeNote">Free: the shape sits square to the knife, the way it first appears. Picking an option turns the shape once to face the knife that way. After that the shape stays still and only the knife moves, sliding through it from one side to the other.</p>
-</div>
-</div></details>
 <details class="grp" id="g-shapes"><summary><span class="gt">Shapes</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
 <div class="sec" data-show="explore slice build unfold ping">
   <div class="lbl">Regular shapes</div>
@@ -197,6 +135,68 @@
   </div>
 </div>
 </div></details>
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+<div class="sec" data-show="build">
+  <div class="lbl">Steps</div>
+  <div class="seg" id="buildStages" style="grid-auto-columns:1fr">
+
+  </div>
+  <div class="btns" style="margin-top:10px">
+    <button class="btn" id="buildPlay">Pause</button>
+    <button class="btn" id="buildReplay">Replay</button>
+  </div>
+</div>
+<div class="sec" data-show="unfold">
+  <div class="lbl">Unfold <b id="unfo">4D → 3D: 0%</b></div>
+  <input type="range" id="unf" min="0" max="200" value="0" step="1" style="width:100%">
+  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mute);margin-top:2px"><span>4D</span><span>3D net</span><span>flat 2D</span></div>
+  <div class="btns" style="margin-top:10px"><button class="btn" id="unfPlay">Pause</button><button class="btn" id="netNext">Try another net</button><button class="btn" id="netStd">Standard net</button></div>
+  <p class="note" id="netNote">Net 1: the standard one, grown outward from the biggest cell.</p>
+</div>
+<div class="sec" data-show="slice">
+  <div class="lbl">Slice view</div>
+  <label class="check" style="margin-top:0"><input type="checkbox" id="slicechk" checked> Show the slice on its own (top right)</label>
+  <p class="note">The 3D solid the knife is cutting out right now, by itself and enlarged so you can always see its shape, turned to the same angle as the big view. It names the shape when it can, and lists the polygons its faces are made of.</p>
+</div>
+<div class="sec" data-show="unfold">
+  <div class="lbl">Cousin's net (2D)</div>
+  <label class="check" style="margin-top:0"><input type="checkbox" id="flatchk" checked> Show the 3D cousin's flat net (top right)</label>
+  <p class="note">One dimension down, for comparison: the 3D cousin opens into a flat 2D net of polygons in step with the big 4D → 3D unfold. While the tesseract opens into a cross of 8 cubes, the cube opens into a cross of 6 squares. The big view's second stage (3D → 2D) then takes the 4D shape itself all the way flat.</p>
+</div>
+<div class="sec" data-show="ping">
+  <div class="lbl">Ping <b id="pingo">0.6 s per step</b></div>
+  <input type="range" id="pingSpd" min="0.2" max="1.5" value="0.6" step="0.05" style="width:100%">
+  <div class="btns" style="margin-top:10px">
+    <button class="btn" id="pingNew">Ping a new corner</button>
+    <button class="btn" id="pingPlay">Pause</button>
+  </div>
+  <label class="check"><input type="checkbox" id="pingAuto" checked> Ping again automatically</label>
+  <div class="seg" id="pingstyle" style="margin-top:10px">
+    <button data-ps="stay" class="on">Stay lit</button>
+    <button data-ps="echo">Echo</button>
+  </div>
+  <label class="check" id="pingBackRow"><input type="checkbox" id="pingBack" checked> Then unlight from the start, the same way it lit</label>
+  <p class="note" id="pingnote">Stay lit: every corner the pulse reaches stays on, so the lit region grows until the whole shape glows. With unlighting on, a wave of darkness then starts from the same corner and follows the light outward along the same paths.</p>
+</div>
+<div class="sec" data-show="slice">
+  <div class="lbl">Knife position: slide it through the shape <b id="knifeo">0.00</b></div>
+  <input type="range" id="knife" min="-100" max="100" value="0" step="1" style="width:100%">
+  <label class="check"><input type="checkbox" id="sweep" checked> Sweep the knife back and forth</label>
+  <label class="check"><input type="checkbox" id="sliceSpin"> Keep spinning in 4D while slicing</label>
+  <label class="check"><input type="checkbox" id="sliceFillChk" checked> Fill the slice's faces, so it reads as one solid</label>
+  <div class="lbl" style="margin-top:12px">Which part of the shape faces the knife</div>
+  <div class="seg g5" id="knifeDir">
+    <button data-k="free" class="on">Free</button>
+    <button data-k="vert">Corner</button>
+    <button data-k="edge">Edge</button>
+    <button data-k="face">Face</button>
+    <button data-k="cell">Cell</button>
+  </div>
+  <div class="btns" style="margin-top:8px"><button class="btn" id="vfBtn">Show the vertex figure</button></div>
+  <p class="note" id="vfNote">One click: a corner faces the knife and the knife stops just inside it.</p>
+  <p class="note" id="knifeNote">Free: the shape sits square to the knife, the way it first appears. Picking an option turns the shape once to face the knife that way. After that the shape stays still and only the knife moves, sliding through it from one side to the other.</p>
+</div>
+</div></details>
 <details class="grp" id="g-rot"><summary><span class="gt">Rotation &amp; motion</span><span class="gv" id="gv-rot"></span></summary><div class="gb">
 <div class="sec" data-show="explore slice ping">
   <div class="lbl">Rotate through the 4th dimension</div>
@@ -308,16 +308,6 @@
   <label class="check"><input type="checkbox" id="conf" checked> Thickness shows 4D depth</label>
 </div>
 </div></details>
-<details class="grp" id="g-info"><summary><span class="gt">Structure</span><span class="gv" id="gv-info"></span></summary><div class="gb">
-<div class="sec">
-  <div class="lbl">Structure</div>
-  <div class="stats">
-    <div class="stat"><b id="nv">16</b><small id="nvl">vertices</small></div>
-    <div class="stat"><b id="ne">32</b><small id="nel">edges</small></div>
-    <div class="stat"><b id="nc">8</b><small id="ncl">cells</small></div>
-  </div>
-</div>
-</div></details>
 <details class="grp" id="g-share"><summary><span class="gt">Share this view</span><span class="gv"></span></summary><div class="gb">
 <div class="sec">
   <p class="note" style="margin-top:0">The link records the shape, mode, camera angle, zoom, 4D turn, colours and knife, so it opens on exactly this picture.</p>
@@ -329,19 +319,14 @@
   <p class="note" id="shareNote"></p>
 </div>
 </div></details>
-<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv" id="gv-print"></span></summary><div class="gb">
-<div class="sec" data-show="explore slice unfold">
-  <div class="lbl">3D print this</div>
-  <div class="seg" id="sizes">
-    <button data-mm="60">60 mm</button>
-    <button data-mm="80" class="on">80 mm</button>
-    <button data-mm="120">120 mm</button>
+<details class="grp" id="g-info"><summary><span class="gt">Structure</span><span class="gv" id="gv-info"></span></summary><div class="gb">
+<div class="sec">
+  <div class="lbl">Structure</div>
+  <div class="stats">
+    <div class="stat"><b id="nv">16</b><small id="nvl">vertices</small></div>
+    <div class="stat"><b id="ne">32</b><small id="nel">edges</small></div>
+    <div class="stat"><b id="nc">8</b><small id="ncl">cells</small></div>
   </div>
-  <p class="note" id="printnote">Thinnest tube: –</p>
-  <div class="btns" style="margin-top:8px">
-    <button class="btn primary" id="export" disabled>Download STL (.zip)</button>
-  </div>
-  <p class="note" id="dlnote">Checking whether downloads work in this view…</p>
 </div>
 </div></details>
 <details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv" id="gv-learn"></span></summary><div class="gb">
@@ -415,6 +400,21 @@
     <div class="btns"><button class="btn try" data-try="600|slice|vfig">Try it: the 600-cell's vertex figure</button></div>
     <p><strong>Cell</strong>: one of the 3D pieces that make up a 4D shape's surface, the way faces make up a polyhedron's. <strong>Facet</strong>: the biggest pieces of a shape's surface in any dimension (cells, in 4D). <strong>Vertex figure</strong>: the small shape you get by slicing off one corner. In 4D it's a polyhedron: a tetrahedron for the tesseract, an icosahedron for the 600-cell, a cube for the 24-cell. <strong>Projection</strong>: a lower-dimensional shadow. <strong>Slice</strong> or <strong>cross-section</strong>: where a hyperplane cuts through. <strong>Net</strong>: the cells unfolded and laid out flat in one dimension lower. <strong>Uniform</strong>: every corner looks the same and every cell is a regular or uniform shape. <strong>W</strong>: the name used here for the fourth direction.</p>
   </details>
+</div>
+</div></details>
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv" id="gv-print"></span></summary><div class="gb">
+<div class="sec" data-show="explore slice unfold">
+  <div class="lbl">3D print this</div>
+  <div class="seg" id="sizes">
+    <button data-mm="60">60 mm</button>
+    <button data-mm="80" class="on">80 mm</button>
+    <button data-mm="120">120 mm</button>
+  </div>
+  <p class="note" id="printnote">Thinnest tube: –</p>
+  <div class="btns" style="margin-top:8px">
+    <button class="btn primary" id="export" disabled>Download STL (.zip)</button>
+  </div>
+  <p class="note" id="dlnote">Checking whether downloads work in this view…</p>
 </div>
 </div></details>
 <details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">

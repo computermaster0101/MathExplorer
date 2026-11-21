@@ -5,6 +5,7 @@ import { SHAPES } from '../geometry/polytopes.js';
 import { mainLines } from '../render/scene.js';
 import { lastFrame, sliceFrame } from '../modes/ping.js';
 import { notAvail } from '../ui/text.js';
+import { zipStore } from '../../../js/shell/zip.js';
 
 // ---------- export ----------
 const RX=12, CX=Array.from({length:RX},(_,m)=>Math.cos(2*Math.PI*m/RX)), SX=Array.from({length:RX},(_,m)=>Math.sin(2*Math.PI*m/RX));
@@ -48,15 +49,6 @@ function makeSTL(tris, lo, s){
     const n=nrm(cross([p[1][0]-p[0][0],p[1][1]-p[0][1],p[1][2]-p[0][2]],[p[2][0]-p[0][0],p[2][1]-p[0][1],p[2][2]-p[0][2]]));
     for (const x of n){ dv.setFloat32(o,x,true); o+=4; } for (const v of p) for (const x of v){ dv.setFloat32(o,x,true); o+=4; } o+=2; }
   return new Uint8Array(buf);
-}
-const CRC=(()=>{ const t=new Uint32Array(256); for (let n=0;n<256;n++){ let c=n; for (let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
-function crc32(u8){ let c=0xFFFFFFFF; for (let i=0;i<u8.length;i++) c=CRC[(c^u8[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
-function zipStore(name, data){
-  const nb=new TextEncoder().encode(name), crc=crc32(data), sz=data.length;
-  const lh=new DataView(new ArrayBuffer(30)); lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true); lh.setUint32(14,crc,true); lh.setUint32(18,sz,true); lh.setUint32(22,sz,true); lh.setUint16(26,nb.length,true);
-  const cd=new DataView(new ArrayBuffer(46)); cd.setUint32(0,0x02014b50,true); cd.setUint16(4,20,true); cd.setUint16(6,20,true); cd.setUint32(16,crc,true); cd.setUint32(20,sz,true); cd.setUint32(24,sz,true); cd.setUint16(28,nb.length,true);
-  const end=new DataView(new ArrayBuffer(22)); end.setUint32(0,0x06054b50,true); end.setUint16(8,1,true); end.setUint16(10,1,true); end.setUint32(12,46+nb.length,true); end.setUint32(16,30+nb.length+sz,true);
-  return new Blob([lh.buffer, nb, data, cd.buffer, nb, end.buffer]);
 }
 export let downloads=null;
 export const exportBtn=$('export'), dlNote=$('dlnote');

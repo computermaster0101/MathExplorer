@@ -44,10 +44,10 @@ async function mount(name) {
   return import(fileUrl(name, 'index.js').href);
 }
 
-// shared panel groups (Music & sound) sit inside the active explorer's panel, right after its Controls group
+// shared panel groups (Music & sound) sit inside the active explorer's panel, right after its Colour & style group
 function attach({ stageEl, panelEl }) {
   stage.insertBefore(stageEl, $('stageBtns')); panel.append(panelEl);
-  const ctl = panelEl.querySelector('#g-ctl');
+  const ctl = panelEl.querySelector('#g-style');
   panelEl.insertBefore(soundGroup, ctl ? ctl.nextSibling : null);
 }
 function detach({ stageEl, panelEl }) { $('shellParts').append(soundGroup); stageEl.remove(); panelEl.remove(); }

@@ -56,14 +56,24 @@ export function colourStep(dt) {
  * A periodic motion whose position is `value` (in the motion's own units, `period` per cycle).
  * Free-running it advances at `rate` units per second (times energyMul). With the tempo locked it runs at one cycle
  * per `cycleBeats` beats and is gently pulled so each cycle starts on a bar line.
+ * It never jumps: the speed eases over about 1.5 s when the beat locks, unlocks or the tempo changes its mind, and
+ * catching up with the bar only ever runs it up to a quarter faster or slower, so it drifts into time.
  */
 export class Phase {
+  constructor() { this.v = null; }
   step(value, dt, period, beatsPerCycle, rate = 1) {
-    if (!tempoLocked()) return value + dt * rate * energyMul();
-    const target = ((barBeats() / beatsPerCycle) % 1 + 1) % 1 * period;
-    let e = target - (((value % period) + period) % period);
-    if (e > period / 2) e -= period; else if (e < -period / 2) e += period;
-    return value + dt * period * (bpm() / 60) / beatsPerCycle + e * (1 - Math.exp(-dt / 0.8));
+    const locked = tempoLocked();
+    const base = locked ? period * (bpm() / 60) / beatsPerCycle : rate * energyMul();
+    if (this.v === null || dt > 0.5) this.v = base;   // first step, or back after a pause
+    this.v += (base - this.v) * (1 - Math.exp(-dt / 1.5));
+    let pull = 0;
+    if (locked) {
+      const target = ((barBeats() / beatsPerCycle) % 1 + 1) % 1 * period;
+      let e = target - (((value % period) + period) % period);
+      if (e > period / 2) e -= period; else if (e < -period / 2) e += period;
+      pull = Math.max(-0.25, Math.min(0.25, 4 * e / period));   // close the gap in about a quarter of a cycle, within ±25% speed
+    }
+    return value + dt * this.v * (1 + pull);
   }
 }
 

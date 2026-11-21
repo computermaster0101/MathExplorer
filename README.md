@@ -21,8 +21,11 @@ server {
     listen 80;
     root /var/www/math-explorer;
     index index.html;
+    add_header Cache-Control "no-cache";   # always check for a newer file (an unchanged one is still a quick 304)
 }
 ```
+
+The app is many small JavaScript modules with no build step to stamp new file names on them. Without that header, a browser may keep using cached copies for a while after an update, and a mix of old and new modules can misbehave. `python -m http.server` can't send the header, so when developing with it, reload with Ctrl+Shift+R (Cmd+Shift+R on a Mac) after changing files.
 
 nginx's default `mime.types` already serves `.js` as JavaScript, which is all the modules need. Fonts come from Google Fonts. three.js (r128) is kept in `vendor/three/`, so nothing else is loaded from outside.
 

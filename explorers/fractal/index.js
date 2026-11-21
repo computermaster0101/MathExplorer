@@ -24,6 +24,7 @@ import './ui/formula-panel.js';
 import './io/save-image.js';
 import './io/share.js';
 import './io/recorder.js';
+import './io/print3d.js';
 import './input/pointers.js';
 import './loop.js';
 import './input/keyboard.js';

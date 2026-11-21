@@ -135,9 +135,13 @@ $('t3reset').addEventListener('click', ()=>{ Object.assign(st.d3,{rxy:0,rxz:0,ry
 $('bsBreathe').addEventListener('change', e=>{ st.d3.bsBreathe=e.target.checked; const [c,a]=bsSweep(); st.d3.bsT=Math.asin(clamp((st.d3.boxS-c)/a,-1,1))/0.3; });
 $('r4reset').addEventListener('click', ()=>{ Object.assign(st.d3,{axw:0,ayw:0,azw:0,spin4:false}); $('spin4').checked=false; syncR4(); touch(); });
 $('pw3').addEventListener('input', e=>{ const b0=d3Bound(); st.d3.power=snapGap(+e.target.value,-2,2); e.target.value=st.d3.power; refit3(b0); $('pw3o').textContent=st.d3.power.toFixed(1); if (st.d3.breathe){ st.d3.breathe=false; $('breathe').checked=false; } touch(); });
-$('breathe').addEventListener('change', e=>{ st.d3.breathe=e.target.checked; const [c,a]=pwSweep(); st.d3.t=Math.asin(clamp((st.d3.power-c)/a,-1,1))/0.22; });
-// Breathe stays on the side it started: powers 2 to 24, or −2 to −16
-export const pwSweep=()=> st.d3.power<0 ? [-9,7] : [13,11];
+$('breathe').addEventListener('change', e=>{ st.d3.breathe=e.target.checked; const [g,c,a]=pwSweep(); st.d3.t=Math.asin(clamp((Math.log(g*st.d3.power)-c)/a,-1,1))/0.22; });
+// Breathe stays on the side it started: powers 2 to 24, or −2 to −16. It sweeps evenly in the power's logarithm (each
+// moment multiplies the power by the same amount): 2 to 5 changes the shape far more than 16 to 24, so an even sweep in
+// the power itself rushed through the dramatic low end and dawdled at the top. Returns [sign, centre, half-width] of log|power|.
+const logSweep=(lo,hi)=>[(Math.log(lo)+Math.log(hi))/2, (Math.log(hi)-Math.log(lo))/2];
+export const pwSweep=()=> st.d3.power<0 ? [-1, ...logSweep(2,16)] : [1, ...logSweep(2,24)];
+export const pwAt=s=>{ const [g,c,a]=pwSweep(); return g*Math.exp(c+a*s); };   // s: the sweep's sine, -1..1
 export const bsSweep=()=> st.d3.boxS>0 ? [2.2,0.6] : [-2,0.6];
 $('bs3').addEventListener('input', e=>{ const b0=d3Bound(); st.d3.boxS=snapGap(+e.target.value,-1.1,1.5); e.target.value=st.d3.boxS; refit3(b0); if (e.isTrusted && st.d3.bsBreathe){ st.d3.bsBreathe=false; $('bsBreathe').checked=false; } $('bs3o').textContent=minus(st.d3.boxS.toFixed(2)); touch(); });
 const cutOn=()=>{ if (!is4() && !st.d3.cut){ st.d3.cut=true; $('cut3').checked=true; } };   // moving the knife on a 3D shape switches the cut on
@@ -168,6 +172,7 @@ segClick('budMode', d=>{ st.budMode=d.bm; refreshLegend(); });
 $('rot').addEventListener('input', e=>{ const nd=+e.target.value; st.vE.rot+=(nd-st.rotDeg)*Math.PI/180; st.rotDeg=nd; $('roto').textContent=nd+'°'; touch(); });
 $('mapChk').addEventListener('change', e=>{ st.mapInset=e.target.checked; });
 $('prevChk').addEventListener('change', e=>{ st.prevInset=e.target.checked; });
+$('markChk').addEventListener('change', e=>{ st.centreMark=e.target.checked; touch(); });
 $('chartChk').addEventListener('change', e=>{ st.chartInset=e.target.checked; });
 // style
 segClick('cmode', d=>{ st.cmode=+d.c; $('cmodeNote').textContent=CMODE_NOTE[st.cmode]; refreshLegend(); });

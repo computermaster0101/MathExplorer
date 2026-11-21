@@ -51,7 +51,7 @@ export function drawInsets(){
     if (show(in2, st.prevInset && canPrev)){ const P=panel(in2); if (P){ roundClip(P);
       if (!st.julia){ const md=viewDescs()[0], w=st.hover ? toWorld(md,st.hover[0],st.hover[1]) : [st.vE.cx,st.vE.cy], c=toMath(st.type,w), dg=cDigits(), jw=T.jview||[0,0,1.55];
         const img=cachedAux('prev', ['p',st.type,c[0].toFixed(dg),c[1].toFixed(dg),styleKey()].join('|'), P, {cx:jw[0],cy:jw[1],scale:jw[2],type:st.type,julia:true,c,iter:200});
-        P.g.drawImage(img,0,0,P.W,P.H); P.g.restore(); panelTitle(P, st.hover?'Julia set at your pointer':'Julia set at the + mark', 'c = '+fmtC(c,dg), true); }
+        P.g.drawImage(img,0,0,P.W,P.H); P.g.restore(); panelTitle(P, st.hover?'Julia set at your pointer':st.centreMark?'Julia set at the + mark':'Julia set at the middle', 'c = '+fmtC(c,dg), true); }
       else { const ov=[T.view[0],T.view[1],T.view[2]*1.15,T.view[3]], d={x:0,y:0,w:P.W,h:P.H,v:{cx:ov[0],cy:ov[1],scale:ov[2],rot:ov[3]}};
         const img=cachedAux('prevM', ['pm',st.type,styleKey()].join('|'), P, {cx:ov[0],cy:ov[1],scale:ov[2],type:st.type,julia:false,iter:200});
         P.g.drawImage(img,0,0,P.W,P.H); const cd=toDisp(st.type,st.jc), p=toScreen(d,cd[0],cd[1]); P.g.strokeStyle='#fff'; P.g.lineWidth=2; P.g.beginPath(); P.g.arc(p[0],p[1],6,0,7); P.g.stroke();

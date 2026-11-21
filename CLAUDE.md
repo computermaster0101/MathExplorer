@@ -8,7 +8,7 @@ Math Explorer is a single-page static site made of plain HTML, CSS and native ES
 
 ## Running and checking
 
-Serve the folder over HTTP (modules don't load from `file://`), for example `python -m http.server 8000`, then open `http://localhost:8000/`. There are no tests or linters. To check a change, load the page, use the affected explorer and mode, and watch the browser console. A missing import or a load-order problem shows up as an error the moment the explorer loads.
+Serve the folder over HTTP (modules don't load from `file://`), for example `python -m http.server 8000`, then open `http://localhost:8000/`. After editing, reload with Ctrl+Shift+R: browsers cache the modules, and the README's nginx config sends `Cache-Control: no-cache` for the same reason. There are no tests or linters. To check a change, load the page, use the affected explorer and mode, and watch the browser console. A missing import or a load-order problem shows up as an error the moment the explorer loads.
 
 ## Layout
 
@@ -35,7 +35,7 @@ vendor/three/              three.js r128 ES module build
 
 ## Music (js/shell/audio/)
 
-One player serves the whole app. Music keeps playing across explorer switches and both explorers react to it. Its panel group (`#g-sound` in `index.html`) is moved by `main.js` into the active explorer's panel, right after that explorer's `#g-ctl` group. Explorers never touch the audio graph.
+One player serves the whole app. Music keeps playing across explorer switches and both explorers react to it. Its panel group (`#g-sound` in `index.html`) is moved by `main.js` into the active explorer's panel, right after that explorer's `#g-style` group. Both panels keep the same group order: Shapes, Controls, (Rotation & motion), View, Colour & style, Music & sound, Share, Numbers/Structure, Learn, 3D print, Keyboard shortcuts. Explorers never touch the audio graph.
 
 - `frames.js` turns raw samples into spectral frames at a fixed hop (512 samples), each stamped with its audio time. It runs in an AudioWorklet (`frames-worklet.js`). AudioWorklet needs a secure context, so on plain-http hosts `engine.js` falls back to a ScriptProcessor. Keep both paths working.
 - `analysis.js` does all beat work per frame on the audio clock, never per screen frame, so results are identical at any frame rate:
@@ -53,7 +53,8 @@ One player serves the whole app. Music keeps playing across explorer switches an
   - `voice()` is a slow sway in -1..1 around the vocals' recent level. Use it for at most one gentle parameter per scene.
   - `shimmer()` is treble (0..1); `energyMul()` is a speed multiplier; `colourStep(dt)` advances the palette.
   - Keep the mapping sparse: every extra parameter the music moves at once makes the picture read as chaos, not rhythm. That was the "jumpy" complaint behind this design.
-  - `new Phase().step(value, dt, period, cycleBeats(n), freeRate)` is for periodic motions: their cycles land on bar lines when the tempo is locked.
+  - `new Phase().step(value, dt, period, cycleBeats(n), freeRate)` is for periodic motions: their cycles land on bar lines when the tempo is locked. It never jumps: its speed eases over about 1.5 s when the lock or tempo changes, and it catches up with the bar at most ±25% faster or slower. An earlier version snapped into place, which made Breathe lurch.
+  - Choose `n` by how much the motion changes the picture. Turning and twisting can cycle every "Slow motions take" bars (`n=1`), but Breathe reshapes the whole object and uses `n=4`; at bar speed it "hit too hard".
   - `new Groove().delta(dt, perSecond, perBeat, steps)` is for advancing motions: they surge on each beat. Pass `steps=true` when exactly one step per beat matters.
   - `BeatGate` reports beat crossings.
   - Each motion owns its own `Phase`/`Groove` instance (see the `clk` objects in each explorer's `loop.js`).
@@ -78,6 +79,7 @@ These modules came from splitting large single-file apps, and they keep that cod
 - `fractals/types.js` (`TYPES`) defines the families. `render/webgl.js` holds the GLSL shaders as strings, plus context setup.
 - Deep zoom uses three precision tiers: doubles, double-double (`math/double-double.js`, about 32 digits) and 416-bit BigInt fixed point (`math/big-fixed.js`, about 125 digits). It uses perturbation: a reference orbit is computed on the CPU (in a Blob-URL worker for Extreme precision), uploaded as a texture, and sped up with BLA (`render/bla.js`).
 - Custom formulas (`formula/formula.js`) are compiled twice, by `toGLSL` and by `toJS`. Both must give the same results.
+- 3D print (`io/print3d.js`) samples `printDE()` from `modes/fractal3d.js` on a grid. It skips 4×4×4 blocks that are clearly outside, thickens the shape (everything within half the minimum wall counts as inside), keeps the biggest connected piece and wraps it with surface nets. The STL is written in millimetres with the explorer's y axis up. The build spans many frames, so `freeze3(true)` makes the distance functions read a frozen copy of `st.d3` (via `D3()`), and a Breathe can't change the shape halfway through. Camera helpers (`cam3`, `d3Mag`) keep reading `st.d3`. The Mandelbox's distance never goes negative, so "inside" is always "within a little over half a grid step", never "below 0". A Downloads-in-Claude save goes in a zip (`js/shell/zip.js`, shared with the polytope export).
 - `window.__fx` exposes internals for console debugging.
 
 ### Polytope explorer specifics

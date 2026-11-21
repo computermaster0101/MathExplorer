@@ -32,7 +32,7 @@ export function drawLink(){
 export function drawTapMark(){ if (!shared.tapMark) return; const a=(performance.now()-shared.tapMark.t)/900; if (a>1){ shared.tapMark=null; return; }
   const g=octx; g.strokeStyle=`rgba(255,255,255,${1-a})`; g.lineWidth=2; g.beginPath(); g.arc(shared.tapMark.x,shared.tapMark.y,8+26*a,0,7); g.stroke(); }
 export function drawCentreMark(){
-  const T=TYPES[st.type]; if (!st.prevInset || !T.julia || st.julia || st.hover) return;
+  const T=TYPES[st.type]; if (!st.centreMark || !st.prevInset || !T.julia || st.julia || st.hover) return;
   const g=octx, x=cssW/2, y=cssH/2, light=isLight();
   g.lineCap='round'; for (const [col,w] of [[light?'rgba(255,255,255,0.8)':'rgba(0,0,0,0.55)',3.5],[light?'#222':'#fff',1.5]]){ g.strokeStyle=col; g.lineWidth=w;
     g.beginPath(); g.moveTo(x-11,y); g.lineTo(x-4,y); g.moveTo(x+4,y); g.lineTo(x+11,y); g.moveTo(x,y-11); g.lineTo(x,y-4); g.moveTo(x,y+4); g.lineTo(x,y+11); g.stroke(); }

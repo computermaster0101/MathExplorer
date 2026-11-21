@@ -14,7 +14,7 @@ import { drawOrbit, newOrbit, orbitIdx } from './modes/orbit.js';
 import { drawCentreMark, drawLink, drawTapMark, pathC } from './modes/julia-link.js';
 import { drawInsets } from './ui/insets.js';
 import { refreshLegend, updateDynamic } from './ui/learn.js';
-import { advanceFly, bsSweep, diveUI, endlessWarp, pwSweep, syncR4, syncW, twAmp } from './ui/controls.js';
+import { advanceFly, bsSweep, diveUI, endlessWarp, pwAt, syncR4, syncW, twAmp } from './ui/controls.js';
 import { writeHash } from './io/share.js';
 import { BeatGate, Groove, Phase, colourStep, cycleBeats, energyMul, pulse, reacting, voice } from '../../js/shell/audio/react.js';
 import { recFrame } from './io/recorder.js';
@@ -45,8 +45,9 @@ function advance3D(dt){ const D=st.d3; let moving=ptrs.size>0;
     if (u>=1){ D.warp=null; D.target=null; D.trip=(D.trip||1)+1; let ok=false;
       for (let k=0;k<8 && !ok;k++){ ok=retarget3(); if (!ok){ D.yaw+=0.7; D.pitch=clamp(D.pitch+0.25*(Math.random()-0.5),-0.6,0.9); } }
       if (D.shape==='nest'){ D.target=[0,0,0]; nestDive(); } else if (ok){ D.dive=true; D.extra=d3Extra(); } else { D.target=null; D.dive=false; } dive3UI(); } }
-  if (D.breathe && D.shape==='bulb'){ D.t=clk.breathe.step(D.t, dt, 2*Math.PI/0.22, cycleBeats(1)); { const [c,a]=pwSweep(); D.power=c+a*Math.sin(D.t*0.22); } $('pw3').value=D.power; $('pw3o').textContent=D.power.toFixed(1); moving=true; }
-  if (D.bsBreathe && D.shape==='box'){ D.bsT=clk.box.step(D.bsT, dt, 2*Math.PI/0.3, cycleBeats(1)); { const [c,a]=bsSweep(); D.boxS=c+a*Math.sin(D.bsT*0.3); } $('bs3').value=D.boxS; $('bs3o').textContent=minus(D.boxS.toFixed(2)); moving=true; }
+  // Breathe reshapes the whole object, so with music one cycle takes 4× "Slow motions take" (8 bars by default), near its free pace
+  if (D.breathe && D.shape==='bulb'){ D.t=clk.breathe.step(D.t, dt, 2*Math.PI/0.22, cycleBeats(4)); D.power=pwAt(Math.sin(D.t*0.22)); $('pw3').value=D.power; $('pw3o').textContent=D.power.toFixed(1); moving=true; }
+  if (D.bsBreathe && D.shape==='box'){ D.bsT=clk.box.step(D.bsT, dt, 2*Math.PI/0.3, cycleBeats(4)); { const [c,a]=bsSweep(); D.boxS=c+a*Math.sin(D.bsT*0.3); } $('bs3').value=D.boxS; $('bs3o').textContent=minus(D.boxS.toFixed(2)); moving=true; }
   if (D.spin3){ const wrap=a=>((a+180)%360+360)%360-180; const g=clk.spin3.delta(dt, 1, 0.5); D.rxy=wrap(D.rxy+g*9); D.rxz=wrap(D.rxz+g*13); D.ryz=wrap(D.ryz+g*6); if (frameN%3===0) syncT3(); moving=true; }
   if (D.twAnim){ D.twT=clk.twist.step(D.twT, dt, 2*Math.PI/0.25, cycleBeats(2)); D.twist=(D.twSg||1)*twAmp()*(1+Math.sin(D.twT*0.25)); $('tw3').value=D.twist; $('tw3o').textContent=D.twist.toFixed(1)+'°'; moving=true; }
   if (D.sweep){ D.wt=clk.sweep.step(D.wt, dt, 2*Math.PI/0.45, cycleBeats(1)); D.w=0.94*Math.sin(D.wt*0.45); syncW(); moving=true; }
