@@ -11,6 +11,12 @@
     <div class="seg g2" id="ruleList"></div>
     <div class="row" style="margin-top:8px"><input type="text" id="ruleIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Your own, e.g. B36/S23" style="flex:1"><button class="btn" id="ruleApply">Use</button></div>
     <p class="note" id="ruleNote"></p>
+    <div class="lbl" style="margin-top:10px">When you pick a rule</div>
+    <div id="ruleStart">
+      <label class="check"><input type="radio" name="ruleStart" value="new" checked> New start: a fresh random start each time</label>
+      <label class="check"><input type="radio" name="ruleStart" value="same"> Same start: keep the start number, to compare rules</label>
+      <label class="check"><input type="radio" name="ruleStart" value="keep"> Keep the cells: carry on under the new rule</label>
+    </div>
   </div>
   <div class="sec" id="leniaPre" hidden>
     <div class="lbl">Kind</div>
@@ -33,6 +39,7 @@
 <details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
   <div class="sec">
     <div class="btns"><button class="btn" id="goBtn">Pause</button><button class="btn" id="stepBtn">One step</button><button class="btn" id="newBtn">New start</button><button class="btn" id="clearBtn">Clear</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Start number</span><input type="text" id="seedIn" class="txt" inputmode="numeric" spellcheck="false" autocomplete="off" style="flex:1" title="Type a number and press Enter to restart from that exact start"><button class="btn" id="seedGo">Use</button></div>
     <div class="row" style="margin-top:10px"><span style="width:96px">Speed</span><input type="range" id="speed" min="0.1" max="4" step="0.05" value="1"><output id="speedo">1.0×</output></div>
     <div class="row" id="densRow"><span style="width:96px">Start density</span><input type="range" id="dens" min="0.05" max="0.9" step="0.01" value="0.3"><output id="denso">30%</output></div>
   </div>

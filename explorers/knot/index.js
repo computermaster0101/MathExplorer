@@ -98,6 +98,7 @@ function trackAt(t, s) {   // position and frame at fraction s of the lap, inter
   return { P: lerp(at(t.P, i), at(t.P, i + 1)), T: lerp(at(t.T, i), at(t.T, i + 1)).normalize(), N: lerp(at(t.N, i), at(t.N, i + 1)).normalize(), B: lerp(at(t.B, i), at(t.B, i + 1)).normalize() };
 }
 function stepRide(dt) {
+  if (!rideTrack) { makeTrack(); ride.comp = Math.min(ride.comp, rideTrack.length - 1); }   // a rebuild mid-ride (tube, detail, draw as) drops the track
   const t = rideTrack[ride.comp], k = drive();
   // looking about: arrows (and dragging), easing back to straight ahead when let go; A / D slide round the tube; W / S lean on the speed
   if (S.pointers.size || Math.abs(S.vel.x) + Math.abs(S.vel.y) > 1e-5) { ride.yaw -= S.vel.x * 1.2; ride.pitch -= S.vel.y * 1.2; S.vel.x = S.vel.y = 0; }

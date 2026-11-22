@@ -176,6 +176,7 @@ function scroll(dt) {
   off[0] = ((off[0] + (c * x - s * y) * v) % W + W) % W; off[1] = ((off[1] + (s * x + c * y) * v) % H + H) % H; return true;
 }
 function setup() {
+  $('seedIn').value = st.seed;   // the start number on show is always the one in use
   off[0] = off[1] = 0;
   const r = lc.getBoundingClientRect(), w = Math.max(16, Math.min(1024, Math.floor(r.width / st.cell))), h = Math.max(16, Math.min(1024, Math.floor(r.height / st.cell)));
   const fl = needsFloat(); if (fl && !G.floatOK) { S = null; return; }
@@ -243,7 +244,10 @@ lc.addEventListener('pointerup', () => { painting = false; }); lc.addEventListen
 // ---------- panel ----------
 $('ruleList').innerHTML = Object.entries(RULES).map(([k, [n, r]]) => `<button data-r="${k}">${n}<small style="display:block;opacity:.7;font-size:10.5px">${r}</small></button>`).join('');
 segClick('modeList', d => pickMode(d.m));
-segClick('ruleList', d => { st.rule = d.r; st.ruleText = RULES[d.r][1]; $('ruleIn').value = ''; const s = START[d.r]; setRange('dens', s && s[0] !== 'cells' ? s[1] : 0.3); setup(); count(); labels(); share.touch(); });   // each rule starts afresh, in its own way (START)
+segClick('ruleList', d => { const was = rtype(); st.rule = d.r; st.ruleText = RULES[d.r][1]; $('ruleIn').value = '';
+  const how = ruleStart(); if (how === 'keep') { if (was !== rtype() || rtype()) setup(); }   // the same cells under the new rule (the special rules still need their own start)
+  else { if (how === 'new') st.seed = newSeed(); const s = START[d.r]; setRange('dens', s && s[0] !== 'cells' ? s[1] : 0.3); setup(); }   // the rule starts afresh, in its own way (START), from a new or the same start number
+  count(); labels(); share.touch(); });
 $('ruleApply').addEventListener('click', () => { const R0 = parseRule($('ruleIn').value); if (!R0) { $('ruleNote').textContent = 'Write it as B, the birth counts, then /S and the survival counts: for example B36/S23.'; return; }
   st.ruleText = R0.text; st.rule = Object.keys(RULES).find(k => RULES[k][1] === R0.text) || 'custom'; labels(); share.touch(); });
 $('ruleIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('ruleApply').click(); });
@@ -276,10 +280,16 @@ function stats() {
   $('statNote').textContent = st.mode === 'life' ? 'The grid wraps round: what leaves one edge comes back on the other.' : st.mode === 'lenia' ? 'Mass is the sum of every cell\'s amount. A glider keeps its mass while it moves.' : 'Feed ' + st.feed.toFixed(4) + ', kill ' + st.kill.toFixed(4) + ': tiny changes give very different patterns.';
 }
 $('goBtn').addEventListener('click', () => togglePause()); $('stepBtn').addEventListener('click', () => { st.paused = true; step(); count(); labels(); $('goBtn').textContent = 'Run'; dirty = true; });
-$('newBtn').addEventListener('click', () => renew()); $('clearBtn').addEventListener('click', () => { if (!S) return; const d = st.dens; st.dens = 0; setup(); st.dens = d; count(); dirty = true; });
+$('newBtn').addEventListener('click', () => renew()); $('clearBtn').addEventListener('click', () => { if (!S) return; clearWorld(); count(); });
+const ruleStart = () => (document.querySelector('#ruleStart input:checked') || {}).value || 'new', newSeed = () => Math.floor(Math.random() * 9999) + 1;
+// a start number typed in: restart from exactly that start
+const useSeed = () => { const v = Math.round(+$('seedIn').value.replace(/[^0-9]/g, '')); if (!(v >= 1)) { $('seedIn').value = st.seed; return; } st.seed = Math.min(v, 9999999);   /* the shader gets it as a float: exact to 16.7 million */ st.paused = false; $('goBtn').textContent = 'Pause'; setup(); count(); dirty = true; share.touch(); };
+$('seedGo').addEventListener('click', useSeed); $('seedIn').addEventListener('keydown', e => { if (e.key === 'Enter') { useSeed(); e.target.blur(); } });
+function clearWorld() { const d = st.dens; st.dens = 0; setup(); st.dens = d; dirty = true; }
 $('speed').addEventListener('input', e => { st.speed = +e.target.value; $('speedo').textContent = st.speed.toFixed(1) + '×'; share.touch(); });
 $('dens').addEventListener('input', e => { st.dens = +e.target.value; $('denso').textContent = Math.round(st.dens * 100) + '%'; share.touch(); });
-segClick('patList', d => placePattern(d.p));
+// a pattern goes into an empty world under Life's own rule, where it does what its name says; with Keep the cells, it's added to what's there
+segClick('patList', d => { if (!S) return; if (ruleStart() !== 'keep') { if (st.ruleText !== 'B3/S23') { st.rule = 'conway'; st.ruleText = 'B3/S23'; $('ruleIn').value = ''; } clearWorld(); labels(); share.touch(); } placePattern(d.p); count(); });
 $('mu').addEventListener('input', e => { st.mu = +e.target.value; $('muo').textContent = st.mu.toFixed(3); share.touch(); });
 $('sigma').addEventListener('input', e => { st.sigma = +e.target.value; $('sigmao').textContent = st.sigma.toFixed(4); share.touch(); });
 $('feed').addEventListener('input', e => { st.feed = +e.target.value; $('feedo').textContent = st.feed.toFixed(4); share.touch(); });
@@ -309,7 +319,7 @@ buildKeys($('keyTable'), [['G', 'Pause / run'], ['N', 'A new random start'], ['1
 
 // ---------- actions ----------
 function togglePause() { st.paused = !st.paused; $('goBtn').textContent = st.paused ? 'Run' : 'Pause'; labels(); }
-function renew() { st.paused = false; $('goBtn').textContent = 'Pause'; st.seed = Math.floor(Math.random() * 9999) + 1; setup(); count(); dirty = true; share.touch(); }
+function renew() { st.paused = false; $('goBtn').textContent = 'Pause'; st.seed = newSeed(); setup(); count(); dirty = true; share.touch(); }
 function resetView() { st.paused = false; $('goBtn').textContent = 'Pause'; lz = 1; la = 0; MO.resetView(); setup(); count(); dirty = true; share.touch(); }
 
 // ---------- loop ----------
@@ -384,7 +394,7 @@ function apply(code) {
   const p = new URLSearchParams(code), m = p.get('m'); if (!INFO[m]) return false;
   clickData('#palettes', 'pal', p.get('pal') || 'aurora'); setCheck('palRev', p.get('rev') === '1'); setRange('cyc', num(p, 'cyc', 0)); clickData('#bg', 'b', '#' + (p.get('bg') || '0b0d12'));
   setRange('speed', num(p, 'spd', 1)); setCheck('beatSeed', p.get('bs') !== '0'); setCheck('trails', p.get('tr') !== '0'); setCheck('round', p.get('rc') !== '0'); setCheck('relief', p.get('rl') !== '0');
-  st.seed = Math.max(1, Math.round(num(p, 'seed', 1))); st.dens = clamp(num(p, 'd', 0.3), 0, 0.9); $('dens').value = st.dens; $('denso').textContent = Math.round(st.dens * 100) + '%';
+  st.seed = clamp(Math.round(num(p, 'seed', 1)), 1, 9999999); st.dens = clamp(num(p, 'd', 0.3), 0, 0.9); $('dens').value = st.dens; $('denso').textContent = Math.round(st.dens * 100) + '%';
   st.cell = clamp(Math.round(num(p, 'cs', 3)), 1, 10); $('cell').value = st.cell; $('cello').textContent = st.cell + ' px';
   if (m === 'life') { if (RTYPE[p.get('r')]) { st.ruleText = p.get('r'); st.rule = p.get('r'); } else { const R0 = parseRule(p.get('r') || 'B3/S23') || parseRule('B3/S23'); st.ruleText = R0.text; st.rule = Object.keys(RULES).find(k => RULES[k][1] === R0.text) || 'custom'; } }
   if (m === 'lenia') { st.lenia = LENIA[p.get('k')] ? p.get('k') : 'tangle'; document.querySelectorAll('#leniaList button').forEach(b => b.classList.toggle('on', b.dataset.p === st.lenia)); setRange('mu', num(p, 'mu', LENIA[st.lenia][0])); setRange('sigma', num(p, 'sg', LENIA[st.lenia][1])); }
