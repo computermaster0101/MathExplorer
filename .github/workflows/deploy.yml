@@ -1,0 +1,29 @@
+# Deploy to https://mathexplorer.thedigitalspace.net on every push to main (or by hand from the Actions tab).
+# AWS trusts GitHub's sign-in for this repository's main branch only (no stored keys); the role it gets can upload to the
+# site bucket and refresh CloudFront, and nothing else (no deletes).
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # to sign in to AWS
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false   # let a running deploy finish; the next one follows
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::493695230962:role/mathexplorer-github-deploy
+          aws-region: us-east-1
+      - name: Upload and refresh
+        run: bash ./deploy.sh
