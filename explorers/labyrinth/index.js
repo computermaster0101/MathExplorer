@@ -392,6 +392,7 @@ function pick(kind, key, keepView) {
   if (kind === 'classic') { if (key === 'random') st.seq = randomLabyrinth(st.rings, Math.random) || st.seq, st.classic = 'random'; else if (key && CLASSIC[key]) { st.classic = key; st.seq = CLASSIC[key].seq.slice(); setRange('cRings', st.seq.length); } }
   for (const k of ['tpms', 'foam', 'maze', 'classic']) $('c-' + k).hidden = k !== kind;
   document.querySelectorAll('[data-for]').forEach(el => { el.hidden = el.dataset.for !== kind; });
+  motionFor(kind);
   if (!keepView) S.reset(); orbit.rotation.set(0, 0, 0);
   if (kind === 'tpms') buildTpmsOrbit(); else if (kind === 'foam') buildFoamOrbit(); else if (kind === 'classic') buildClassicOrbit(); else { clear(orbit); mz.over = false; newMaze(); }
   markLists(); labels(); share.touch();
@@ -461,6 +462,7 @@ $('mNew').addEventListener('click', () => newMaze(1 + Math.floor(Math.random() *
 $('mCrumbs').addEventListener('change', e => { st.crumbs = e.target.checked; if (maze) refreshMarks(); share.touch(); });
 $('cWalk').addEventListener('click', () => go()); $('cNew').addEventListener('click', () => pick('classic', 'random'));
 $('cRings').addEventListener('input', e => { st.rings = +e.target.value; $('cRingso').textContent = st.rings; });
+$('cRings').addEventListener('change', e => { if (e.isTrusted) pick('classic', 'random'); });   // let go of Rings: a new labyrinth with that many (picking a named one only shows its count)
 $('detail').addEventListener('input', e => { st.detail = +e.target.value; $('detailo').textContent = st.detail; if (st.kind === 'tpms') { if (fly.on) buildFlyWorld(); else buildTpmsOrbit(); } share.touch(); });
 $('fog').addEventListener('input', e => { st.fog = +e.target.value; $('fogo').textContent = st.fog.toFixed(2); share.touch(); });
 $('spin').addEventListener('change', e => { st.spin = e.target.checked; share.touch(); });
@@ -500,9 +502,15 @@ function resetView() { st.paused = false; if (st.kind === 'maze') { mz.over = fa
 let running = false, tPrev = 0, frame = 0;
 // Rotation & motion (its own group), for the outside view and the maze map: turning (an ancient labyrinth turns about its
 // own middle), rocking, tumbling, the camera's zoom and drift, and Slowly change (a wall's thickness, the foam's block...)
+// a maze is always first person: turning and the camera don't apply there (looked up by id: the group may not exist yet)
+function motionFor(kind) { for (const id of ['mvTurnSec', 'mvCamSec']) { const el = document.getElementById(id); if (el) el.hidden = kind === 'maze'; }
+  // and the controls that only some kinds use: Detail (the surfaces' mesh), Colour by (surfaces and foams), Finish (not the maze's flat-lit walls)
+  const show = (id, on) => { const el = $(id); el.hidden = !on; const l = el.previousElementSibling; if (l && l.matches('.lbl')) l.hidden = !on; };
+  $('detail').closest('.row').hidden = kind !== 'tpms'; show('cmode', kind === 'tpms' || kind === 'foam'); show('finish', kind !== 'maze'); }
 const MO = makeMotion3D(S, { spinRow: $('spin').closest('label'), rate: () => (st.kind === 'classic' ? 0.12 : 0.175), spinOn: () => st.spin,
   turn: a => { if (st.kind === 'classic') orbit.rotation.y += a; else S.turn(a, 0); },
   sweep: { skip: ['flySpeed', 'mLevel', 'mLoops', 'cRings', 'detail'], every: 120 } });
+motionFor(st.kind);
 const REC = addRecorder({ stage: canvas.parentElement, name: () => fileBase(), bg: () => st.bg });
 // the Visualizer: a new labyrinth, foam or ancient labyrinth every so often; when the chorus comes in, fly through an
 // endless labyrinth until the next change
@@ -566,7 +574,7 @@ const encode = () => { const p = new URLSearchParams(); p.set('k', st.kind);
   if (st.kind === 'maze') { p.set('lv', st.level); p.set('me', st.method); if (st.loops) p.set('lo', st.loops); if (st.goal !== 'corner') p.set('go', st.goal); p.set('seed', st.seed); if (st.race) p.set('race', 1); if (!st.crumbs) p.set('cr', 0); }
   if (st.kind === 'classic') { p.set('seq', st.seq.join('-')); }
   if (st.flySpeed !== 1) p.set('fs', st.flySpeed); if (st.detail !== 2) p.set('d', st.detail); if (st.fog !== 0.5) p.set('fog', st.fog); p.set('cm', st.cmode); p.set('pal', st.palette); if (st.palRev) p.set('rev', 1);
-  if (st.cycleSpeed) p.set('cyc', st.cycleSpeed); if (st.finish !== 'satin') p.set('fin', st.finish); if (st.bg !== '#0b0d12') p.set('bg', st.bg.slice(1));
+  if (st.cycleSpeed) p.set('cyc', st.cycleSpeed); if (!st.spin) p.set('sp', 0); if (st.finish !== 'satin') p.set('fin', st.finish); if (st.bg !== '#0b0d12') p.set('bg', st.bg.slice(1));
   if (!fpOn && st.kind !== 'maze') { const q = S.pivot.quaternion; p.set('q', [q.x, q.y, q.z, q.w].map(r4).join('_')); p.set('z', r4(MO.baseZ())); }   /* the turned view, as you see it */
   MO.encode(p); return p.toString(); };
 function apply(code) {
@@ -574,7 +582,7 @@ function apply(code) {
   if (!kind && TPMS[p.get('s')]) kind = 'tpms';   // an old Surfaces link to a triply periodic surface
   if (!['tpms', 'foam', 'maze', 'classic'].includes(kind)) return false;
   clickData('#palettes', 'pal', p.get('pal') || 'aurora'); setCheck('palRev', p.get('rev') === '1'); setRange('cyc', num(p, 'cyc', 0)); clickData('#finish', 'f', p.get('fin') || 'satin'); clickData('#bg', 'b', '#' + (p.get('bg') || '0b0d12'));
-  clickData('#cmode', 'c', ['side', 'height', 'solid'].includes(p.get('cm')) ? p.get('cm') : 'side'); setRange('flySpeed', num(p, 'fs', 1)); setRange('detail', clamp(num(p, 'd', 2), 1, 4)); setRange('fog', num(p, 'fog', 0.5));
+  clickData('#cmode', 'c', ['side', 'height', 'solid'].includes(p.get('cm')) ? p.get('cm') : 'side'); setRange('flySpeed', num(p, 'fs', 1)); setRange('detail', clamp(num(p, 'd', 2), 1, 4)); setRange('fog', num(p, 'fog', 0.5)); setCheck('spin', p.get('sp') !== '0');
   if (kind === 'tpms') { st.tpms = TPMS[p.get('s')] ? p.get('s') : 'gyroid'; const m = p.get('m'); st.tmode = ['sheet', 'network', 'double'].includes(m) ? m : 'sheet'; document.querySelectorAll('#tMode button').forEach(b => b.classList.toggle('on', b.dataset.m === st.tmode));
     st.thick = clamp(num(p, 't', 0.18), 0.06, 0.6); $('tThick').value = st.thick; $('tThicko').textContent = st.thick.toFixed(2); st.cells = clamp(num(p, 'c', 1), 1, 2); $('tCells').value = st.cells; $('tCellso').textContent = st.cells;
     st.flip = p.get('fl') === '1' ? -1 : 1; setCheck('auto', p.get('au') !== '0'); st.beacon = p.get('b') === '1'; $('beacon').checked = st.beacon; }

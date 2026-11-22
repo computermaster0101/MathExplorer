@@ -105,7 +105,7 @@ export function makeMotion3D(S, opts) {
     <div class="seg" id="mvStyle"><button data-s="round" class="on">Round and round</button><button data-s="rock">Rock to and fro</button></div>
     ${row('Tumble', 'mvTumble', 0, 1, 0.01, 0, amount)}
     <p class="note">Tumble also turns it head over heels, slower than it turns round, so you see every side.</p></div>
-  <div class="sec"><div class="lbl">Camera</div>
+  <div class="sec" id="mvCamSec"><div class="lbl">Camera</div>
     ${row('Zoom', 'mvZoom', 0.3, 3, 0.01, 1, times)}
     ${row('In &amp; out', 'mvBreathe', 0, 1, 0.01, 0, amount)}
     ${row('Drift', 'mvDrift', 0, 1, 0.01, 0, amount)}

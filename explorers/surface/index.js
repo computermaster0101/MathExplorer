@@ -210,7 +210,6 @@ function stats() {
 }
 $('walkBtn').addEventListener('click', () => go());
 $('playBtn').addEventListener('click', () => play());
-$('resetBtn2').addEventListener('click', () => resetView());
 $('walkSpeed').addEventListener('input', e => { st.walkSpeed = +e.target.value; $('walkSpeedo').textContent = st.walkSpeed.toFixed(1) + '×'; share.touch(); });
 $('autoRound').addEventListener('change', e => { st.autoRound = e.target.checked; share.touch(); });
 $('spin').addEventListener('change', e => { st.spin = e.target.checked; share.touch(); });

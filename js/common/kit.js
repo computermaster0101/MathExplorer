@@ -76,7 +76,8 @@ export const KEY_ROWS = [
   ['+ −', 'Zoom in / out'], ['M', 'Play / pause the music'], ['H', 'Hide / show panel'], ['F', 'Full screen (Esc to leave)'], ['E / Q', 'Expand / collapse all sections'], ['?', 'Open this list']];
 /** Fill the Keyboard shortcuts group: the explorer's own rows first, then the shared ones. */
 export function buildKeys(tableEl, ownRows) {
-  tableEl.innerHTML = [...ownRows, ...KEY_ROWS].map(([k, t]) => `<tr><td><kbd>${k}</kbd></td><td>${t}</td></tr>`).join('');
+  const norm = k => k.replace(/[\s/]/g, ''), own = new Set(ownRows.map(([k]) => norm(k)));   // an explorer's own meaning for a key replaces the shared row
+  tableEl.innerHTML = [...ownRows, ...KEY_ROWS.filter(([k]) => !own.has(norm(k)))].map(([k, t]) => `<tr><td><kbd>${k}</kbd></td><td>${t}</td></tr>`).join('');
 }
 
 // ---------- the Save & share group ----------

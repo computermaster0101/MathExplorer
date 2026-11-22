@@ -190,7 +190,7 @@ function drawPattern(ctx, W, H, opts = {}) {
     ctx.lineWidth = Math.max(0.6, Math.min(4, s * 0.045)) * st.lw * (opts.print ? 2.2 : 1 + 0.15 * voiceNow); ctx.lineJoin = 'round'; for (const path of groups.values()) ctx.stroke(path); }
   if (g.lines && (!P.wallpaper || st.edges)) { ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     for (const L of g.lines) { ctx.beginPath(); L.p.forEach((q, i) => (i ? ctx.lineTo(X(q), Y(q)) : ctx.moveTo(X(q), Y(q))));
-      if (P.wallpaper) { ctx.strokeStyle = opts.print ? 'rgba(0,0,0,0)' : st.bg === '#f3efe6' ? 'rgba(28,30,38,.25)' : 'rgba(255,255,255,.22)'; ctx.lineWidth = 1; }
+      if (P.wallpaper) { ctx.strokeStyle = opts.print ? 'rgba(0,0,0,0)' : st.bg === '#f3efe6' ? 'rgba(28,30,38,.25)' : 'rgba(255,255,255,.22)'; ctx.lineWidth = st.lw; }
       else { ctx.strokeStyle = opts.print ? '#fff' : tone(L.c); ctx.lineWidth = Math.max(1, s * 0.12) * st.lw; }
       ctx.stroke(); } }
   ctx.restore(); patInfo = { count, nC, lines: (g.lines || []).length }; return (g.polys || []).length;

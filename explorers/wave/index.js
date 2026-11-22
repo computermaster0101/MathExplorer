@@ -346,7 +346,7 @@ document.querySelectorAll('.btn.try').forEach(b => b.addEventListener('click', (
   else if (m === 'plate') { clickData('#plateShape', 's', a); pickMode('plate'); }
   else if (m === 'string') { setRange('pluck', +a); pickMode('string'); }
   else if (m === 'epi') { setRange('ncirc', +c); clickData('#curveList', 'c', a); pickMode('epi'); } }));
-buildKeys($('keyTable'), [['G', 'Ripples: pause the waves · tank: start again · plate: fresh sand · string: pluck · epicycles: draw again'], ['N', 'Something new: move the sources, splash, a random pattern or pluck'], ['1 – 5', 'Ripples, wave tank, plate, string, epicycles'], ['+ / −', 'Ripples: longer / shorter waves · epicycles: more / fewer circles'], ['← → ↑ ↓ / W A S D', 'Ripples: move round the pond']]);
+buildKeys($('keyTable'), [['G', 'Ripples: pause the waves · tank: start again · plate: fresh sand · string: pluck · epicycles: draw again'], ['N', 'Something new: move the sources, splash, a random pattern or pluck'], ['1 – 5', 'Ripples, wave tank, plate, string, epicycles'], ['+ / −', 'Ripples: longer / shorter waves · epicycles: more / fewer circles'], ['← → ↑ ↓ / W A S D', 'Ripples: move round the pond'], ['Shift', 'Hold with the keys above to go three times faster']]);
 
 // ---------- actions ----------
 let ripRun = true;

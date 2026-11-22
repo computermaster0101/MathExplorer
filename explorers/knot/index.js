@@ -161,7 +161,6 @@ function stats() {
   else { setStats(...s.stats(P)); $('statNote').textContent = ''; }
 }
 $('rideBtn').addEventListener('click', () => go());
-$('resetBtn2').addEventListener('click', () => resetView());
 segClick('seat', d => { st.seat = d.s; share.touch(); });
 $('watch').addEventListener('change', e => { st.watch = e.target.checked; share.touch(); });
 $('rideSpeed').addEventListener('input', e => { st.rideSpeed = +e.target.value; $('rideSpeedo').textContent = st.rideSpeed.toFixed(1) + '×'; share.touch(); });

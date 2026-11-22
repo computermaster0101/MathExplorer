@@ -315,7 +315,7 @@ $('snap').addEventListener('click', () => { show(); saveCanvasPNG(lc, fileBase()
 document.querySelectorAll('.btn.try').forEach(b => b.addEventListener('click', () => { const [m, a, c] = b.dataset.try.split('|'); st.paused = false; $('goBtn').textContent = 'Pause';
   if (m === 'life') { pickMode('life'); clickData('#ruleList', 'r', a); if (c) { const d = st.dens; st.dens = 0; setup(); st.dens = d; if (c === 'gun' && st.cell > 3) setRange('cell', 3); placePattern(c); } else setup(); }
   else if (m === 'lenia') { pickMode('lenia'); clickData('#leniaList', 'p', a); } else { pickMode('rd'); clickData('#rdList', 'p', a); } }));
-buildKeys($('keyTable'), [['G', 'Pause / run'], ['N', 'A new random start'], ['1 – 3', 'Life, Lenia, reaction–diffusion'], ['+ / −', 'Bigger / smaller cells'], ['Wheel', 'Zoom in / out on the middle'], ['Right-drag', 'Erase'], ['← → ↑ ↓ / W A S D', 'Scroll the world (it wraps round: off one edge, on at the other)']]);
+buildKeys($('keyTable'), [['G', 'Pause / run'], ['N', 'A new random start'], ['1 – 3', 'Life, Lenia, reaction–diffusion'], ['+ / −', 'Bigger / smaller cells'], ['Wheel', 'Zoom in / out on the middle'], ['Right-drag', 'Erase'], ['← → ↑ ↓ / W A S D', 'Scroll the world (it wraps round: off one edge, on at the other)'], ['Shift', 'Hold with the keys above to go three times faster']]);
 
 // ---------- actions ----------
 function togglePause() { st.paused = !st.paused; $('goBtn').textContent = st.paused ? 'Run' : 'Pause'; labels(); }

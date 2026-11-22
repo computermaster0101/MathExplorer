@@ -167,7 +167,7 @@ document.querySelectorAll('#flowList, #mapList').forEach(el => el.addEventListen
 function pickSystem(k, keepView) {
   if (!SYSTEMS[k]) return; st.sys = k; st.start = null; if (!keepView) viewFromCode = false;
   document.querySelectorAll('#flowList button, #mapList button').forEach(b => b.classList.toggle('on', b.dataset.s === k));
-  const m = isMap(); canvas.hidden = m; mapc.hidden = !m; $('viewSec').hidden = m; $('flowView').hidden = m; $('mapView').hidden = !m; $('spinRow').hidden = m; MO.group.querySelectorAll('.sec').forEach((e, i) => { if (i < 2) e.hidden = m; });
+  const m = isMap(); canvas.hidden = m; mapc.hidden = !m; $('viewSec').hidden = m; $('flowView').hidden = m; $('mapView').hidden = !m; $('spinRow').hidden = m; MO.group.querySelector('#mvTurnSec').hidden = m; MO.group.querySelector('#mvCamSec').hidden = m; for (const id of ['cmode', 'finish']) { const el = $(id); el.hidden = m; const l = el.previousElementSibling; if (l && l.matches('.lbl')) l.hidden = m; }   /* a map is coloured by how often points land, drawn flat */   /* a map is flat and drawn by its own view: turning and the camera don't apply */
   $('hint').textContent = m ? 'Drag to move · scroll / pinch to zoom · arrows and W A S D to move around' : 'Drag to turn · scroll / pinch to zoom · arrows and W A S D to steer';
   view.enabled = m; buildParams(); rebuild(keepView); labels();
 }
@@ -182,6 +182,8 @@ function buildParams() {
   for (const p of s.params) $('pp_' + p.id).addEventListener('input', e => { P[p.id] = +e.target.value; $('pp_' + p.id + 'o').textContent = (+e.target.value).toFixed(p.step < 0.01 ? 3 : 2); if (e.isTrusted) rebuild(true); else { if (isMap()) resetMap(); resetLyap(); share.touch(); } labels(); });
 }
 function labels() {
+  $('pathLen').closest('.row').hidden = st.mode !== 'path'; $('count').closest('.row').hidden = $('trail').closest('.row').hidden = st.mode !== 'swarm';   // each slider only where it does something (the butterfly effect has none, so its View group goes)
+  $('g-view').hidden = !isMap() && st.mode === 'butterfly';
   const s = sy(); $('title').textContent = s.name; $('subtitle').textContent = s.alt; $('gv-shapes').textContent = s.name; $('about').innerHTML = `<strong>${s.name}.</strong> ${s.info}`;
   $('modeNote').textContent = { path: 'One point, followed for a long time: the path traces out the attractor.', swarm: 'Many points at once, each with a fading trail: watch the flow stretch and fold them.', butterfly: 'Two points that start a millionth apart. For a while they move as one, then they part for good.' }[st.mode];
   $('gv-ctl').textContent = isMap() ? 'map' : st.mode;
@@ -195,7 +197,7 @@ function stats() {
   if (!isMap() && surv && !surv.ok) cap = '<b>It runs away.</b> With these numbers the point flies off to infinity instead of settling onto a shape. Try nearer the usual numbers.';
   else if (!isMap() && st.mode === 'butterfly' && F) { const d = Math.hypot(...F.a.map((v, i) => v - F.b[i])) / surv.ext;
     cap = d < 1e-3 ? `<b>${F.t.toFixed(1)} s:</b> still together (${d < 1e-5 ? 'less than a hundred-thousandth' : (d * 100).toPrecision(2) + '%'} of the shape apart).` : d < 0.15 ? `<b>${F.t.toFixed(1)} s:</b> drifting apart: now ${(d * 100).toFixed(1)}% of the shape's size apart.` : `<b>${F.t.toFixed(1)} s:</b> they've parted for good. A millionth of a difference at the start, and now nothing in common.`; }
-  else if (l != null && l < 0.005 && !isMap()) cap = '<b>Not chaotic here.</b> With these numbers the point settles into a loop or a still point: neighbouring starts don\'t drift apart.';
+  else if (l != null && l < 0.005 && !(isMap() && sy().restart)) cap = '<b>Not chaotic here.</b> With these numbers the point settles into a loop or a still point: neighbouring starts don\'t drift apart.';
   const el = $('stageCap'); el.innerHTML = cap; el.style.display = cap ? 'block' : 'none';
 }
 segClick('mode', d => { st.mode = d.m; startFlow(); labels(); share.touch(); });
@@ -211,7 +213,7 @@ $('expo').addEventListener('input', e => { st.expo = +e.target.value; $('expoo')
 segClick('cmode', d => { st.cmode = d.c; if (F && F.kind === 'path') startFlow(); labels(); share.touch(); });
 buildSwatches($('palettes'), st.palette, name => { st.palette = name; recolour(); palLabel(); share.touch(); });
 const palLabel = () => { $('palName').textContent = 'Palette: ' + st.palette.replace('_', ' & ').replace(/^./, c => c.toUpperCase()) + (st.palRev ? ' (reversed)' : ''); };
-function recolour() { R = rampOf(st.palette, st.palRev); $('lgBar').style.background = rampCss(R); if (F && F.kind === 'path') { const s = sy(), P = st.P[st.sys]; for (let i = 0; i < F.n; i++) { const p = [F.pos[i * 3], F.pos[i * 3 + 1], F.pos[i * 3 + 2]], v = s.f(p[0], p[1], p[2], P); F.col.set(colourFor(p, Math.hypot(...v), i / F.L), i * 3); } obj.geometry.attributes.color.needsUpdate = true; } }
+function recolour() { R = rampOf(st.palette, st.palRev); $('lgBar').style.background = rampCss(R); if (F && F.kind === 'path' && !isMap()) { const s = sy(), P = st.P[st.sys]; for (let i = 0; i < F.n; i++) { const p = [F.pos[i * 3], F.pos[i * 3 + 1], F.pos[i * 3 + 2]], v = s.f(p[0], p[1], p[2], P); F.col.set(colourFor(p, Math.hypot(...v), i / F.L), i * 3); } obj.geometry.attributes.color.needsUpdate = true; } }
 $('palRev').addEventListener('change', e => { st.palRev = e.target.checked; recolour(); palLabel(); share.touch(); });
 $('cyc').addEventListener('input', e => { st.cycleSpeed = +e.target.value; $('cyco').textContent = st.cycleSpeed ? st.cycleSpeed.toFixed(1) + '×' : 'off'; share.touch(); });
 segClick('finish', d => { st.finish = d.f; const g = st.finish === 'glow'; lineMat.blending = g ? THREE.AdditiveBlending : THREE.NormalBlending; lineMat.depthWrite = !g; lineMat.opacity = g ? 0.7 : 0.92; lineMat.needsUpdate = true; share.touch(); });
