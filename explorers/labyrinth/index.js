@@ -58,6 +58,13 @@ function blockMesh(F, n, L) {
     for (const [a, b] of E12) { if ((gv[a] < 0) === (gv[b] < 0)) continue; const t = gv[a] / (gv[a] - gv[b]), A = C8[a], B = C8[b]; sx += A[0] + t * (B[0] - A[0]); sy += A[1] + t * (B[1] - A[1]); sz += A[2] + t * (B[2] - A[2]); ne++; }
     cell[i + j * n + k * n * n] = pos.length / 3; const q = [at(i) + sx / ne * h, at(j) + sy / ne * h, at(k) + sz / ne * h];
     for (let a = 0; a < 3; a++) if (Math.abs(q[a]) > L - 0.75 * h) q[a] = Math.sign(q[a]) * L;   /* points at the cut lie exactly on the cube, so its faces are flat and its edges clean */
+    // a point on the cut where the wall also passes (the rim): slide it along the cut face onto the wall itself, so the rim follows
+    // the true curve instead of stepping from grid cell to grid cell (that staircase was the blocky edge)
+    const fixed = [0, 1, 2].filter(a => Math.abs(q[a]) === L);
+    if (fixed.length === 1) { let lo2 = Infinity, hi2 = -Infinity; for (const c of C8) { const f = F(at(i + c[0]), at(j + c[1]), at(k + c[2])); lo2 = Math.min(lo2, f); hi2 = Math.max(hi2, f); }
+      if (lo2 < 0 && hi2 > 0) { const ax = fixed[0], e = h * 0.05;
+        for (let it = 0; it < 4; it++) { const f = F(q[0], q[1], q[2]), gr = [0, 1, 2].map(d => { if (d === ax) return 0; const a1 = q.slice(), b1 = q.slice(); a1[d] += e; b1[d] -= e; return (F(...a1) - F(...b1)) / (2 * e); }), g2 = gr[0] * gr[0] + gr[1] * gr[1] + gr[2] * gr[2];
+          if (g2 < 1e-12) break; const st2 = Math.max(-h, Math.min(h, f / g2)); for (let d = 0; d < 3; d++) q[d] -= gr[d] * st2; for (let d = 0; d < 3; d++) if (d !== ax) q[d] = Math.max(-L, Math.min(L, q[d])); } } }
     pos.push(q[0], q[1], q[2]);
   }
   const P3 = [1, N, N * N];
@@ -75,7 +82,7 @@ const field = () => solidField(tp().g, st.tmode, st.thick, st.flip);
 function tpColours(pos, nor) {
   const g = tp().g, n = pos.length / 3, col = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) { const x = pos[i * 3], y = pos[i * 3 + 1], z = pos[i * 3 + 2]; let t;
-    if (st.cmode === 'side') { const e = nor ? 0.08 : 0; const s = g(x + (nor ? nor[i * 3] * e : 0), y + (nor ? nor[i * 3 + 1] * e : 0), z + (nor ? nor[i * 3 + 2] * e : 0)); t = s > 0 ? 0.22 : 0.8; }
+    if (st.cmode === 'side') { const e = nor ? 0.08 : 0; const s = g(x + (nor ? nor[i * 3] * e : 0), y + (nor ? nor[i * 3 + 1] * e : 0), z + (nor ? nor[i * 3 + 2] * e : 0)); t = 0.51 - 0.29 * Math.tanh(s / 0.06); }   /* a soft step: a hard one coloured whole grid points, so where the two colours meet on a cut face the line came out as a sawtooth */
     else if (st.cmode === 'height') t = 0.5 + 0.5 * Math.sin(y * 0.5); else t = 0.6;
     const c = tone(t); col.set(c, i * 3); }
   return col;
@@ -113,7 +120,7 @@ function stepFly(dt) {
   const F = fly.F, k = drive(), f = (k.fast ? 3 : 1) * k.scale, fwd = new V3(0, 0, -1).applyQuaternion(fly.q), up = new V3(0, 1, 0).applyQuaternion(fly.q), right = new V3(1, 0, 0).applyQuaternion(fly.q);
   if (S.pointers.size || Math.abs(S.vel.x) + Math.abs(S.vel.y) > 1e-5) { turn(fly.q, -S.vel.x * 1.1, -S.vel.y * 1.1); S.vel.x = S.vel.y = 0; fly.manual = 2.5; }
   if (k.any) { fly.manual = 2.5; turn(fly.q, -k.turnX * 1.2 * f * dt, k.turnY * 0.9 * f * dt); }
-  fly.manual = Math.max(0, fly.manual - dt);
+  fly.manual = Math.max(0, fly.manual - dt); if (fly.manual > 0) fly.aim = null;   /* steering by hand: the aim starts afresh afterwards */
   // steering itself: try a fan of directions round straight ahead and turn toward the one with the most room
   if (st.auto && fly.manual === 0 && !fly.hop) {
     let best = fwd, bs = -Infinity;
@@ -121,7 +128,10 @@ function stepFly(dt) {
       let s = Infinity; for (const r of [0.5, 1, 1.6, 2.4]) { const p = fly.pos.clone().addScaledVector(d, r); s = Math.min(s, F(p.x, p.y, p.z) + r * 0.04); } s += (a === 0 ? 0.08 : 0); if (fly.beacon && st.beacon) s += 0.1 * d.dot(fly.beacon.clone().sub(fly.pos).normalize());
       if (s > bs) { bs = s; best = d; } }
     const ahead = fly.pos.clone().addScaledVector(fwd, 0.9), room = Math.min(F(fly.pos.x, fly.pos.y, fly.pos.z), F(ahead.x, ahead.y, ahead.z));   /* turn harder the less room there is ahead */
-    const qt = new THREE.Quaternion().setFromUnitVectors(fwd, best); fly.q.premultiply(new THREE.Quaternion().slerp(qt, Math.min(1, dt * (1.4 + 5 * Math.max(0, 0.9 - room)))));
+    // ease the aim toward the best direction rather than jumping to it: two nearly equal choices used to win on alternate frames,
+    // so the view turned, stopped, turned (a visible judder)
+    if (!fly.aim) fly.aim = fwd.clone(); fly.aim.lerp(best, 1 - Math.exp(-dt * 3)).normalize();
+    const qt = new THREE.Quaternion().setFromUnitVectors(fwd, fly.aim); fly.q.premultiply(new THREE.Quaternion().slerp(qt, Math.min(1, dt * (1.4 + 5 * Math.max(0, 0.9 - room)))));
     // keep roughly level, like an aircraft, so "up" stays up
     const lvl = new V3(0, 1, 0).sub(fwd.clone().multiplyScalar(fwd.y)).normalize(); const roll = Math.atan2(up.clone().cross(lvl).dot(fwd), up.dot(lvl)); fly.q.premultiply(new THREE.Quaternion().setFromAxisAngle(fwd, roll * Math.min(1, dt * 0.8)));
   }

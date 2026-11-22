@@ -15,7 +15,7 @@ import { SHAPES, GROUPS, defaults, curvePoints } from './knots.js';
 
 // ---------- state ----------
 const st = { shape: 'trefoil', P: {}, detail: 3, draw: 'solid', tube: 0.07, cmode: 'along', palette: 'aurora', palRev: false, cycle: 0, cycleSpeed: 0,
-  finish: 'satin', bg: '#0b0d12', spin: true, speed: 0.5, paused: false, mm: 80, seat: 'top', watch: false, rideSpeed: 1 };
+  finish: 'satin', bg: '#0b0d12', spin: true, speed: 0.5, paused: false, mm: 80, seat: 'top', watch: false, hop: true, rideSpeed: 1 };
 for (const k in SHAPES) st.P[k] = defaults(SHAPES[k]);
 const sh = () => SHAPES[st.shape];
 
@@ -73,7 +73,12 @@ function applyLook() { for (const m of meshes) { m.material = FIN[st.finish]; m.
 let rideTrack = null;   // [{P, T, N, B, len}] per loop
 function makeTrack() {
   const s = sh(), P = st.P[st.shape], NR = 2400;
-  rideTrack = curvePoints(s, P, NR).map(pts => {
+  rideTrack = buildTrack(s, P, NR);
+  // how close each ring comes to each other ring (for hopping across where they pass closest)
+  ride.gap = rideTrack.map((a, i) => rideTrack.map((b, j) => { if (i === j) return Infinity; let m = Infinity; for (let x = 0; x < a.P.length; x += 8) for (let y = 0; y < b.P.length; y += 8) m = Math.min(m, a.P[x].distanceTo(b.P[y])); return m; }));
+}
+function buildTrack(s, P, NR) {
+  return curvePoints(s, P, NR).map(pts => {
     const Pv = pts.map(p => new V3(p[0] - centre.x, p[1] - centre.y, p[2] - centre.z)), n = Pv.length, T = [], N = [], B = []; let len = 0;
     for (let i = 0; i < n; i++) { T.push(Pv[(i + 1) % n].clone().sub(Pv[(i + n - 1) % n]).normalize()); len += Pv[(i + 1) % n].distanceTo(Pv[i]); }
     let nrm = new V3(0, 1, 0); if (Math.abs(nrm.dot(T[0])) > 0.9) nrm.set(1, 0, 0); nrm.sub(T[0].clone().multiplyScalar(nrm.dot(T[0]))).normalize(); N.push(nrm);
@@ -85,11 +90,11 @@ function makeTrack() {
     return { P: Pv, T, N, B, len };
   });
 }
-const ride = { on: false, comp: 0, s: 0, laps: 0, yaw: 0, pitch: 0, around: 0, aim: new V3(), aimW: 0, pivotQ: new THREE.Quaternion(), fov: 0 };
+const ride = { on: false, comp: 0, s: 0, rev: false, hop: null, cool: 0, near: Infinity, gap: [], laps: 0, yaw: 0, pitch: 0, around: 0, aim: new V3(), aimW: 0, pivotQ: new THREE.Quaternion(), fov: 0 };
 const lapClock = new Phase();
 function startRide() {
-  if (!rideTrack) makeTrack(); ride.on = true; ride.cmodeBefore = null;
-  if (st.cmode === 'along') { ride.cmodeBefore = 'along'; clickData('#cmode', 'c', 'bands'); }   // bands rushing past show the motion; put back afterwards ride.comp = Math.min(ride.comp, rideTrack.length - 1); ride.s = 0; ride.laps = 0; ride.yaw = ride.pitch = 0; ride.aimW = 0;
+  if (!rideTrack) makeTrack(); ride.on = true; ride.cmodeBefore = null; ride.rev = false; ride.hop = null; ride.cool = 1.5; ride.near = Infinity;
+  /* the ride keeps the colours you chose (it used to switch Along to Bands) */ ride.comp = Math.min(ride.comp, rideTrack.length - 1); ride.s = 0; ride.laps = 0; ride.yaw = ride.pitch = 0; ride.aimW = 0;
   ride.pivotQ.copy(S.pivot.quaternion); S.vel.x = S.vel.y = 0; st.paused = false; labels(); }
 function endRide() { if (!ride.on) return; ride.on = false; if (ride.cmodeBefore && st.cmode === 'bands') clickData('#cmode', 'c', ride.cmodeBefore); rideLight.intensity = 0; S.camera.up.set(0, 1, 0); S.camera.quaternion.identity(); S.reset(); S.resize(); labels(); }
 const at = (arr, i) => arr[((i % arr.length) + arr.length) % arr.length];
@@ -112,16 +117,33 @@ function stepRide(dt) {
     const before = ride.s; ride.s = lapClock.step(ride.s, dt, 1, cycleBeats(mult), 1 / lapSec);
     if (Math.floor(ride.s) > Math.floor(before)) ride.laps++;
   }
-  const F = trackAt(t, ride.s), up = F.N.clone().multiplyScalar(Math.cos(ride.around)).add(F.B.clone().multiplyScalar(Math.sin(ride.around))).normalize();
+  const F = trackAt(t, ride.rev ? -ride.s : ride.s); if (ride.rev) { F.T.negate(); F.B.negate(); }   // riding a ring the other way round, after a hop
+  hopCheck(F, dt);
+  const up = F.N.clone().multiplyScalar(Math.cos(ride.around)).add(F.B.clone().multiplyScalar(Math.sin(ride.around))).normalize();
   const r = st.tube, pos = st.seat === 'top' ? F.P.clone().addScaledVector(up, r * 3.4).addScaledVector(F.T, -r * 3.5) : F.P.clone();   // on top: a little above and behind, so you see the track ahead
   // where to look: ahead, turned by yaw and pitch; with "watch" on, drawn toward the nearest other strand ahead
   let dir = F.T.clone().applyAxisAngle(up, ride.yaw); const side = dir.clone().cross(up).normalize(); dir.applyAxisAngle(side, ride.pitch);
   if (st.watch) { const target = nearestStrand(pos, F.T); if (target) { ride.aim.lerp(target.sub(pos).normalize(), Math.min(1, dt * 3)); ride.aimW = Math.min(0.75, ride.aimW + dt * 1.5); } else ride.aimW = Math.max(0, ride.aimW - dt); dir.lerp(ride.aim, ride.aimW).normalize(); }
   // into the scene's world coordinates (the knot sits scaled and turned inside the stage)
+  if (ride.hop) {   // gliding across to the other ring: blend from where the camera was
+    ride.hop.t += dt / 0.8; const u = Math.min(1, ride.hop.t), e = u * u * (3 - 2 * u);
+    pos.lerpVectors(ride.hop.pos, pos, e); dir.lerpVectors(ride.hop.dir, dir, e).normalize(); up.lerpVectors(ride.hop.up, up, e).normalize(); if (u >= 1) ride.hop = null; }
+  ride.last = { pos: pos.clone(), dir: dir.clone(), up: up.clone() };
   S.fit.updateMatrixWorld(true); const M = S.fit.matrixWorld, wPos = pos.clone().applyMatrix4(M), wDir = dir.clone().transformDirection(M), wUp = up.clone().transformDirection(M);
   S.camera.position.copy(wPos); S.camera.up.copy(wUp); S.camera.lookAt(wPos.clone().add(wDir));
   const fov = st.seat === 'top' ? 70 : 82; if (S.camera.fov !== fov) { S.camera.fov = fov; S.camera.updateProjectionMatrix(); }
   rideLight.position.copy(wPos); rideLight.intensity = st.seat === 'inside' ? 1.4 : 0.5; rideLight.distance = 2.6;
+}
+// riding a link: where this ring passes closest to another, hop across onto it, going whichever way matches your heading
+function hopCheck(F, dt) {
+  ride.cool = Math.max(0, ride.cool - dt); if (!st.hop || rideTrack.length < 2 || ride.hop || !ride.last) return;
+  let bd = Infinity, bc = -1, bi = 0; rideTrack.forEach((t, ci) => { if (ci === ride.comp) return; const n = t.P.length; for (let i = 0; i < n; i += 4) { const d = t.P[i].distanceTo(F.P); if (d < bd) { bd = d; bc = ci; bi = i; } } });
+  const was = ride.near; ride.near = bd; if (bc < 0 || ride.cool > 0) return;
+  // just past the closest point (the distance has started growing again), and that point is about as close as these two rings ever come
+  if (!(bd > was && was < ride.gap[ride.comp][bc] * 1.3 + st.tube)) return;
+  const t = rideTrack[bc], n = t.P.length; let i0 = bi; for (let i = bi - 4; i <= bi + 4; i++) { const j = ((i % n) + n) % n; if (t.P[j].distanceTo(F.P) < t.P[i0].distanceTo(F.P)) i0 = j; }
+  ride.hop = { t: 0, pos: ride.last.pos.clone(), dir: ride.last.dir.clone(), up: ride.last.up.clone() };
+  ride.comp = bc; ride.rev = t.T[i0].dot(F.T) < 0; ride.s = (ride.rev ? -1 : 1) * i0 / n; ride.cool = 2.5; ride.near = Infinity; stats();
 }
 // the closest strand that isn't the bit of track you're on, a little ahead of you (for "watch the strands")
 function nearestStrand(pos, fwd) {
@@ -147,7 +169,7 @@ function buildParams() {
   for (const p of s.params || []) $('pp_' + p.id).addEventListener('input', e => { P[p.id] = +e.target.value; $('pp_' + p.id + 'o').textContent = e.target.value; build(); if (ride.on) { makeTrack(); ride.comp = Math.min(ride.comp, rideTrack.length - 1); } labels(); share.touch(); });
 }
 function labels() {
-  const s = sh(), P = st.P[st.shape], loops = s.curves(P).length;
+  const s = sh(), P = st.P[st.shape], loops = s.curves(P).length; $('hopRow').hidden = loops < 2;
   $('title').textContent = s.name; $('subtitle').textContent = s.alt; $('gv-shapes').textContent = s.name; $('about').innerHTML = `<strong>${s.name}.</strong> ${s.info}`;
   $('rideBtn').textContent = ride.on ? 'Stop riding' : 'Ride the knot'; $('gv-ctl').textContent = ride.on ? 'riding' : '';
   $('hint').textContent = ride.on ? `Arrows or drag: look round · A D: slide round the tube · W S, + −: speed${loops > 1 ? ' · N: next ring' : ''} · G: stop` : 'Drag to turn · scroll / pinch to zoom · G to ride the knot';
@@ -163,6 +185,7 @@ function stats() {
 $('rideBtn').addEventListener('click', () => go());
 segClick('seat', d => { st.seat = d.s; share.touch(); });
 $('watch').addEventListener('change', e => { st.watch = e.target.checked; share.touch(); });
+$('hop').addEventListener('change', e => { st.hop = e.target.checked; share.touch(); });
 $('rideSpeed').addEventListener('input', e => { st.rideSpeed = +e.target.value; $('rideSpeedo').textContent = st.rideSpeed.toFixed(1) + '×'; share.touch(); });
 $('spin').addEventListener('change', e => { st.spin = e.target.checked; share.touch(); });
 $('speed').addEventListener('input', e => { st.speed = +e.target.value; $('speedo').textContent = st.speed.toFixed(1) + '×'; share.touch(); });
@@ -221,7 +244,7 @@ export function onKey(e) {
   if (e.key === 't' || e.key === 'T') { setCheck('watch', !st.watch); return true; }
   return standardKeys(e, {
     pause: () => { if (st.paused) st.paused = false; else if (moving()) st.paused = true; else { st.spin = true; $('spin').checked = true; } },
-    go, reset: resetView, renew: () => { if (ride.on && rideTrack.length > 1) { ride.comp = (ride.comp + 1) % rideTrack.length; ride.s = 0; stats(); } },
+    go, reset: resetView, renew: () => { if (ride.on && rideTrack.length > 1) { ride.comp = (ride.comp + 1) % rideTrack.length; ride.s = 0; ride.rev = false; ride.cool = 2.5; stats(); } },
     shape: dir => clickNext('#shapeLists button', dir), palette: dir => clickNext('#palettes button', dir), colourMode: dir => clickNext('#cmode button', dir),
     reverse: () => $('palRev').click(), cycle: () => setRange('cyc', st.cycleSpeed > 0 ? 0 : 1),
     zoom: f => { if (ride.on) setRange('rideSpeed', clamp(st.rideSpeed / f, 0.1, 3)); else S.zoom(f); },
@@ -231,7 +254,7 @@ export function onKey(e) {
 const encode = () => { const p = new URLSearchParams(), P = st.P[st.shape]; p.set('s', st.shape); for (const k in P) p.set(k, r4(P[k]));
   p.set('d', st.detail); if (st.draw !== 'solid') p.set('dr', st.draw); p.set('tu', r4(st.tube)); p.set('cm', st.cmode); p.set('pal', st.palette); if (st.palRev) p.set('rev', 1); if (st.cycleSpeed) p.set('cyc', st.cycleSpeed);
   p.set('fin', st.finish); if (st.bg !== '#0b0d12') p.set('bg', st.bg.slice(1)); if (!st.spin) p.set('sp', 0); if (st.speed !== 0.5) p.set('spd', st.speed);
-  if (st.seat !== 'top') p.set('seat', st.seat); if (st.watch) p.set('w', 1); if (st.rideSpeed !== 1) p.set('rs', st.rideSpeed);
+  if (st.seat !== 'top') p.set('seat', st.seat); if (st.watch) p.set('w', 1); if (!st.hop) p.set('hp', 0); if (st.rideSpeed !== 1) p.set('rs', st.rideSpeed);
   const q = ride.on ? ride.pivotQ : S.pivot.quaternion; p.set('q', [q.x, q.y, q.z, q.w].map(r4).join('_')); if (!ride.on) p.set('z', r4(MO.baseZ())); MO.encode(p); return p.toString(); };
 function apply(code) {
   const p = new URLSearchParams(code), k = p.get('s'); if (!SHAPES[k]) return false; endRide();
@@ -239,7 +262,7 @@ function apply(code) {
   setRange('detail', num(p, 'd', 3)); clickData('#drawMode', 'd', p.get('dr') || 'solid'); setRange('tube', num(p, 'tu', 0.07));
   clickData('#cmode', 'c', ['along', 'ring', 'height', 'bands', 'stripe', 'solid'].includes(p.get('cm')) ? p.get('cm') : 'along'); clickData('#palettes', 'pal', p.get('pal') || 'aurora'); setCheck('palRev', p.get('rev') === '1');
   setRange('cyc', num(p, 'cyc', 0)); clickData('#finish', 'f', p.get('fin') || 'satin'); clickData('#bg', 'b', '#' + (p.get('bg') || '0b0d12'));
-  setCheck('spin', p.get('sp') !== '0'); setRange('speed', num(p, 'spd', 0.5)); clickData('#seat', 's', p.get('seat') === 'inside' ? 'inside' : 'top'); setCheck('watch', p.get('w') === '1'); setRange('rideSpeed', num(p, 'rs', 1));
+  setCheck('spin', p.get('sp') !== '0'); setRange('speed', num(p, 'spd', 0.5)); clickData('#seat', 's', p.get('seat') === 'inside' ? 'inside' : 'top'); setCheck('watch', p.get('w') === '1'); setCheck('hop', p.get('hp') !== '0'); setRange('rideSpeed', num(p, 'rs', 1));
   pickShape(k, true);
   const q = (p.get('q') || '').split('_').map(Number); if (q.length === 4 && q.every(isFinite)) S.pivot.quaternion.set(...q).normalize();
   const z = num(p, 'z', 0); if (z > 0) S.camera.position.z = clamp(z, 1.2, 14);

@@ -156,10 +156,17 @@ function stepWalk(dt) {
     let du = 0, dv = 0; if (det > 1e-12) { du = (G * a - Fm * b) / det; dv = (E * b - Fm * a) / det; } else { du = (s.u[1] - s.u[0]) * 0.002; }   // a pinch point: step over it
     let nu = walk.u + du, nv = walk.v + dv; const want = F.p.clone().add(move);
     if (nu < s.u[0] || nu > s.u[1] || nv < s.v[0] || nv > s.v[1]) {
-      const r = (s.wrapU || s.wrapV || s.closed || nu < s.u[0] || nu > s.u[1] || nv < s.v[0] || nv > s.v[1]) ? reseat(nu, nv, want) : null;
+      // across the edge we've reached: a seam (it wraps, or the shape is closed) or a pole (the edge is a single point) carries on
+      // over it; any other edge is open, and we turn back. Trying a seam match at an open edge found the edge's own mirror image, so
+      // the walker never turned and pushed along the rim, looking out into space.
+      const outU = nu < s.u[0] || nu > s.u[1], outV = nv < s.v[0] || nv > s.v[1], P = st.P[st.shape];
+      const pole = (axis, x) => { const a = axis ? s.f(s.u[0] + 0.13 * (s.u[1] - s.u[0]), x, P) : s.f(x, s.v[0] + 0.13 * (s.v[1] - s.v[0]), P), b = axis ? s.f(s.u[0] + 0.61 * (s.u[1] - s.u[0]), x, P) : s.f(x, s.v[0] + 0.61 * (s.v[1] - s.v[0]), P);
+        return !!(a && b) && Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) < 1e-3 * ext; };
+      const openU = outU && !(s.wrapU || s.closed || pole(0, clamp(nu, s.u[0], s.u[1]))), openV = outV && !(s.wrapV || s.closed || pole(1, clamp(nv, s.v[0], s.v[1])));
+      const r = openU || openV ? null : reseat(nu, nv, want);
       if (r) { nu = r[0]; nv = r[1]; }
       else {   // an open edge: turn back, as if bumping into a rail
-        const e = (nu < s.u[0] || nu > s.u[1] ? F.fu : F.fv).clone().normalize(); walk.d.addScaledVector(e, -2 * walk.d.dot(e)).normalize();
+        const e = (openU ? F.fu : openV ? F.fv : outU ? F.fu : F.fv).clone().normalize(); walk.d.addScaledVector(e, -2 * walk.d.dot(e)).normalize();
         nu = clamp(nu, s.u[0], s.u[1]); nv = clamp(nv, s.v[0], s.v[1]); }
     }
     const F2 = frameAt(nu, nv); if (F2) { walk.u = nu; walk.v = nv; walk.dist += Math.abs(ds); F = F2; } else { walk.d.negate(); }
