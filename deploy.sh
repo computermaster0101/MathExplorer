@@ -16,7 +16,9 @@ TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 git archive HEAD | tar -x -C "$TMP"
 rm -rf "$TMP/CLAUDE.md" "$TMP/.gitignore" "$TMP/.gitattributes" "$TMP/deploy.sh" "$TMP/.github"
 cd "$TMP"
-up() { aws s3 sync . "$BUCKET" --exclude "*" "$@" --cache-control "$CC" --only-show-errors; }
+# every file, every time (about 2.7 MB): "sync" compares size and date, and git archive stamps files with the commit's date,
+# so a change that kept a file's size could have been skipped
+up() { aws s3 cp . "$BUCKET" --recursive --exclude "*" "$@" --cache-control "$CC" --only-show-errors; }
 up --include "*.js" --content-type "text/javascript; charset=utf-8"
 up --include "*.html" --content-type "text/html; charset=utf-8"
 up --include "*.css" --content-type "text/css; charset=utf-8"
