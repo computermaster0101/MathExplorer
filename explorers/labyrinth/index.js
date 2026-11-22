@@ -123,15 +123,18 @@ function stepFly(dt) {
   fly.manual = Math.max(0, fly.manual - dt); if (fly.manual > 0) fly.aim = null;   /* steering by hand: the aim starts afresh afterwards */
   // steering itself: try a fan of directions round straight ahead and turn toward the one with the most room
   if (st.auto && fly.manual === 0 && !fly.hop) {
+    // a leaning that wanders (a new random one every 3 to 6 s) tips close calls, so forks go different ways
+    fly.biasT = (fly.biasT || 0) - dt; if (!fly.bias || fly.biasT <= 0) { fly.bias = new V3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(); fly.biasT = 3 + 3 * Math.random(); }
     let best = fwd, bs = -Infinity;
     for (let a = 0; a < 13; a++) { const d = a === 0 ? fwd.clone() : fwd.clone().applyAxisAngle(up, 0.5 * Math.cos(a * 0.966)).applyAxisAngle(right, 0.5 * Math.sin(a * 0.966)).normalize();
-      let s = Infinity; for (const r of [0.5, 1, 1.6, 2.4]) { const p = fly.pos.clone().addScaledVector(d, r); s = Math.min(s, F(p.x, p.y, p.z) + r * 0.04); } s += (a === 0 ? 0.08 : 0); if (fly.beacon && st.beacon) s += 0.1 * d.dot(fly.beacon.clone().sub(fly.pos).normalize());
+      let s = Infinity; for (const r of [0.5, 1, 1.6, 2.4]) { const p = fly.pos.clone().addScaledVector(d, r); s = Math.min(s, F(p.x, p.y, p.z) + r * 0.04); } s += (a === 0 ? 0.08 : 0) + 0.04 * d.dot(fly.bias); if (fly.beacon && st.beacon) s += 0.1 * d.dot(fly.beacon.clone().sub(fly.pos).normalize());
       if (s > bs) { bs = s; best = d; } }
     const ahead = fly.pos.clone().addScaledVector(fwd, 0.9), room = Math.min(F(fly.pos.x, fly.pos.y, fly.pos.z), F(ahead.x, ahead.y, ahead.z));   /* turn harder the less room there is ahead */
     // ease the aim toward the best direction rather than jumping to it: two nearly equal choices used to win on alternate frames,
     // so the view turned, stopped, turned (a visible judder)
     if (!fly.aim) fly.aim = fwd.clone(); fly.aim.lerp(best, 1 - Math.exp(-dt * 3)).normalize();
-    const qt = new THREE.Quaternion().setFromUnitVectors(fwd, fly.aim); fly.q.premultiply(new THREE.Quaternion().slerp(qt, Math.min(1, dt * (1.4 + 5 * Math.max(0, 0.9 - room)))));
+    const qt = new THREE.Quaternion().setFromUnitVectors(fwd, fly.aim); const g = 1.4 + 5 * Math.max(0, 0.9 - room); fly.gain = fly.gain == null ? g : fly.gain + (g - fly.gain) * (1 - Math.exp(-dt * 5));   /* how sharply it turns eases in and out rather than jumping as the room ahead changes */
+    fly.q.premultiply(new THREE.Quaternion().slerp(qt, Math.min(1, dt * fly.gain)));
     // keep roughly level, like an aircraft, so "up" stays up
     const lvl = new V3(0, 1, 0).sub(fwd.clone().multiplyScalar(fwd.y)).normalize(); const roll = Math.atan2(up.clone().cross(lvl).dot(fwd), up.dot(lvl)); fly.q.premultiply(new THREE.Quaternion().setFromAxisAngle(fwd, roll * Math.min(1, dt * 0.8)));
   }
