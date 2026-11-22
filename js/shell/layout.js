@@ -25,7 +25,7 @@ function zenWake() {
 }
 
 export function enterZen() {
-  app.classList.add('zen'); zenWake(); window.scrollTo(0, 0); zenFS = false;
+  app.classList.add('zen'); zenWake(); showTip(); window.scrollTo(0, 0); zenFS = false;
   const el = document.documentElement;
   try { const r = el.requestFullscreen && el.requestFullscreen(); if (r && r.then) r.then(() => { zenFS = true; }).catch(() => {}); } catch (e) { /* not allowed here */ }
   onChange();
@@ -48,6 +48,47 @@ export function showKeys() {
   g.open = true; g.scrollIntoView({ block: 'nearest' });
 }
 
+// ---------- touch gestures on the picture (phones and tablets) ----------
+// In full screen a tap pauses or resumes everything moving (as Space does) and a double tap leaves full screen; outside full
+// screen a double tap enters it. Pressing and holding still for a moment resets the view (as R does), anywhere. In full screen a
+// quick swipe changes the colours: left / right the next / previous palette (V / C), up / down the colour style (Shift + V / C). Only quick, still, one-finger taps on the picture itself count: drags, pinches, buttons and
+// the mouse are untouched. While a touch screen is in use, full screen shows nothing but the picture (no exit button, no
+// Paused tag), so screenshots come out clean; a tip says how to get out, for a moment, on the way in.
+const stage = $('stage'), T = { down: null, n: 0, multi: false, last: 0, lastXY: null, timer: null, touch: 0 };
+/** True just after a touch on the picture: explorers' own tap actions (fly to a spot, next room…) stand aside in full screen. */
+export const touchTapping = () => inZen() && performance.now() - T.touch < 600;
+/** True just after any touch: a double tap that the browser also reports as a double click shouldn't zoom as well. */
+export const recentTouch = () => performance.now() - T.touch < 800;
+const onPicture = e => e.target && e.target.tagName === 'CANVAS';
+stage.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'touch') { app.classList.remove('touch'); return; }
+  app.classList.add('touch'); T.touch = performance.now();
+  T.n++; if (T.n > 1) T.multi = true;
+  if (T.n === 1) { T.multi = false; T.down = onPicture(e) ? { x: e.clientX, y: e.clientY, t: performance.now() } : null; T.start = T.down && { ...T.down }; }
+  clearTimeout(T.hold); if (T.down && !T.multi) T.hold = setTimeout(() => { if (!T.down || T.multi) return; T.down = null; clearTimeout(T.timer); T.last = 0;   // press and hold: reset
+    try { navigator.vibrate && navigator.vibrate(15); } catch (er) { /* no buzz here */ } document.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', code: 'KeyR', bubbles: true })); }, 600);
+}, true);
+stage.addEventListener('pointermove', e => { if (e.pointerType === 'touch' && T.down && Math.hypot(e.clientX - T.down.x, e.clientY - T.down.y) > 10) { clearTimeout(T.hold); T.down = null; } }, true);   // moving: a drag, not a press
+const press = (key, shift) => document.dispatchEvent(new KeyboardEvent('keydown', { key, shiftKey: !!shift, bubbles: true }));
+const lift = e => {
+  if (e.pointerType !== 'touch') return; clearTimeout(T.hold); T.touch = performance.now(); T.n = Math.max(0, T.n - 1);
+  // a swipe (full screen): quick, long enough, and mostly one way
+  const g = T.start; if (T.n === 0) T.start = null;
+  if (g && T.n === 0 && !T.multi && inZen() && e.type !== 'pointercancel') { const dx = e.clientX - g.x, dy = e.clientY - g.y, ax = Math.abs(dx), ay = Math.abs(dy);
+    if (performance.now() - g.t < 400 && Math.max(ax, ay) > 60 && Math.max(ax, ay) > 2 * Math.min(ax, ay)) { T.down = null; T.last = 0; clearTimeout(T.timer);
+      if (ax > ay) press(dx < 0 ? 'v' : 'c'); else press(dy < 0 ? 'V' : 'C', true); return; } }
+  const d = T.down; if (T.n > 0 || !d) return; T.down = null;
+  if (T.multi || e.type === 'pointercancel' || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 12 || performance.now() - d.t > 300) return;
+  const now = performance.now(), near = T.lastXY && Math.hypot(e.clientX - T.lastXY[0], e.clientY - T.lastXY[1]) < 40;
+  if (now - T.last < 320 && near) { clearTimeout(T.timer); T.last = 0; toggleZen(); return; }   // double tap: full screen on or off
+  T.last = now; T.lastXY = [e.clientX, e.clientY]; clearTimeout(T.timer);
+  if (inZen()) T.timer = setTimeout(() => { T.last = 0; document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true })); }, 320);   // one tap: pause / resume
+};
+stage.addEventListener('pointerup', lift, true); stage.addEventListener('pointercancel', lift, true);
+// the tip, shown for a moment on going full screen by touch
+const tip = document.createElement('div'); tip.id = 'zenTip'; tip.textContent = 'Tap: pause · double-tap: leave full screen · hold: reset · swipe: colours'; stage.appendChild(tip);
+let tipT = null;
+const showTip = () => { if (!app.classList.contains('touch')) return; tip.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => tip.classList.remove('on'), 2200); };
 $('panelBtn').addEventListener('click', () => togglePanel());
 $('zenBtn').addEventListener('click', enterZen);
 $('zenExit').addEventListener('click', exitZen);

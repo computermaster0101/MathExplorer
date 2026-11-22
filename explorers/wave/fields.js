@@ -1,5 +1,5 @@
-// The maths behind Waves & Cymatics: vibration patterns of square and round plates, shapes for the epicycles, and the
-// Fourier transform that turns a drawing into circles.
+// The maths behind Waves & Cymatics: vibration patterns of square and round plates (the epicycles' drawings and their
+// Fourier transform moved to Drawing Machines, explorers/draw/machines.js).
 
 // ---------- Bessel functions: the shapes a round drum can vibrate in ----------
 /** J_m(x) from its integral, (1/π) ∫ cos(m t − x sin t) dt over 0..π (accurate to about 1e-6 for x < 40 with 64 steps). */
@@ -92,38 +92,3 @@ export const isShaped = shape => !!MASKS[shape];
 
 export function modeName(shape, i) { if (isShaped(shape)) return `pattern ${i + 1}`; if (shape === 'square') { const [n, m] = SQUARE_MODES[i % SQUARE_MODES.length]; return `${n}, ${m}`; } const [m, n] = ROUND_MODES[i % ROUND_MODES.length]; return `${m} line${m === 1 ? '' : 's'}, ${n} ring${n === 1 ? '' : 's'}`; }
 
-// ---------- shapes for the epicycles (closed curves, t from 0 to 1) ----------
-const heart = t => { const a = 2 * Math.PI * t; return [16 * Math.sin(a) ** 3 / 17, (13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)) / 17]; };
-const star = t => { const k = Math.floor(t * 10), f = t * 10 - k, P = j => { const a = Math.PI / 2 + j * Math.PI / 5, r = j % 2 ? 0.4 : 1; return [r * Math.cos(a), r * Math.sin(a)]; }, A = P(k), B = P(k + 1); return [A[0] + (B[0] - A[0]) * f, A[1] + (B[1] - A[1]) * f]; };
-const square = t => { const k = Math.floor(t * 4), f = t * 4 - k, C = [[-0.8, -0.8], [0.8, -0.8], [0.8, 0.8], [-0.8, 0.8], [-0.8, -0.8]]; return [C[k][0] + (C[k + 1][0] - C[k][0]) * f, C[k][1] + (C[k + 1][1] - C[k][1]) * f]; };
-const trefoil = t => { const a = 2 * Math.PI * t; return [(Math.sin(a) + 2 * Math.sin(2 * a)) / 3, (Math.cos(a) - 2 * Math.cos(2 * a)) / 3]; };
-const butterfly = t => { const a = 12 * Math.PI * t, r = Math.exp(Math.cos(a)) - 2 * Math.cos(4 * a) - Math.sin(a / 12) ** 5; return [r * Math.sin(a) / 4.2, r * Math.cos(a) / 4.2 + 0.15]; };
-const pi = t => { // the letter π, as one closed outline
-  const P = [[-0.85, 0.55], [0.85, 0.55], [0.85, 0.75], [-0.85, 0.75], [-0.85, 0.55], [-0.5, 0.55], [-0.55, -0.2], [-0.7, -0.75], [-0.45, -0.75], [-0.3, -0.2], [-0.27, 0.55], [0.2, 0.55], [0.2, -0.5], [0.3, -0.72], [0.6, -0.72], [0.7, -0.5], [0.55, -0.5], [0.48, -0.58], [0.42, -0.5], [0.42, 0.55], [0.85, 0.55]];
-  const L = []; let tot = 0; for (let i = 0; i + 1 < P.length; i++) { const d = Math.hypot(P[i + 1][0] - P[i][0], P[i + 1][1] - P[i][1]); L.push(d); tot += d; }
-  let s = t * tot; for (let i = 0; i < L.length; i++) { if (s <= L[i]) { const f = s / L[i]; return [P[i][0] + (P[i + 1][0] - P[i][0]) * f, P[i][1] + (P[i + 1][1] - P[i][1]) * f]; } s -= L[i]; } return P[0]; };
-const infinity = t => { const a = 2 * Math.PI * t, d = 1 + Math.sin(a) ** 2; return [Math.cos(a) / d * 0.95, Math.sin(a) * Math.cos(a) / d * 0.95]; };
-const rose = t => { const a = 2 * Math.PI * t, r = Math.cos(5 * a); return [r * Math.cos(a) * 0.9, r * Math.sin(a) * 0.9]; };
-const spiro = t => { const a = 6 * Math.PI * t, R0 = 5, r0 = 3, d = 4.2; return [((R0 - r0) * Math.cos(a) + d * Math.cos((R0 - r0) / r0 * a)) / 6.4, ((R0 - r0) * Math.sin(a) - d * Math.sin((R0 - r0) / r0 * a)) / 6.4]; };
-const cardioid = t => { const a = 2 * Math.PI * t, r = 1 - Math.cos(a); return [r * Math.sin(a) * 0.48, (r * Math.cos(a) + 0.9) * 0.48 + 0.05]; };
-const note = t => { // a musical quaver, as one closed outline
-  const P = [[-0.52, -0.72], [-0.32, -0.86], [-0.08, -0.82], [0.02, -0.64], [0.02, 0.62], [0.42, 0.34], [0.5, 0.08], [0.56, 0.22], [0.5, 0.48], [0.08, 0.86], [-0.06, 0.86], [-0.06, -0.52], [-0.22, -0.48], [-0.46, -0.52], [-0.58, -0.62]];
-  const L = []; let tot = 0; for (let i = 0; i < P.length; i++) { const A = P[i], B = P[(i + 1) % P.length], d = Math.hypot(B[0] - A[0], B[1] - A[1]); L.push(d); tot += d; }
-  let s = t * tot; for (let i = 0; i < P.length; i++) { if (s <= L[i]) { const A = P[i], B = P[(i + 1) % P.length], f = s / L[i]; return [A[0] + (B[0] - A[0]) * f, A[1] + (B[1] - A[1]) * f]; } s -= L[i]; } return P[0]; };
-export const CURVES = { infinity: ['Infinity', infinity], rose: ['Five-petal rose', rose], spiro: ['Spirograph', spiro], cardioid: ['Cardioid', cardioid], note: ['Musical note', note], heart: ['Heart', heart], star: ['Star', star], square: ['Square', square], trefoil: ['Trefoil', trefoil], butterfly: ['Butterfly', butterfly], pi: ['π', pi] };
-export function samplePath(f, n = 512) { const P = []; for (let i = 0; i < n; i++) P.push(f(i / n)); return P; }
-/** Evenly re-spaced copy of a drawn path (so slow and fast strokes count the same), closed back to its start. */
-export function resample(P, n = 512) {
-  if (P.length < 2) return P; const Q = [...P, P[0]], L = [0]; for (let i = 1; i < Q.length; i++) L.push(L[i - 1] + Math.hypot(Q[i][0] - Q[i - 1][0], Q[i][1] - Q[i - 1][1]));
-  const tot = L[L.length - 1] || 1, out = []; let j = 0;
-  for (let i = 0; i < n; i++) { const s = tot * i / n; while (j < L.length - 2 && L[j + 1] < s) j++; const f = (s - L[j]) / ((L[j + 1] - L[j]) || 1); out.push([Q[j][0] + (Q[j + 1][0] - Q[j][0]) * f, Q[j][1] + (Q[j + 1][1] - Q[j][1]) * f]); }
-  return out;
-}
-/** Discrete Fourier transform of a closed path: one circle per frequency, sorted biggest first. Each is {f, r, ph}. */
-export function dft(P) {
-  const N = P.length, out = [];
-  for (let k = 0; k < N; k++) { const f = k <= N / 2 ? k : k - N; let re = 0, im = 0;
-    for (let n = 0; n < N; n++) { const a = -2 * Math.PI * f * n / N; re += P[n][0] * Math.cos(a) - P[n][1] * Math.sin(a); im += P[n][0] * Math.sin(a) + P[n][1] * Math.cos(a); }
-    re /= N; im /= N; out.push({ f, r: Math.hypot(re, im), ph: Math.atan2(im, re) }); }
-  return out.sort((a, b) => b.r - a.r);
-}

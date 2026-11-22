@@ -1,0 +1,9 @@
+/* Drawing Machines: rules on top of css/app.css */
+.app[data-explorer="draw"] #dc{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.app[data-explorer="draw"] #dc:active{cursor:grabbing}
+.app[data-explorer="draw"] #dc.drawing{cursor:crosshair}
+.app[data-explorer="draw"] .shapeGroup + .shapeGroup{margin-top:12px}
+.app.zen[data-explorer="draw"] #dc{cursor:none}
+/* the Paper background: darker stage text */
+.app.light[data-explorer="draw"] .hud h1{color:#2b303b}
+.app.light[data-explorer="draw"] .hud .sub, .app.light[data-explorer="draw"] .legend, .app.light[data-explorer="draw"] .hint{color:#5b6170}

@@ -1,0 +1,103 @@
+<details class="grp" id="g-shapes"><summary><span class="gt">Drawings</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+  <div class="sec" id="shapeLists"></div>
+  <div class="sec" id="paramSec"><div id="params"></div></div>
+</div></details>
+
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="btns"><button class="btn primary" id="goBtn">Draw it again</button><button class="btn" id="ownBtn">Draw your own</button></div>
+    <p class="note" id="ownNote" hidden>Draw one closed shape on the picture with your finger or the mouse; the circles will rebuild it.</p>
+    <div class="row" style="margin-top:8px"><span style="width:84px">Speed</span><input type="range" id="speed" min="0.1" max="4" step="0.05" value="1"><output id="speedo">1.0×</output></div>
+    <label class="check"><input type="checkbox" id="machine" checked> Show the machine (T)</label>
+    <label class="check"><input type="checkbox" id="loop" checked> Draw it again and again</label>
+    <label class="check" id="targetRow"><input type="checkbox" id="target"> Show the drawing the circles copy</label>
+    <label class="check" id="buildRow"><input type="checkbox" id="build"> Add the circles one by one</label>
+    <label class="check" id="slideRow"><input type="checkbox" id="slide"> Keep sliding the multiplier</label>
+  </div>
+</div></details>
+
+<details class="grp" id="g-view"><summary><span class="gt">View &amp; detail</span><span class="gv" id="gv-view"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="row"><span style="width:84px">Line width</span><input type="range" id="lw" min="0.3" max="4" step="0.05" value="1.4"><output id="lwo">1.4</output></div>
+    <label class="check"><input type="checkbox" id="glow"> Glow</label>
+  </div>
+</div></details>
+
+<details class="grp" id="g-style"><summary><span class="gt">Colour &amp; style</span><span class="gv" id="gv-style"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Colour by</div>
+    <div class="seg" id="cmode"><button data-c="along" class="on">Along the line</button><button data-c="laps">Each lap</button><button data-c="solid">One colour</button></div>
+    <p class="note" id="cmodeNote"></p>
+    <div class="lbl" style="margin-top:12px">Palette</div>
+    <div class="swatches" id="palettes"></div>
+    <p class="note" id="palName" style="margin-top:6px"></p>
+    <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+    <div class="row" style="margin-top:10px"><span style="width:74px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
+    <div class="lbl" style="margin-top:12px">Background</div>
+    <div class="seg" id="bg"><button data-b="#0b0d12" class="on">Midnight</button><button data-b="#000000">Black</button><button data-b="#f3efe6">Paper</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-share"><summary><span class="gt">Save, share &amp; record</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="btns"><button class="btn" id="snap">Save image (PNG)</button></div><p class="note" id="dlnote">Saves exactly what you see.</p></div>
+  <div class="sec">
+    <div class="lbl">Share this view</div>
+    <p class="note" style="margin:0 0 8px">The link records the drawing, its settings (and your own drawing), the colours and the view.</p>
+    <input type="text" id="linkBox" readonly class="txt" spellcheck="false">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="copyLink">Copy link</button></div>
+    <div class="lbl" style="margin-top:12px">Load a view</div>
+    <input type="text" id="viewIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Paste a view link or code">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+    <p class="note" id="shareNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-info"><summary><span class="gt">Numbers</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="stats">
+    <div class="stat"><b id="s1">–</b><small id="s1l"></small></div>
+    <div class="stat"><b id="s2">–</b><small id="s2l"></small></div>
+    <div class="stat"><b id="s3">–</b><small id="s3l"></small></div>
+  </div><p class="note" id="statNote"></p></div>
+</div></details>
+
+<details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv"></span></summary><div class="gb">
+  <div class="explain">
+    <p id="about"></p>
+    <details class="topic"><summary>Drawing anything with circles</summary>
+      <p>Joseph Fourier claimed in 1807 that any wave, however jagged, is a sum of smooth sine waves. Drawn in the plane, each sine wave is a circle spinning at a whole number of turns per lap, carried on the end of the one before. Add enough of them and they draw anything: a heart, a star, the letter π, your own scribble. <strong>Circles</strong> sets how many are used; <strong>Add the circles one by one</strong> shows the drawing getting closer as each one joins. Your phone uses the same idea to compress music and pictures.</p>
+      <div class="btns"><button class="btn try" data-try="e_heart|build">Watch a heart build up</button><button class="btn try" data-try="e_pi">The letter π</button><button class="btn try" data-try="e_heart|own">Draw your own</button></div>
+    </details>
+    <details class="topic"><summary>Gears and the spirograph</summary>
+      <p>A wheel rolling inside a ring draws a curve that closes only when the wheel has turned a whole number of times. How many? Divide both teeth counts by the biggest number that goes into both (their greatest common divisor): the wheel's share is the number of laps, the ring's the number of petals. Teeth counts that share no factor give the most intricate patterns, which is why spirograph sets have odd-looking numbers.</p>
+      <div class="btns"><button class="btn try" data-try="s_flower">96 and 36: 3 laps</button><button class="btn try" data-try="s_lace">105 and 40: 8 laps</button><button class="btn try" data-try="s_astroid">The astroid</button></div>
+    </details>
+    <details class="topic"><summary>Pictures of music</summary>
+      <p>A harmonograph's pendulums, or the two tuning forks behind a Lissajous figure, swing at speeds in a ratio. Simple ratios are the harmonies the ear finds sweet, and draw simple figures: 2 : 1 is an octave, 3 : 2 a fifth, 4 : 3 a fourth. Complicated ratios make busier figures, as they make busier sounds. Pythagoras noticed the musical half of this with strings 2,500 years ago.</p>
+      <div class="btns"><button class="btn try" data-try="h_fifth">A fifth</button><button class="btn try" data-try="h_octave">An octave</button><button class="btn try" data-try="l_32">Lissajous 3 : 2</button></div>
+    </details>
+    <details class="topic"><summary>Times tables on a circle</summary>
+      <p>Put 200 points round a circle and join each point to the one twice its number round: the threads outline a cardioid. Times 3 gives a nephroid, times 4 a curve with three cusps. In between, at times 2.5 or 3.7, the threads tangle and untangle as the multiplier slides. Mathologer's video of this has been watched by millions.</p>
+      <div class="btns"><button class="btn try" data-try="t_2">Times 2</button><button class="btn try" data-try="t_21|slide">Slide from 21</button></div>
+    </details>
+    <details class="topic"><summary>Roses</summary>
+      <p>Let the distance from the middle swing in and out, cos(nθ/d), as the angle θ turns. Whole numbers give petals: n of them if n is odd, 2n if even. Fractions make the pen go round several times before the curve closes, laying petals over petals.</p>
+      <div class="btns"><button class="btn try" data-try="r_3">Three petals</button><button class="btn try" data-try="r_53">Rose 5 / 3</button></div>
+    </details>
+  </div>
+</div></details>
+
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Size</div>
+    <div class="seg" id="prSize"><button data-mm="60">60 mm</button><button data-mm="80" class="on">80 mm</button><button data-mm="120">120 mm</button></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="prBtn">Download STL</button></div>
+    <p class="note" id="prNote">Prints the finished drawing as a raised line on a square tile.</p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><table class="keys" id="keyTable"></table></div>
+  <div class="sec"><label class="check" style="margin-top:0"><input type="checkbox" id="invertY"> Invert up / down (aeroplane style: ↑ tips the view down)</label>
+    <div class="row" style="margin-top:8px"><span style="width:110px">Navigation speed</span><input type="range" id="navSpeed" min="0.1" max="2" step="0.05" value="0.5"><output id="navSpeedo">0.50×</output></div>
+    <p class="note">Both are shared by every explorer and remembered in this browser.</p></div>
+</div></details>

@@ -6,6 +6,7 @@ import { makeGL, noWebGL } from '../../js/common/gl.js';
 import { saveCanvasPNG, saveFile } from '../../js/common/save.js';
 import { stlFromTriangles, heightfieldTriangles } from '../../js/common/stl.js';
 import { flashFx as flash, pulseFx as pulse, voiceFx as voice, colourStep, energyMul, BeatGate } from '../../js/shell/audio/react.js';
+import { inZen } from '../../js/shell/layout.js';
 import { setPausedTag, drive } from '../../js/shell/keys.js';
 import { parseRoute } from '../../js/shell/route.js';
 import { makeMotion2D, addRecorder } from '../../js/common/motion.js';
@@ -237,7 +238,7 @@ function show() {
 let painting = false;
 const toCell = e => { const r = lc.getBoundingClientRect(), x = ((e.clientX - r.left) / r.width - 0.5) * W / lz, y = (0.5 - (e.clientY - r.top) / r.height) * H / lz, c = Math.cos(la), s = Math.sin(la), m = (v, n) => ((v % n) + n) % n;
   return [m(c * x - s * y + W / 2 + off[0], W), m(s * x + c * y + H / 2 + off[1], H)]; };
-lc.addEventListener('pointerdown', e => { lc.setPointerCapture(e.pointerId); painting = true; const [x, y] = toCell(e); paintAt(x, y, st.brush === 'erase' || e.button === 2); });
+lc.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && inZen()) return;   /* full screen on a phone: a tap pauses (the shell), no painting */ lc.setPointerCapture(e.pointerId); painting = true; const [x, y] = toCell(e); paintAt(x, y, st.brush === 'erase' || e.button === 2); });
 lc.addEventListener('pointermove', e => { if (!painting) return; const [x, y] = toCell(e); paintAt(x, y, st.brush === 'erase' || (e.buttons & 2)); });
 lc.addEventListener('pointerup', () => { painting = false; }); lc.addEventListener('contextmenu', e => e.preventDefault());
 

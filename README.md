@@ -1,6 +1,6 @@
 # Math Explorer
 
-Interactive maths in the browser: one page with eleven explorers, picked from the menu at the top of the side panel.
+Interactive maths in the browser: one page with twelve explorers, picked from the menu at the top of the side panel.
 
 - **Fractals**: Mandelbrot, Julia and other escape-time sets with very deep zoom, Buddhabrot, 3D and 4D fractals, fractals grown from rules, and orbits. With music playing, the 3D shapes dance: they nod on the beat, lean, twist and flex with the bass, gently at Calm and fully at Wild.
 - **4D Polytopes**: the regular 4D shapes and many others, turned through four dimensions, sliced, unfolded into nets and built up step by step.
@@ -11,7 +11,8 @@ Interactive maths in the browser: one page with eleven explorers, picked from th
 - **Complex Functions**: domain colouring on the plane or the Riemann sphere, 29 functions including Gamma, Riemann zeta and Weierstrass ℘, draggable zeros and poles, your own formulas, and a Steps slider that grows Julia and Newton fractals (with a link across to Fractals).
 - **Strange Attractors**: 17 chaotic flows traced in 3D (Lorenz, Rössler, Chua's circuit…), the butterfly effect, and 10 chaotic maps built up from millions of points.
 - **Tilings**: regular and uniform tilings (Wythoff's construction) on the sphere, the plane and the hyperbolic plane, all 11 Archimedean tilings, the 17 wallpaper groups, Truchet tiles, Penrose tilings, quasicrystals and the hat monotile.
-- **Waves & Cymatics**: interfering ripples, a simulated wave tank (slits, a lens, a moving source), sand on Chladni plates of six shapes (including a guitar), a plucked string and Fourier epicycles.
+- **Waves & Cymatics**: interfering ripples, a simulated wave tank (slits, a lens, a moving source), sand on Chladni plates of six shapes (including a guitar) and a plucked string.
+- **Drawing Machines**: 30 drawings made by machines as you watch: Fourier epicycles (any closed drawing from spinning circles, including your own, adding the circles one by one), the spirograph, the harmonograph, Lissajous figures, times tables on a circle (sliding the multiplier) and roses.
 - **Growing Patterns**: 20 Life-like rules (including Brian's Brain, Wireworld and a Larger-than-Life rule) with classic patterns, Lenia and 11 reaction–diffusion recipes, with a brush to paint into them. Each start has a number you can type in to get it back.
 
 Every explorer shares the same keys, reacts to the music player, saves images, records videos (with the music), makes share links and exports 3D-printable STL files. Each newer explorer has a one-click **Visualizer** (the ♫ button next to Full screen): it goes full screen, sets everything moving and changes the scene with the song, a new look every eight bars and a bigger change when the chorus or a drop comes in. The music panel's Intensity (Calm, Lively, Wild) sets how big the reactions are, in Fractals too. Each also has a motion group for making moving pictures: the 3D ones turn, rock, tumble, zoom in and out and drift; the flat ones drift, keep zooming and turn; and in all of them "Slowly change the shape" sweeps one of the shape's own sliders back and forth, so the shape morphs as you watch.

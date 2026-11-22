@@ -5,17 +5,12 @@
       <button data-m="tank">Wave tank<small>splashes, slits and walls</small></button>
       <button data-m="plate">Chladni plate<small>sand finds the still lines</small></button>
       <button data-m="string">A string<small>harmonics of a pluck</small></button>
-      <button data-m="epi">Epicycles<small>any drawing from circles</small></button>
     </div>
   </div>
   <div class="sec" id="s-plate" hidden>
     <div class="lbl">Plate</div>
     <div class="seg g3" id="plateShape"><button data-s="square" class="on">Square</button><button data-s="round">Round (a drum)</button><button data-s="guitar">Guitar</button><button data-s="triangle">Triangle</button><button data-s="stadium">Stadium</button><button data-s="rectangle">Rectangle</button></div>
     <div class="row" style="margin-top:10px"><span style="width:96px">Pattern</span><input type="range" id="pmode" min="0" max="17" step="1" value="4"><output id="pmodeo"></output></div>
-  </div>
-  <div class="sec" id="s-epi" hidden>
-    <div class="lbl">Drawing</div>
-    <div class="seg g3" id="curveList"></div>
   </div>
 </div></details>
 
@@ -50,12 +45,6 @@
     <div class="row"><span style="width:96px">Ring time</span><input type="range" id="damp" min="0" max="2" step="0.05" value="0.5"><output id="dampo">0.5</output></div>
     <label class="check"><input type="checkbox" id="showParts" checked> Show each harmonic on its own</label>
     <p class="note">Drag on the string to pluck it somewhere else. G plucks again.</p>
-  </div>
-  <div class="sec" id="c-epi" hidden>
-    <div class="row"><span style="width:96px">Circles</span><input type="range" id="ncirc" min="1" max="200" step="1" value="40"><output id="ncirco">40</output></div>
-    <label class="check"><input type="checkbox" id="showCirc" checked> Show the circles</label>
-    <label class="check"><input type="checkbox" id="showTarget"> Show the original drawing</label>
-    <p class="note">Or draw your own: press on the picture and draw one closed line.</p>
   </div>
   <div class="sec">
     <div class="btns"><button class="btn" id="goBtn">Go</button></div>
@@ -133,7 +122,8 @@
     </details>
     <details class="topic"><summary>Any drawing from circles</summary>
       <p>Joseph Fourier showed that any repeating motion is a sum of simple circular ones. Here each circle spins at a whole number of turns per lap, riding on the one before, and the pen at the end draws the shape. A few circles give a rough sketch; more circles add the corners. The same idea compresses music into MP3s and photos into JPEGs: keep the big circles, drop the tiny ones.</p>
-      <div class="btns"><button class="btn try" data-try="epi|heart|3">A heart from 3 circles</button><button class="btn try" data-try="epi|square|60">A square from 60</button></div>
+      <p>Drawings made of spinning circles now have an explorer of their own, with spirographs, harmonographs and more.</p>
+      <div class="btns"><a class="btn" href="#/draw">Open Drawing Machines</a></div>
     </details>
   </div>
 </div></details>

@@ -120,6 +120,10 @@ details.sub p{margin:0 0 10px;line-height:1.55}
 .app.zen{grid-template-columns:1fr;height:100vh}
 .app.zen aside, .app.zen .hud, .app.zen .legend, .app.zen .hint, .app.zen #stageCap, .app.zen #insets, .app.zen #stageBtns{display:none !important}
 .app.zen #zenExit{display:block} .app.zen #zenExit.fade{opacity:0;pointer-events:none}
+/* full screen on a touch screen: nothing but the picture, for clean screenshots (tap pauses, double tap leaves) */
+.app.zen.touch #zenExit, .app.zen.touch #pausedTag, .app.zen.touch #compass, .app.zen.touch #na{display:none !important}
+#zenTip{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:7;padding:9px 14px;border-radius:999px;background:rgba(10,12,18,.72);color:#e8ecf4;font-size:13px;pointer-events:none;opacity:0;transition:opacity .4s;white-space:nowrap}
+#zenTip.on{opacity:1}
 
 @media (max-width:820px){
   .app.nopanel, .app.zen{grid-template-rows:100vh}

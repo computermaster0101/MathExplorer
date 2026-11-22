@@ -32,6 +32,7 @@ const EXPLORERS = {
   attractor: { title: 'Strange Attractors' },
   tiling:    { title: 'Tilings' },
   wave:      { title: 'Waves & Cymatics' },
+  draw:      { title: 'Drawing Machines' },
   life:      { title: 'Growing Patterns' },
 };
 
@@ -74,11 +75,16 @@ const route = () => { queue = queue.then(show).catch(e => console.error(e)); };
 // shapes that moved to their own explorer: old links to them still open them, in their new home
 const MOVED = { surface: { knot: ['unknot', 'trefoil', 'figure8', 'cinquefoil', 'torusknot', 'lissajous', 'k61', 'k62', 'k63', 'k72', 'k73', 'k74', 'granny', 'square', 'hopf', 'solomon', 'whitehead', 'chain', 'olympic', 'borromean'],
   labyrinth: ['gyroid', 'schwarzP', 'schwarzD', 'neovius', 'lidinoid', 'iwp'] } };
+// Waves' epicycles moved to Drawing Machines: an old Waves epicycle link becomes the same drawing there
+function epicyclesMoved(name, code) { const p = new URLSearchParams(code); if (name !== 'wave' || p.get('m') !== 'epi') return null;
+  const q = new URLSearchParams(), c = p.get('c') || 'heart'; q.set('k', c === 'own' ? 'own' : 'e_' + c); if (p.has('n')) q.set('n', p.get('n')); if (p.get('ci') === '0') q.set('mc', '0'); if (p.get('tg') === '1') q.set('tg', '1');
+  for (const k of ['own', 'pal', 'rev', 'cyc', 'bg', 'spd']) if (p.has(k)) q.set(k, p.get(k)); return ['draw', q.toString()]; }
 function movedTo(name, code) { const m = MOVED[name], k = new URLSearchParams(code).get('s'); if (!m || !k) return null; for (const to in m) if (EXPLORERS[to] && m[to].includes(k)) return to; return null; }
 
 async function show() {
   let { explorer: name, code } = parseRoute();
   const to = movedTo(name, code); if (to) { name = to; try { history.replaceState(null, '', '#/' + name + '/' + code); } catch (e) { /* sandboxed */ } }
+  const ep = epicyclesMoved(name, code); if (ep) { [name, code] = ep; try { history.replaceState(null, '', '#/' + name + '/' + code); } catch (e) { /* sandboxed */ } }
   if (!EXPLORERS[name]) { name = DEFAULT_EXPLORER; code = ''; try { history.replaceState(null, '', '#/' + name); } catch (e) { /* sandboxed */ } }
   if (name === current) { if (code) (await loaded[name]).showView?.(code); return; }
 

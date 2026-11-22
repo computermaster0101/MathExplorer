@@ -16,6 +16,7 @@ import { FOAMS, foamCells, faceArea } from './foam.js';
 import { makeMaze, solve, wallFollow, degree, isOpen, neighbour } from './maze.js';
 import { CLASSIC, randomLabyrinth, countLabyrinths, labyrinthPath } from './classic.js';
 import { WALL_PATTERNS, patchMaterial, setPattern, U as WT } from './walltex.js';
+import { touchTapping } from '../../js/shell/layout.js';
 
 // ---------- state ----------
 const LEVELS = [null, [5, 5, 1], [6, 6, 2], [7, 7, 3], [8, 8, 4], [10, 10, 5]];
@@ -300,7 +301,7 @@ const mazeClock = new Groove();
 // a tap (no drag) steps into the next room the way you're looking: the touch screen's W
 let tapAt = null;
 canvas.addEventListener('pointerdown', e => { tapAt = { x: e.clientX, y: e.clientY, t: performance.now() }; });
-canvas.addEventListener('pointerup', e => { const t = tapAt; tapAt = null; if (!t || Math.hypot(e.clientX - t.x, e.clientY - t.y) > 8 || performance.now() - t.t > 400) return;
+canvas.addEventListener('pointerup', e => { const t = tapAt; tapAt = null; if (e.pointerType === 'touch' && touchTapping()) return;   /* full screen: a tap pauses */ if (!t || Math.hypot(e.clientX - t.x, e.clientY - t.y) > 8 || performance.now() - t.t > 400) return;
   if (st.kind === 'maze' && maze && !mz.over && mz.mode === 'drive' && !mz.glide) stepRoom(); });
 function stepRoom() {
   const fwd = [-Math.sin(mz.yaw) * Math.cos(mz.pitch), -Math.cos(mz.yaw) * Math.cos(mz.pitch), Math.sin(mz.pitch)], V = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];   /* in maze axes: x, y (world z), floor */

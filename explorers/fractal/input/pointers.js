@@ -6,6 +6,7 @@ import { cssH, cssW, panBy, toOff, toWorld, touch, viewDescs, zoomAt } from '../
 import { notAvail } from '../ui/notice.js';
 import { d3Bound, d3MinDist, pan3, tap3 } from '../modes/fractal3d.js';
 import { newOrbit } from '../modes/orbit.js';
+import { touchTapping, recentTouch } from '../../../js/shell/layout.js';
 
 // ---------- pointers ----------
  let lastMid=null, lastPinch=0, dragDesc=null; shared.vel3 = {x:0,y:0}; let downAt=null;
@@ -26,10 +27,10 @@ glc.addEventListener('pointermove', e=>{
     if (lastMid){ const ddx=mx-lastMid[0], ddy=my-lastMid[1]; if (st.mode==='d3') pan3(ddx,ddy); else if (st.mode==='grow'){ st.grow.gv.ox+=ddx; st.grow.gv.oy+=ddy; } else if (!(st.mode==='link' && dragDesc && dragDesc.side==='L')) panBy(descAt(mx,my),ddx,ddy); }
     lastMid=[mx,my]; if (lastPinch) zoomBy(lastPinch/d, mx, my); lastPinch=d; }
 });
-const endP=e=>{ const p=ptrs.get(e.pointerId); if (e.pointerType==='mouse' && st.mode==='explore') st.hover=[e.offsetX,e.offsetY]; ptrs.delete(e.pointerId); if (ptrs.size<2){ lastPinch=0; lastMid=null; }
-  if (p && downAt && st.mode==='d3' && !ptrs.size && Math.hypot(p.x-downAt.x,p.y-downAt.y)<6 && e.timeStamp-downAt.t<450) tap3(p.x,p.y);
-  if (p && downAt && st.mode==='orbit' && Math.hypot(p.x-downAt.x,p.y-downAt.y)<6 && e.timeStamp-downAt.t<600){ const d=viewDescs()[0]; newOrbit(toWorld(d,p.x,p.y)); st.orbit.playing=true; $('orbPlay').textContent='Pause'; }
-  if (p && downAt && st.mode==='explore' && (st.dive||st.endlessRun) && Math.hypot(p.x-downAt.x,p.y-downAt.y)<6 && e.timeStamp-downAt.t<500){
+const endP=e=>{ const p=ptrs.get(e.pointerId), zt=e.pointerType==='touch' && touchTapping();   /* in full screen a touch tap pauses (the shell): no tap actions here */ if (e.pointerType==='mouse' && st.mode==='explore') st.hover=[e.offsetX,e.offsetY]; ptrs.delete(e.pointerId); if (ptrs.size<2){ lastPinch=0; lastMid=null; }
+  if (p && downAt && !zt && st.mode==='d3' && !ptrs.size && Math.hypot(p.x-downAt.x,p.y-downAt.y)<6 && e.timeStamp-downAt.t<450) tap3(p.x,p.y);
+  if (p && downAt && !zt && st.mode==='orbit' && Math.hypot(p.x-downAt.x,p.y-downAt.y)<6 && e.timeStamp-downAt.t<600){ const d=viewDescs()[0]; newOrbit(toWorld(d,p.x,p.y)); st.orbit.playing=true; $('orbPlay').textContent='Pause'; }
+  if (p && downAt && !zt && st.mode==='explore' && (st.dive||st.endlessRun) && Math.hypot(p.x-downAt.x,p.y-downAt.y)<6 && e.timeStamp-downAt.t<500){
     const d=viewDescs()[0]; st.fly=null; st.dive=true; st.steerTo=toOff(d,p.x,p.y); st.manualT=3; shared.tapMark={x:p.x,y:p.y,t:performance.now()}; }
   if (!ptrs.size){ dragDesc=null; } touch(); };
 shared.tapMark = null;
@@ -41,4 +42,4 @@ export function zoomBy(f, x, y){
   if (st.mode==='grow'){ const G=st.grow.gv, nz=clamp(G.z/f,0.2,60), k=nz/G.z, cx=cssW/2, cy=70+(cssH-170)/2; G.ox=x-cx-(x-cx-G.ox)*k; G.oy=y-cy-(y-cy-G.oy)*k; G.z=nz; return; }
   if (notAvail()) return; const d=descAt(x,y); st.fly=null; zoomAt(d,x,y,f); }
 glc.addEventListener('wheel', e=>{ e.preventDefault(); zoomBy(Math.exp(e.deltaY*0.0015), e.offsetX, e.offsetY); }, {passive:false});
-glc.addEventListener('dblclick', e=>{ if (st.mode==='explore' || st.mode==='orbit' || (st.mode==='link' && descAt(e.offsetX,e.offsetY).side==='R')){ const d=descAt(e.offsetX,e.offsetY); zoomAt(d,e.offsetX,e.offsetY,e.shiftKey?2:0.5); } });
+glc.addEventListener('dblclick', e=>{ if (recentTouch()) return;   /* a double tap is full screen (the shell), not a zoom */ if (st.mode==='explore' || st.mode==='orbit' || (st.mode==='link' && descAt(e.offsetX,e.offsetY).side==='R')){ const d=descAt(e.offsetX,e.offsetY); zoomAt(d,e.offsetX,e.offsetY,e.shiftKey?2:0.5); } });
