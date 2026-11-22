@@ -1,0 +1,8 @@
+/* Foams: rules on top of css/app.css */
+.app[data-explorer="foam"] #fc{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.app[data-explorer="foam"] #fc:active{cursor:grabbing}
+.app[data-explorer="foam"] .shapeGroup + .shapeGroup{margin-top:12px}
+.app.zen[data-explorer="foam"] #fc{cursor:none}
+/* the Paper background: darker stage text */
+.app.light[data-explorer="foam"] .hud h1{color:#2b303b}
+.app.light[data-explorer="foam"] .hud .sub, .app.light[data-explorer="foam"] .legend, .app.light[data-explorer="foam"] .hint{color:#5b6170}

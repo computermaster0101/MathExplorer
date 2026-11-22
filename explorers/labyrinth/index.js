@@ -15,10 +15,11 @@ import { TPMS, solidField, periodicMesh, solidForPrint } from './tpms.js';
 import { FOAMS, foamCells, faceArea } from './foam.js';
 import { makeMaze, solve, wallFollow, degree, isOpen, neighbour } from './maze.js';
 import { CLASSIC, randomLabyrinth, countLabyrinths, labyrinthPath } from './classic.js';
+import { WALL_PATTERNS, patchMaterial, setPattern, U as WT } from './walltex.js';
 
 // ---------- state ----------
 const LEVELS = [null, [5, 5, 1], [6, 6, 2], [7, 7, 3], [8, 8, 4], [10, 10, 5]];
-const st = { kind: 'tpms', tpms: 'gyroid', tmode: 'sheet', thick: 0.18, cells: 1, flip: 1, auto: true, beacon: false, flySpeed: 1,
+const st = { wpat: 'none', wpSize: 0.4, wpGlow: 0, wpMove: false, wpFloor: false, kind: 'tpms', tpms: 'gyroid', tmode: 'sheet', thick: 0.18, cells: 1, flip: 1, auto: true, beacon: false, flySpeed: 1,
   foam: 'kelvin', block: 2, films: true, level: 2, method: 'dfs', loops: 0, goal: 'corner', seed: 1, crumbs: true, race: false,
   classic: 'cretan', seq: CLASSIC.cretan.seq.slice(), rings: 7, detail: 2, fog: 0.5, spin: true, cmode: 'side', palette: 'aurora', palRev: false,
   cycle: 0, cycleSpeed: 0, finish: 'satin', bg: '#0b0d12', paused: false, mm: 80 };
@@ -27,6 +28,7 @@ const tone = t => (st.cycle ? sampleMirror(R, t * 0.5 + st.cycle) : sampleRamp(R
 
 // ---------- the stage ----------
 const canvas = $('lbc'), S = makeStage3D(canvas, { z: 6 }), V3 = THREE.Vector3, FIN = makeFinishes();
+for (const k of ['satin', 'gloss', 'metal', 'flat']) patchMaterial(FIN[k]);   // wall patterns (walltex.js) work on every finish but the soap-film Bubble
 S.addFlash(FIN.flat); S.addFlash(FIN.bubble);   // the finishes the lights don't reach still flash on the beat
 let foamLineMat = null;
 const orbit = new THREE.Group(); S.fit.add(orbit);                  // what you see from outside, scaled to fit
@@ -124,10 +126,10 @@ function stepFly(dt) {
   // steering itself: try a fan of directions round straight ahead and turn toward the one with the most room
   if (st.auto && fly.manual === 0 && !fly.hop) {
     // a leaning that wanders (a new random one every 3 to 6 s) tips close calls, so forks go different ways
-    fly.biasT = (fly.biasT || 0) - dt; if (!fly.bias || fly.biasT <= 0) { fly.bias = new V3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(); fly.biasT = 3 + 3 * Math.random(); }
+    fly.biasT = (fly.biasT || 0) - dt; if (!fly.bias || fly.biasT <= 0) { fly.bias = new V3(Math.random() - 0.5, 1.8 * (Math.random() - 0.5), Math.random() - 0.5).normalize();   /* leaning up or down more often than not */ fly.biasT = 3 + 3 * Math.random(); }
     let best = fwd, bs = -Infinity;
     for (let a = 0; a < 13; a++) { const d = a === 0 ? fwd.clone() : fwd.clone().applyAxisAngle(up, 0.5 * Math.cos(a * 0.966)).applyAxisAngle(right, 0.5 * Math.sin(a * 0.966)).normalize();
-      let s = Infinity; for (const r of [0.5, 1, 1.6, 2.4]) { const p = fly.pos.clone().addScaledVector(d, r); s = Math.min(s, F(p.x, p.y, p.z) + r * 0.04); } s += (a === 0 ? 0.08 : 0) + 0.04 * d.dot(fly.bias); if (fly.beacon && st.beacon) s += 0.1 * d.dot(fly.beacon.clone().sub(fly.pos).normalize());
+      let s = Infinity; for (const r of [0.5, 1, 1.6, 2.4]) { const p = fly.pos.clone().addScaledVector(d, r); s = Math.min(s, F(p.x, p.y, p.z) + r * 0.04); } s += (a === 0 ? 0.08 : 0) + 0.05 * d.dot(fly.bias); if (fly.beacon && st.beacon) s += 0.1 * d.dot(fly.beacon.clone().sub(fly.pos).normalize());
       if (s > bs) { bs = s; best = d; } }
     const ahead = fly.pos.clone().addScaledVector(fwd, 0.9), room = Math.min(F(fly.pos.x, fly.pos.y, fly.pos.z), F(ahead.x, ahead.y, ahead.z));   /* turn harder the less room there is ahead */
     // ease the aim toward the best direction rather than jumping to it: two nearly equal choices used to win on alternate frames,
@@ -135,8 +137,11 @@ function stepFly(dt) {
     if (!fly.aim) fly.aim = fwd.clone(); fly.aim.lerp(best, 1 - Math.exp(-dt * 3)).normalize();
     const qt = new THREE.Quaternion().setFromUnitVectors(fwd, fly.aim); const g = 1.4 + 5 * Math.max(0, 0.9 - room); fly.gain = fly.gain == null ? g : fly.gain + (g - fly.gain) * (1 - Math.exp(-dt * 5));   /* how sharply it turns eases in and out rather than jumping as the room ahead changes */
     fly.q.premultiply(new THREE.Quaternion().slerp(qt, Math.min(1, dt * fly.gain)));
-    // keep roughly level, like an aircraft, so "up" stays up
-    const lvl = new V3(0, 1, 0).sub(fwd.clone().multiplyScalar(fwd.y)).normalize(); const roll = Math.atan2(up.clone().cross(lvl).dot(fwd), up.dot(lvl)); fly.q.premultiply(new THREE.Quaternion().setFromAxisAngle(fwd, roll * Math.min(1, dt * 0.8)));
+    // no level flight: it rolls slowly one way or the other (a new roll every 4 to 8 s, sometimes none), eased in and out, with only
+    // a faint pull back toward level so it never stays upside down for long. Holding it level made every turn read as left or right.
+    fly.spinT = (fly.spinT || 0) - dt; if (fly.spinT <= 0) { fly.spinWant = Math.random() < 0.25 ? 0 : (Math.random() < 0.5 ? -1 : 1) * (0.15 + 0.4 * Math.random()); fly.spinT = 4 + 4 * Math.random(); }
+    fly.spin = (fly.spin || 0) + ((fly.spinWant || 0) - (fly.spin || 0)) * (1 - Math.exp(-dt * 0.8));
+    const lvl = new V3(0, 1, 0).sub(fwd.clone().multiplyScalar(fwd.y)).normalize(); const roll = Math.atan2(up.clone().cross(lvl).dot(fwd), up.dot(lvl)); fly.q.premultiply(new THREE.Quaternion().setFromAxisAngle(fwd, roll * Math.min(1, dt * 0.08) + fly.spin * dt));
   }
   if (fly.hop) {   // stepping through the wall to the other maze
     fly.hop.t += dt / 0.8; const u = Math.min(1, fly.hop.t), e = u * u * (3 - 2 * u); fly.pos.lerpVectors(fly.hop.a, fly.hop.b, e); if (u >= 1) fly.hop = null;
@@ -224,7 +229,7 @@ function stepFoamFly(dt) {
 // ======================================================================================================
 let maze = null; const H = 1, TH = 0.07, EYE = 0.45;
 const mz = { mode: 'drive', pos: new V3(), yaw: 0, pitch: 0, cell: 0, steps: 0, deadEnds: 0, visits: null, t0: 0, done: false, solved: false, path: null, u: 0, hint: 0, over: false, build: null, hand: null, ghost: null, usedMap: false };
-const wallMat = plain(), floorMat = plain({ roughness: 0.8 }), markMat = new THREE.MeshBasicMaterial({ color: 0xffffff }), goalMat = new THREE.MeshBasicMaterial({ color: 0xffd36e });
+const wallMat = patchMaterial(plain()), floorMat = plain({ roughness: 0.8 }), markMat = new THREE.MeshBasicMaterial({ color: 0xffffff }), goalMat = new THREE.MeshBasicMaterial({ color: 0xffd36e });
 let walls = null, wallKey = null, floors = null, crumbs = null, pathMarks = null, goalMesh = null, playerMesh = null, ghostMesh = null;
 const goalCell = () => (st.goal === 'centre' ? maze.id(Math.floor(maze.X / 2), Math.floor(maze.Y / 2), Math.floor((maze.Z - 1) / 2)) : maze.N - 1);
 const cellCentre = (i, exploded) => { const [x, y, z] = maze.xyz(i); return new V3(x + 0.5, z * H * (exploded ? 1.8 : 1) + EYE, y + 0.5); };
@@ -488,6 +493,14 @@ const palLabel = () => { $('palName').textContent = 'Palette: ' + st.palette.rep
 $('palRev').addEventListener('change', e => { st.palRev = e.target.checked; R = rampOf(st.palette, st.palRev); palLabel(); recolourAll(); share.touch(); });
 $('cyc').addEventListener('input', e => { st.cycleSpeed = +e.target.value; $('cyco').textContent = st.cycleSpeed ? st.cycleSpeed.toFixed(1) + '×' : 'off'; share.touch(); });
 segClick('finish', d => { st.finish = d.f; recolourAll(); share.touch(); });
+// wall patterns: the Tilings patterns (and two more) on the walls, tinted by the palette
+$('wallPat').innerHTML = WALL_PATTERNS.map(([k, n]) => `<option value="${k}">${n}</option>`).join('');
+const applyPattern = () => { setPattern(st.wpat, st.wpSize); patternRows(); };
+$('wallPat').addEventListener('change', e => { st.wpat = WALL_PATTERNS.some(p => p[0] === e.target.value) ? e.target.value : 'none'; applyPattern(); share.touch(); });
+$('patSize').addEventListener('input', e => { st.wpSize = +e.target.value; $('patSizeo').textContent = st.wpSize.toFixed(2); applyPattern(); share.touch(); });
+$('patGlow').addEventListener('input', e => { st.wpGlow = +e.target.value; $('patGlowo').textContent = st.wpGlow ? st.wpGlow.toFixed(2) : 'off'; share.touch(); });
+$('patMove').addEventListener('change', e => { st.wpMove = e.target.checked; share.touch(); });
+$('patFloor').addEventListener('change', e => { st.wpFloor = e.target.checked; patternRows(); share.touch(); });
 segClick('bg', d => { st.bg = d.b; lightStage(); S.setBackground(st.bg); recolourAll(); share.touch(); });
 segClick('prSize', d => { st.mm = +d.mm; });
 $('snap').addEventListener('click', () => { S.render(); saveCanvasPNG(canvas, fileName(fileBase()) + '.png', $('dlnote')); });
@@ -516,7 +529,8 @@ let running = false, tPrev = 0, frame = 0;
 // Rotation & motion (its own group), for the outside view and the maze map: turning (an ancient labyrinth turns about its
 // own middle), rocking, tumbling, the camera's zoom and drift, and Slowly change (a wall's thickness, the foam's block...)
 // a maze is always first person: turning and the camera don't apply there (looked up by id: the group may not exist yet)
-function motionFor(kind) { for (const id of ['mvTurnSec', 'mvCamSec']) { const el = document.getElementById(id); if (el) el.hidden = kind === 'maze'; }
+function patternRows() { const none = st.wpat === 'none'; $('patSec').hidden = st.kind === 'foam'; $('patOpts').hidden = none; $('patFloorRow').hidden = st.kind !== 'maze'; WT.u_wtTop.value = st.kind !== 'maze' || st.wpFloor ? 1 : 0; }
+function motionFor(kind) { patternRows(); for (const id of ['mvTurnSec', 'mvCamSec']) { const el = document.getElementById(id); if (el) el.hidden = kind === 'maze'; }
   // and the controls that only some kinds use: Detail (the surfaces' mesh), Colour by (surfaces and foams), Finish (not the maze's flat-lit walls)
   const show = (id, on) => { const el = $(id); el.hidden = !on; const l = el.previousElementSibling; if (l && l.matches('.lbl')) l.hidden = !on; };
   $('detail').closest('.row').hidden = kind !== 'tpms'; show('cmode', kind === 'tpms' || kind === 'foam'); show('finish', kind !== 'maze'); }
@@ -528,7 +542,8 @@ const REC = addRecorder({ stage: canvas.parentElement, name: () => fileBase(), b
 // the Visualizer: a new labyrinth, foam or ancient labyrinth every so often; when the chorus comes in, fly through an
 // endless labyrinth until the next change
 makeVisualizer(MO, { preset: 'mvt=0.2&mvb=0.3&mvd=0.25', shape: () => (fpOn ? false : pickButton('#tpmsList button, #foamList button, #classicList button:not([data-c="random"])')),
-  drop: () => { if (fly.on) return; if (st.kind !== 'tpms') pickButton('#tpmsList button'); startFly(); return () => endFly(); } });
+  drop: () => { if (fly.on) return; if (st.kind !== 'tpms') pickButton('#tpmsList button'); startFly(); return () => endFly(); },
+  extra: [['a new wall pattern', () => { if (st.kind === 'foam') return false; const o = WALL_PATTERNS.filter(q => q[0] !== st.wpat && q[0] !== 'none'), k = o[Math.floor(Math.random() * o.length)][0]; $('wallPat').value = k; $('wallPat').dispatchEvent(new Event('change')); if (!st.wpGlow) setRange('patGlow', 0.8); return true; }, 2]] });
 function loop(now) {
   if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frame++;
   setPausedTag(st.paused); const goOn = !st.paused;
@@ -540,6 +555,7 @@ function loop(now) {
   // on each beat the outside view pulses (pivot is free here: the fit group's scale is set by each build), and vocals sway it
   const showing = outside && st.kind !== 'maze'; S.pivot.scale.setScalar(showing ? 1 + 0.05 * pulse() : 1); S.fit.rotation.z = showing ? 0.1 * voice() : 0;
   S.setFlash(flash());
+  WT.u_wtGlow.value = st.wpGlow * (1 + 1.6 * flash() + 0.8 * pulse()); if (st.wpMove && !st.paused && st.wpat !== 'none') { WT.u_wtShift.value.x += dt * 0.025; WT.u_wtShift.value.y += dt * 0.011; }   // the pattern's glow follows the beat
   if (capTimer > 0) { capTimer -= dt; if (capTimer <= 0) { $('stageCap').style.display = 'none'; } }
   S.render(); if (frame % 15 === 0) stats(); if (frame % 30 === 0) share.touch();
   requestAnimationFrame(loop);
@@ -587,7 +603,7 @@ const encode = () => { const p = new URLSearchParams(); p.set('k', st.kind);
   if (st.kind === 'maze') { p.set('lv', st.level); p.set('me', st.method); if (st.loops) p.set('lo', st.loops); if (st.goal !== 'corner') p.set('go', st.goal); p.set('seed', st.seed); if (st.race) p.set('race', 1); if (!st.crumbs) p.set('cr', 0); }
   if (st.kind === 'classic') { p.set('seq', st.seq.join('-')); }
   if (st.flySpeed !== 1) p.set('fs', st.flySpeed); if (st.detail !== 2) p.set('d', st.detail); if (st.fog !== 0.5) p.set('fog', st.fog); p.set('cm', st.cmode); p.set('pal', st.palette); if (st.palRev) p.set('rev', 1);
-  if (st.cycleSpeed) p.set('cyc', st.cycleSpeed); if (!st.spin) p.set('sp', 0); if (st.finish !== 'satin') p.set('fin', st.finish); if (st.bg !== '#0b0d12') p.set('bg', st.bg.slice(1));
+  if (st.cycleSpeed) p.set('cyc', st.cycleSpeed); if (!st.spin) p.set('sp', 0); if (st.wpat !== 'none') { p.set('wp', st.wpat); if (st.wpSize !== 0.4) p.set('wps', st.wpSize); if (st.wpGlow) p.set('wpg', st.wpGlow); if (st.wpMove) p.set('wpm', 1); if (st.wpFloor) p.set('wpf', 1); } if (st.finish !== 'satin') p.set('fin', st.finish); if (st.bg !== '#0b0d12') p.set('bg', st.bg.slice(1));
   if (!fpOn && st.kind !== 'maze') { const q = S.pivot.quaternion; p.set('q', [q.x, q.y, q.z, q.w].map(r4).join('_')); p.set('z', r4(MO.baseZ())); }   /* the turned view, as you see it */
   MO.encode(p); return p.toString(); };
 function apply(code) {
@@ -595,7 +611,7 @@ function apply(code) {
   if (!kind && TPMS[p.get('s')]) kind = 'tpms';   // an old Surfaces link to a triply periodic surface
   if (!['tpms', 'foam', 'maze', 'classic'].includes(kind)) return false;
   clickData('#palettes', 'pal', p.get('pal') || 'aurora'); setCheck('palRev', p.get('rev') === '1'); setRange('cyc', num(p, 'cyc', 0)); clickData('#finish', 'f', p.get('fin') || 'satin'); clickData('#bg', 'b', '#' + (p.get('bg') || '0b0d12'));
-  clickData('#cmode', 'c', ['side', 'height', 'solid'].includes(p.get('cm')) ? p.get('cm') : 'side'); setRange('flySpeed', num(p, 'fs', 1)); setRange('detail', clamp(num(p, 'd', 2), 1, 4)); setRange('fog', num(p, 'fog', 0.5)); setCheck('spin', p.get('sp') !== '0');
+  clickData('#cmode', 'c', ['side', 'height', 'solid'].includes(p.get('cm')) ? p.get('cm') : 'side'); setRange('flySpeed', num(p, 'fs', 1)); setRange('detail', clamp(num(p, 'd', 2), 1, 4)); setRange('fog', num(p, 'fog', 0.5)); $('wallPat').value = WALL_PATTERNS.some(q => q[0] === p.get('wp')) ? p.get('wp') : 'none'; $('wallPat').dispatchEvent(new Event('change')); setRange('patSize', clamp(num(p, 'wps', 0.4), 0.1, 1.5)); setRange('patGlow', clamp(num(p, 'wpg', 0), 0, 2)); setCheck('patMove', p.get('wpm') === '1'); setCheck('patFloor', p.get('wpf') === '1'); setCheck('spin', p.get('sp') !== '0');
   if (kind === 'tpms') { st.tpms = TPMS[p.get('s')] ? p.get('s') : 'gyroid'; const m = p.get('m'); st.tmode = ['sheet', 'network', 'double'].includes(m) ? m : 'sheet'; document.querySelectorAll('#tMode button').forEach(b => b.classList.toggle('on', b.dataset.m === st.tmode));
     st.thick = clamp(num(p, 't', 0.18), 0.06, 0.6); $('tThick').value = st.thick; $('tThicko').textContent = st.thick.toFixed(2); st.cells = clamp(num(p, 'c', 1), 1, 2); $('tCells').value = st.cells; $('tCellso').textContent = st.cells;
     st.flip = p.get('fl') === '1' ? -1 : 1; setCheck('auto', p.get('au') !== '0'); st.beacon = p.get('b') === '1'; $('beacon').checked = st.beacon; }

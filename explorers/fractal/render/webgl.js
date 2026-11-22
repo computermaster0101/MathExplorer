@@ -2,7 +2,7 @@ import { shared } from '../shared.js';
 import { $ } from '../util.js';
 import { ddAdd, ddMul } from '../math/double-double.js';
 import { effDensity, st } from '../state.js';
-import { flash } from '../../../js/shell/audio/react.js';
+import { flashFx as flash } from '../../../js/shell/audio/react.js';
 import { RAMP, hexRGB } from '../color/palettes.js';
 
 // ---------- WebGL ----------

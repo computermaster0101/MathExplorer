@@ -17,7 +17,7 @@ import { drawInsets } from './ui/insets.js';
 import { refreshLegend, updateDynamic } from './ui/learn.js';
 import { advanceFly, bsSweep, diveUI, endlessWarp, pwAt, syncR4, syncW, twAmp } from './ui/controls.js';
 import { writeHash } from './io/share.js';
-import { BeatGate, Groove, Phase, colourStep, cycleBeats, energyMul, pulse, reacting, voice } from '../../js/shell/audio/react.js';
+import { BeatGate, Groove, Phase, colourStep, cycleBeats, energyMul, pulseFx as pulse, reacting, voiceFx as voice } from '../../js/shell/audio/react.js';
 import { recFrame } from './io/recorder.js';
 
 // ---------- loop ----------

@@ -1,0 +1,117 @@
+<details class="grp" id="g-shapes"><summary><span class="gt">Foams</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+  <div class="sec" id="shapeLists"></div>
+  <div class="sec" id="paramSec"><div id="params"></div></div>
+</div></details>
+
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="btns"><button class="btn primary" id="flyBtn">Fly through it</button><button class="btn" id="newBtn">New random foam (N)</button></div>
+    <p class="note" id="flyNote">Drift through the bubbles. Arrows or dragging look around, W and S speed up and slow down.</p>
+    <div class="btns" id="settleRow" style="margin-top:8px"><button class="btn" id="settleBtn">Settle (watch it even out)</button></div>
+    <div class="row" style="margin-top:8px"><span style="width:84px">Fly speed</span><input type="range" id="flySpeed" min="0.2" max="3" step="0.05" value="1"><output id="flySpeedo">1.0×</output></div>
+  </div>
+  <div class="sec">
+    <label class="check" style="margin-top:0"><input type="checkbox" id="spin" checked> Keep turning (when not flying)</label>
+    <div class="row"><span style="width:84px">Turn speed</span><input type="range" id="speed" min="-3" max="3" step="0.05" value="0.4"><output id="speedo">0.4×</output></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-view"><summary><span class="gt">View &amp; detail</span><span class="gv" id="gv-view"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Show</div>
+    <div class="seg" id="drawMode"><button data-d="films" class="on">Soap films</button><button data-d="cells">Bubbles</button><button data-d="edges">Edges</button></div>
+    <p class="note" id="drawNote"></p>
+    <div class="row" style="margin-top:8px"><span style="width:84px">Pull apart</span><input type="range" id="explode" min="0" max="1" step="0.01" value="0"><output id="explodeo">0</output></div>
+    <div class="row" id="amountRow"><span style="width:84px">How much</span><input type="range" id="amount" min="1" max="5" step="1" value="3"><output id="amounto">3</output></div>
+    <div id="pieceRow"><div class="lbl" style="margin-top:10px">Piece</div>
+    <div class="seg" id="piece"><button data-p="ball" class="on">Ball</button><button data-p="cube">Cube</button></div></div>
+    <div class="row" style="margin-top:8px"><span style="width:84px">Edges</span><input type="range" id="edgeW" min="0" max="1" step="0.01" value="0.35"><output id="edgeWo">0.35</output></div>
+    <div id="onlyRow"><div class="lbl" style="margin-top:10px">Only bubbles with</div>
+    <div class="seg g3" id="only"></div></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-style"><summary><span class="gt">Colour &amp; style</span><span class="gv" id="gv-style"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Colour by</div>
+    <div class="seg g3" id="cmode"><button data-c="faces" class="on">Faces</button><button data-c="size">Size</button><button data-c="each">Each bubble</button><button data-c="height">Height</button><button data-c="solid">One colour</button></div>
+    <p class="note" id="cmodeNote"></p>
+    <div class="lbl" style="margin-top:12px">Palette</div>
+    <div class="swatches" id="palettes"></div>
+    <p class="note" id="palName" style="margin-top:6px"></p>
+    <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+    <div class="row" style="margin-top:10px"><span style="width:74px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
+    <div class="lbl" style="margin-top:12px">Finish</div>
+    <div class="seg" id="finish"><button data-f="bubble" class="on">Bubble</button><button data-f="satin">Satin</button><button data-f="gloss">Glossy</button><button data-f="metal">Metal</button><button data-f="flat">Neon</button></div>
+    <div class="lbl" style="margin-top:12px">Background</div>
+    <div class="seg" id="bg"><button data-b="#0b0d12" class="on">Midnight</button><button data-b="#000000">Black</button><button data-b="#f3efe6">Paper</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-share"><summary><span class="gt">Save, share &amp; record</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="btns"><button class="btn" id="snap">Save image (PNG)</button></div><p class="note" id="dlnote">Saves exactly what you see.</p></div>
+  <div class="sec">
+    <div class="lbl">Share this view</div>
+    <p class="note" style="margin:0 0 8px">The link records the foam, its settings, the colours and the view.</p>
+    <input type="text" id="linkBox" readonly class="txt" spellcheck="false">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="copyLink">Copy link</button></div>
+    <div class="lbl" style="margin-top:12px">Load a view</div>
+    <input type="text" id="viewIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Paste a view link or code">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+    <p class="note" id="shareNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-info"><summary><span class="gt">Numbers</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="stats">
+    <div class="stat"><b id="s1">–</b><small id="s1l"></small></div>
+    <div class="stat"><b id="s2">–</b><small id="s2l"></small></div>
+    <div class="stat"><b id="s3">–</b><small id="s3l"></small></div>
+  </div><p class="note" id="statNote"></p></div>
+</div></details>
+
+<details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv"></span></summary><div class="gb">
+  <div class="explain">
+    <p id="about"></p>
+    <details class="topic"><summary>The Kelvin problem</summary>
+      <p>How do you divide space into bubbles that all hold the same amount, using the least wall? Kelvin guessed truncated octahedra in 1887. In 1993 Weaire and Phelan beat him by 0.3% with two kinds of bubble. Nobody knows whether anything does better still. The Numbers group shows each foam's <strong>wall score</strong>: the surface of a bubble compared with its volume, scaled so the size doesn't matter. A sphere would score 4.84, but spheres can't fill space. Kelvin's foam scores 5.315, Weaire–Phelan 5.295 (with flat films; bending them saves a little more).</p>
+      <div class="btns"><button class="btn try" data-try="kelvin">Kelvin</button><button class="btn try" data-try="wp">Weaire–Phelan</button><button class="btn try" data-try="cube">Cubes</button></div>
+    </details>
+    <details class="topic"><summary>Plateau's laws</summary>
+      <p>In 1873 the Belgian physicist Joseph Plateau, by then blind, worked out from his experiments the rules every soap foam obeys: films meet <strong>three at a time</strong> along each edge, at 120°, and edges meet <strong>four at a time</strong> at each corner, at about 109.5° (the angle at the middle of a tetrahedron). Jean Taylor proved in 1976 that no other meetings are stable. Cubes and rhombic dodecahedra break these rules, so a real foam never forms them.</p>
+      <div class="btns"><button class="btn try" data-try="rhombic|cells">Rhombic dodecahedra</button><button class="btn try" data-try="kelvin|edges">Kelvin's edges</button></div>
+    </details>
+    <details class="topic"><summary>Frank–Kasper foams</summary>
+      <p>Every bubble in these foams has 12, 14, 15 or 16 faces, all of them pentagons and hexagons, with the hexagons never touching. Charles Frank and John Kasper found this family in 1958 in the crystals of metal alloys. Later the same structures turned up in soap-like molecules, in polymers and in gas hydrates. Weaire–Phelan is one of them. Colour by <strong>Faces</strong> and use <strong>Only bubbles with</strong> to see each kind on its own, or <strong>Pull apart</strong> to separate them.</p>
+      <div class="btns"><button class="btn try" data-try="c15|cells">C15</button><button class="btn try" data-try="sigma|cells">σ phase</button><button class="btn try" data-try="z|cells">Z phase</button></div>
+    </details>
+    <details class="topic"><summary>Real foams</summary>
+      <p>Real foams are random and uneven. A bubble in a three-dimensional foam has about 13.5 faces on average, and pentagons are the commonest face. Over time gas seeps through the films from small bubbles (higher pressure inside) to big ones, so the small shrink and vanish and the foam coarsens. <strong>Settle</strong> evens out a random foam step by step.</p>
+      <div class="btns"><button class="btn try" data-try="random">A random foam</button><button class="btn try" data-try="settled|settle">Watch one settle</button><button class="btn try" data-try="mixed">Many sizes</button></div>
+    </details>
+    <details class="topic"><summary>Bubbles in a tube</summary>
+      <p>Blow bubbles into a tube and they pack in a few neat ways, chosen by how big they are compared with the tube: in a row (bamboo), alternating sides (zigzag), twisting, or in spirals of three or more. The same patterns turn up when spheres are packed in cylinders, from ball bearings to the cells of some plant stems. Change <strong>Bubble length</strong> to see where each one stops looking right.</p>
+      <div class="btns"><button class="btn try" data-try="bamboo">Bamboo</button><button class="btn try" data-try="zigzag">Zigzag</button><button class="btn try" data-try="three|fly">Fly down the spiral</button></div>
+    </details>
+    <details class="topic"><summary>Flat foams and the double bubble</summary>
+      <p>Between two plates a foam is flat. Equal bubbles make a honeycomb, which Thomas Hales proved in 1999 uses the least wall. An uneven flat foam coarsens by von Neumann's rule: a bubble with more than six sides grows, one with fewer shrinks, one with exactly six stays the same. And two bubbles stuck together always make three spherical films meeting at 120°. That this double bubble uses the least film was proved only in 2000, after a century of trying.</p>
+      <div class="btns"><button class="btn try" data-try="raft">Honeycomb</button><button class="btn try" data-try="flatrandom">Flat random foam</button><button class="btn try" data-try="double">Double bubble</button></div>
+    </details>
+  </div>
+</div></details>
+
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Size (longest side)</div>
+    <div class="seg" id="prSize"><button data-mm="60">60 mm</button><button data-mm="80" class="on">80 mm</button><button data-mm="120">120 mm</button></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="prBtn">Download STL</button></div>
+    <p class="note" id="prNote">Prints the foam's edges as a lattice of struts (at least 1.2 mm thick), the piece you see. The double bubble prints as two joined shells.</p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><table class="keys" id="keyTable"></table></div>
+  <div class="sec"><label class="check" style="margin-top:0"><input type="checkbox" id="invertY"> Invert up / down (aeroplane style: ↑ tips the view down)</label>
+    <div class="row" style="margin-top:8px"><span style="width:110px">Navigation speed</span><input type="range" id="navSpeed" min="0.1" max="2" step="0.05" value="0.5"><output id="navSpeedo">0.50×</output></div>
+    <p class="note">Both are shared by every explorer and remembered in this browser.</p></div>
+</div></details>

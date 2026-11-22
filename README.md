@@ -1,12 +1,13 @@
 # Math Explorer
 
-Interactive maths in the browser: one page with ten explorers, picked from the menu at the top of the side panel.
+Interactive maths in the browser: one page with eleven explorers, picked from the menu at the top of the side panel.
 
 - **Fractals**: Mandelbrot, Julia and other escape-time sets with very deep zoom, Buddhabrot, 3D and 4D fractals, fractals grown from rules, and orbits.
 - **4D Polytopes**: the regular 4D shapes and many others, turned through four dimensions, sliced, unfolded into nets and built up step by step.
 - **Surfaces**: one-sided surfaces (Möbius band, Klein bottle, Boy's surface), surfaces of constant curvature and minimal surfaces (including Costa's). Walk on one (G) to come back on the other side of a Möbius band; cut a band down the middle or bend a soap film (N).
 - **Knots & Links**: 20 knots and links, from the trefoil to the Borromean rings, each verified by its invariants. Ride along one like a roller coaster (G), sitting on top or inside the tube.
 - **Labyrinths**: endless labyrinths (gyroid, Schwarz P and D and five more triply periodic surfaces) to fly through and find a beacon in; Kelvin's and Weaire–Phelan's foams; 3D mazes to drive, race the solver through, and score against the shortest route; and the ancient one-path labyrinths, with a generator for new ones.
+- **Foams**: 23 foams, from Kelvin's and Weaire–Phelan's to the Frank–Kasper family (C15, C14, Z, σ), random, settled and mixed-size foams, bubbles stacked in a tube, flat foams and the exact double bubble. Drawn as soap films, separate bubbles or edges, pulled apart, filtered by number of faces, flown through, with each foam's wall score against Kelvin's.
 - **Complex Functions**: domain colouring on the plane or the Riemann sphere, 29 functions including Gamma, Riemann zeta and Weierstrass ℘, draggable zeros and poles, your own formulas, and a Steps slider that grows Julia and Newton fractals (with a link across to Fractals).
 - **Strange Attractors**: 17 chaotic flows traced in 3D (Lorenz, Rössler, Chua's circuit…), the butterfly effect, and 10 chaotic maps built up from millions of points.
 - **Tilings**: regular and uniform tilings (Wythoff's construction) on the sphere, the plane and the hyperbolic plane, all 11 Archimedean tilings, the 17 wallpaper groups, Truchet tiles, Penrose tilings, quasicrystals and the hat monotile.

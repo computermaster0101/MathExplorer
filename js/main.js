@@ -27,6 +27,7 @@ const EXPLORERS = {
   surface:   { title: 'Surfaces' },
   knot:      { title: 'Knots & Links' },
   labyrinth: { title: 'Labyrinths' },
+  foam:      { title: 'Foams' },
   complex:   { title: 'Complex Functions' },
   attractor: { title: 'Strange Attractors' },
   tiling:    { title: 'Tilings' },

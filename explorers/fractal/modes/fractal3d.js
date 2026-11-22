@@ -1,7 +1,7 @@
 import { shared } from '../shared.js';
 import { $, clamp } from '../util.js';
 import { effDensity, st } from '../state.js';
-import { flash, pulse, voice } from '../../../js/shell/audio/react.js';
+import { flashFx as flash, pulseFx as pulse, voiceFx as voice, boost, beatLevel, bassLevel, energyLevel, beatPos, reacting, intensity } from '../../../js/shell/audio/react.js';
 import { hexRGB } from '../color/palettes.js';
 import { fs3For, gl, glc, main, setPal } from '../render/webgl.js';
 import { cssH, cssW, touch } from '../view.js';
@@ -85,6 +85,16 @@ function cutPlane(){ const D=D3(), t=a=>a*Math.PI/180; let n=[0,0,1];
 export const knifeVal=()=> is4() ? wAct() : D3().w*d3Bound()*0.95;
 // the twist actually drawn: the slider, plus a slow sway with the vocals and melody on 3D shapes (4D shapes sway their slice instead)
 export const twistNow=()=>frozen ? frozen.twNow : st.d3.twist+(is4()?0:voice()*(isKifs()?6:15));
+// ---------- the dance: while music plays, the shape nods toward you on each beat, leans side to side across two beats (locked to
+// the song's beat when there is one), twists back and forth across four beats and flexes its twist with the bass, all bigger at Lively and Wild (boost()) and in loud
+// passages. Applied only to what's drawn (the camera distance and turn sent to the shader), so dives aim and prints build as before.
+const DZ={ nod:0, yaw:0, pitch:0, flex:0, tw:0, t:0 };
+export function dance(){ const now=performance.now()/1000, dt=Math.min(0.1, now-(DZ.t||now)); DZ.t=now;
+  // how big: Wild is the full dance; Calm a gentle sway, Lively in between (scaling straight with boost() made even Calm look wild);
+  // at Lively and Wild boost() also adds a little in loud passages and just after a drop
+  const lvl=intensity(), on=reacting(), b=on ? { calm:0.14, lively:0.45, wild:1 }[lvl] * (lvl==='calm' ? 1 : boost() / { lively:1.7, wild:2.6 }[lvl]) : 0, e=energyLevel(), ph=beatPos(), sw=ph==null ? Math.sin(now*Math.PI*2/1.1) : Math.sin(Math.PI*ph), sp=ph==null ? Math.sin(now*Math.PI/1.1) : Math.sin(Math.PI*ph/2), st4=ph==null ? Math.sin(now*Math.PI/2.2) : Math.sin(Math.PI*ph/4);
+  const want={ nod:on?Math.min(0.3, 0.21*beatLevel()*b):0, yaw:on?0.27*b*(0.45+e)*sw:0, pitch:on?0.12*b*(0.45+e)*sp:0, flex:on?2.6*bassLevel()*b:0, tw:on?b*(0.45+e)*st4:0 }, k=1-Math.exp(-dt*12), kn=1-Math.exp(-dt*20);
+  DZ.nod+=(want.nod-DZ.nod)*kn; DZ.yaw+=(want.yaw-DZ.yaw)*k; DZ.pitch+=(want.pitch-DZ.pitch)*k; DZ.flex+=(want.flex-DZ.flex)*k; DZ.tw+=(want.tw-DZ.tw)*k; return DZ; }
 function d3Tf(){ const D=D3(), b=d3Bound(), tw=isKifs()?0:twistNow()*Math.PI/180/b; return {R:getR3(), tw, twS:1/Math.sqrt(1+(tw*b)*(tw*b)), cut:!is4()&&D.cut ? cutPlane() : null}; }
 export const wAct=()=>D3().w*(S3[D3().shape].wR||0.9);
 // 4D distance estimates, in double precision (the shader's twins), for aiming dives
@@ -338,14 +348,16 @@ export function render3D(hq){
   if (!P){ const b=hexRGB(st.bg); gl.viewport(0,0,glc.width,glc.height); gl.clearColor(b[0],b[1],b[2],1); gl.clear(gl.COLOR_BUFFER_BIT); shared.dirty=true; return false; }   // still being built: try again next frame
   if (!f3Ready){ f3Ready=true; shared.lastCap=''; touch(); }
   const g=gl, D=st.d3; g.useProgram(P.p); g.viewport(0,0,glc.width,glc.height);
-  const C=cam3(), pos=C.pos, r=C.r, u=C.u, bz=C.b;
+  const C=cam3(), r=C.r, u=C.u, bz=C.b, Tg=D.target||[0,0,0], nod=dance().nod*(D.dive?0.4:1), pos=C.pos.map((v,i)=>Tg[i]+(v-Tg[i])*(1-nod));   /* the nod: the camera dips toward what it looks at on each beat */
   g.uniform2f(P.u('u_res'),glc.width,glc.height); g.uniform3fv(P.u('u_cam'),pos);
   g.uniformMatrix3fv(P.u('u_rotM'),false,new Float32Array([...r,...u,...bz])); g.uniform1f(P.u('u_fov'),1.6);
   g.uniform1i(P.u('u_s3'),SH3.indexOf(D.shape));
   { const R=getR4(), cm=new Float32Array(16); for (let j=0;j<4;j++) for (let i=0;i<4;i++) cm[j*4+i]=R[i][j]; g.uniformMatrix4fv(P.u('u_r4'),false,cm); const rg=S3[D.shape].rg||[0,1]; g.uniform2f(P.u('u_rg'),rg[0],rg[1]); g.uniform1i(P.u('u_nest0'),-nestOuter()); g.uniform1i(P.u('u_nestM'),st.d3.nestM||0);
-    const T=d3Tf(), M=T.R; g.uniformMatrix3fv(P.u('u_rot3'),false,new Float32Array([M[0][0],M[0][1],M[0][2],M[1][0],M[1][1],M[1][2],M[2][0],M[2][1],M[2][2]]));
+    const T=d3Tf(), dz=DZ, dv=D.dive?0.5:1, cy=Math.cos(dz.yaw*dv), sy=Math.sin(dz.yaw*dv), cp=Math.cos(dz.pitch*dv), spp=Math.sin(dz.pitch*dv);
+    const Rd=[[cy, sy*spp, sy*cp],[0, cp, -spp],[-sy, cy*spp, cy*cp]], M0=T.R, M=[0,1,2].map(i=>[0,1,2].map(j=>Rd[i][0]*M0[0][j]+Rd[i][1]*M0[1][j]+Rd[i][2]*M0[2][j]));   // the lean, on top of the view's own turn
+    g.uniformMatrix3fv(P.u('u_rot3'),false,new Float32Array([M[0][0],M[0][1],M[0][2],M[1][0],M[1][1],M[1][2],M[2][0],M[2][1],M[2][2]]));
     g.uniform1f(P.u('u_tw'),T.tw); g.uniform1f(P.u('u_twS'),T.twS); g.uniform1i(P.u('u_cut'),T.cut?1:0); g.uniform1i(P.u('u_glass'),D.glass?1:0);
-  if (D.shape==='hyp'){ const H=hypMirrors(D.hyp||'534'); g.uniformMatrix3fv(P.u('u_hN'),false,new Float32Array(H.N.flat())); g.uniform3f(P.u('u_hC'),...H.C); g.uniform1f(P.u('u_hR'),H.rho); g.uniform4f(P.u('u_hE'),...H.Ec,H.Er); g.uniform1i(P.u('u_hW'),D.hypW?1:0); } if (T.cut) g.uniform4f(P.u('u_cutP'),T.cut.n[0],T.cut.n[1],T.cut.n[2],T.cut.o); } g.uniform1f(P.u('u_twist'),(twistNow()+(!D.target?pulse()*3:0))*Math.PI/180); g.uniform1i(P.u('u_it3'),d3Iter()); g.uniform1i(P.u('u_hq'),hq?1:0);
+  if (D.shape==='hyp'){ const H=hypMirrors(D.hyp||'534'); g.uniformMatrix3fv(P.u('u_hN'),false,new Float32Array(H.N.flat())); g.uniform3f(P.u('u_hC'),...H.C); g.uniform1f(P.u('u_hR'),H.rho); g.uniform4f(P.u('u_hE'),...H.Ec,H.Er); g.uniform1i(P.u('u_hW'),D.hypW?1:0); } if (T.cut) g.uniform4f(P.u('u_cutP'),T.cut.n[0],T.cut.n[1],T.cut.n[2],T.cut.o); } g.uniform1f(P.u('u_twist'),(twistNow()+(!D.target?pulse()*3+(DZ.flex+DZ.tw*2.4)*(isKifs()?3:9):0))*Math.PI/180);   /* the twist dances too: back and forth across four beats, and the bass flexes it */ g.uniform1i(P.u('u_it3'),d3Iter()); g.uniform1i(P.u('u_hq'),hq?1:0);
   const ab=!D.target ? pulse() : 0, vo=voice();   // music: an optional pulse of the shape on each beat, and the vocal sway (4D slice)
   g.uniform1f(P.u('u_power'),D.power+Math.sign(D.power)*ab*0.8); g.uniform1f(P.u('u_boxS'),D.boxS+Math.sign(D.boxS)*ab*0.06);   // a beat pushes away from zero, never into the gap g.uniform1f(P.u('u_w'),(is4()?wAct()+vo*0.1:0)+ab*0.05);
   g.uniform1f(P.u('u_density'),effDensity()); g.uniform1f(P.u('u_cycle'),st.cycle); g.uniform1f(P.u('u_flash'),flash()); g.uniform1f(P.u('u_bound'),d3Bound()); g.uniform1f(P.u('u_view'),D.dist);

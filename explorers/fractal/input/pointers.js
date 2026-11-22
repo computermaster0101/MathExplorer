@@ -18,7 +18,7 @@ glc.addEventListener('pointermove', e=>{
   if (!ptrs.has(e.pointerId)){ if (st.mode==='explore' && e.pointerType==='mouse'){ st.hover=[x,y]; } return; }
   const prev=ptrs.get(e.pointerId); ptrs.set(e.pointerId,{x,y}); const dx=x-prev.x, dy=y-prev.y;
   if (ptrs.size===1){
-    if (st.mode==='d3'){ if (st.d3.dragMode==='move' || e.shiftKey || (e.buttons&2)) pan3(dx,dy); else { st.d3.aim=null; st.d3.yaw-=dx*0.008; st.d3.pitch=clamp(st.d3.pitch+dy*0.008,-1.45,1.45); shared.vel3={x:dx,y:dy}; touch(); } }
+    if (st.mode==='d3'){ if ((st.d3.dragMode==='move') !== (e.shiftKey || !!(e.buttons&2))) pan3(dx,dy); else {   /* Shift-drag or right-drag does the other one */ st.d3.aim=null; st.d3.yaw-=dx*0.008; st.d3.pitch=clamp(st.d3.pitch+dy*0.008,-1.45,1.45); shared.vel3={x:dx,y:dy}; touch(); } }
     else if (st.mode==='grow'){ st.grow.gv.ox+=dx; st.grow.gv.oy+=dy; }
     else if (st.mode==='link' && dragDesc && dragDesc.side==='L'){ if (!notAvail()) setCFrom(dragDesc,x,y); }
     else if (dragDesc){ panBy(dragDesc,dx,dy); }

@@ -52,6 +52,11 @@ const breath = () => (live() && settings.beats && settings.intensity !== 'calm' 
 export const flashFx = () => (settings.beatStyle === 'pulse' ? 0 : Math.min(2.2, beat() * boost() + 0.18 * breath()));
 export const pulseFx = () => (settings.beatStyle === 'pulse' ? Math.min(2.2, beat() * boost() + 0.25 * breath()) : 0);
 export const voiceFx = () => Math.max(-2, Math.min(2, voice() * Math.min(1.8, boost())));
+// for a dance (3D fractals): the raw beat and bass, the loudness, and where we are in the beat (null without a steady tempo)
+export const beatLevel = () => beat();
+export const bassLevel = () => (live() && settings.beats ? Math.min(1.5, f().bass * amt()) : 0);
+export const energyLevel = () => (live() ? f().energy : 0);
+export const beatPos = () => (live() && settings.tempo && f().locked ? f().beats - f().barOffset : null);
 export const kick = () => (live() && settings.beats ? Math.min(1.5, f().kick * amt()) : 0);
 export const snare = () => (live() && settings.beats ? Math.min(1.5, f().snare * amt()) : 0);
 export const lift = () => (live() ? f().lift : 0);
