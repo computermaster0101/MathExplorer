@@ -1,0 +1,152 @@
+<details class="grp" id="g-shapes"><summary><span class="gt">Labyrinths</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Endless labyrinths</div>
+    <div class="seg g2 shapes" id="tpmsList"></div>
+    <div class="lbl" style="margin-top:10px">Foams</div>
+    <div class="seg g2 shapes" id="foamList"></div>
+    <div class="lbl" style="margin-top:10px">Mazes</div>
+    <div class="seg g2 shapes" id="mazeList"><button data-maze="1">Maze</button><button data-maze="race">Race the solver</button></div>
+    <div class="lbl" style="margin-top:10px">Ancient labyrinths</div>
+    <div class="seg g2 shapes" id="classicList"></div>
+  </div>
+  <div class="sec" data-for="tpms">
+    <div class="lbl">Show it as</div>
+    <div class="seg" id="tMode"><button data-m="sheet" class="on">A wall</button><button data-m="network">One maze solid</button><button data-m="double">Both mazes solid</button></div>
+    <p class="note" id="tModeNote"></p>
+    <div class="row"><span style="width:84px">Thickness</span><input type="range" id="tThick" min="0.06" max="0.6" step="0.01" value="0.18"><output id="tThicko">0.18</output></div>
+  </div>
+  <div class="sec" data-for="maze" hidden>
+    <div class="row"><span style="width:84px">Level</span><input type="range" id="mLevel" min="1" max="5" step="1" value="2"><output id="mLevelo">2</output></div>
+    <div class="lbl" style="margin-top:6px">Built by</div>
+    <div class="seg" id="mMethod"><button data-m="dfs" class="on">Wandering</button><button data-m="prim">Growing</button><button data-m="wilson">Random walks</button></div>
+    <p class="note" id="mMethodNote"></p>
+    <div class="row"><span style="width:84px">Loops</span><input type="range" id="mLoops" min="0" max="1" step="0.05" value="0"><output id="mLoopso">none</output></div>
+  </div>
+  <div class="sec" data-for="classic" hidden>
+    <div class="row"><span style="width:84px">Rings</span><input type="range" id="cRings" min="3" max="11" step="1" value="7"><output id="cRingso">7</output></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+  <!-- endless labyrinths -->
+  <div class="sec" id="c-tpms">
+    <div class="btns"><button class="btn primary" id="flyBtn">Fly through it</button><button class="btn" id="sideBtn">Other maze (N)</button></div>
+    <label class="check"><input type="checkbox" id="auto" checked> Steer itself (T): the keys take over whenever you use them</label>
+    <label class="check"><input type="checkbox" id="beacon"> Find the beacon: a glowing light somewhere in the labyrinth</label>
+    <div class="row"><span style="width:84px">Fly speed</span><input type="range" id="flySpeed" min="0.2" max="3" step="0.05" value="1"><output id="flySpeedo">1.0×</output></div>
+  </div>
+  <!-- foams -->
+  <div class="sec" id="c-foam" hidden>
+    <div class="btns"><button class="btn primary" id="fFly">Fly through the foam</button></div>
+  </div>
+  <!-- mazes -->
+  <div class="sec" id="c-maze" hidden>
+    <div class="lbl">Goal</div>
+    <div class="seg" id="mGoal"><button data-g="corner" class="on">Far corner</button><button data-g="centre">The centre</button></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="mSolve">Solve it (G)</button><button class="btn" id="mHint">Hint (T)</button><button class="btn" id="mOver">Map (O)</button><button class="btn" id="mNew">New maze (N)</button></div>
+    <div class="btns" style="margin-top:6px"><button class="btn" id="mBuild">Watch it being built</button><button class="btn" id="mHand">Left-hand rule</button></div>
+    <label class="check"><input type="checkbox" id="mCrumbs" checked> Breadcrumbs: mark where you've been</label>
+    <p class="note" id="mBest"></p>
+  </div>
+  <!-- ancient labyrinths -->
+  <div class="sec" id="c-classic" hidden>
+    <div class="btns"><button class="btn primary" id="cWalk">Walk the path (G)</button><button class="btn" id="cNew">A new labyrinth (N)</button></div>
+    <p class="note" id="cSeq"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-view"><summary><span class="gt">View &amp; detail</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="row"><span style="width:84px">Detail</span><input type="range" id="detail" min="1" max="4" step="1" value="2"><output id="detailo">2</output></div>
+    <div class="row" data-for="tpms"><span style="width:84px">Cells shown</span><input type="range" id="tCells" min="1" max="2" step="1" value="1"><output id="tCellso">1</output></div>
+    <div class="row" data-for="foam" hidden><span style="width:84px">Block</span><input type="range" id="fBlock" min="1" max="3" step="1" value="2"><output id="fBlocko">2 × 2 × 2</output></div>
+    <label class="check" data-for="foam" hidden><input type="checkbox" id="fFilms" checked> Show the soap films (not just the edges)</label>
+    <div class="row"><span style="width:84px">Mist</span><input type="range" id="fog" min="0" max="1" step="0.05" value="0.5"><output id="fogo">0.50</output></div>
+    <label class="check"><input type="checkbox" id="spin" checked> Keep turning (outside view)</label>
+  </div>
+</div></details>
+
+<details class="grp" id="g-style"><summary><span class="gt">Colour &amp; style</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Colour by</div>
+    <div class="seg" id="cmode"><button data-c="side" class="on">Which maze</button><button data-c="height">Height</button><button data-c="solid">One colour</button></div>
+    <div class="lbl" style="margin-top:12px">Palette</div>
+    <div class="swatches" id="palettes"></div>
+    <p class="note" id="palName" style="margin-top:6px"></p>
+    <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+    <div class="row" style="margin-top:10px"><span style="width:84px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
+    <div class="lbl" style="margin-top:12px">Finish</div>
+    <div class="seg" id="finish"><button data-f="satin" class="on">Satin</button><button data-f="gloss">Glossy</button><button data-f="metal">Metal</button><button data-f="flat">Neon</button><button data-f="bubble">Bubble</button></div>
+    <div class="lbl" style="margin-top:12px">Background</div>
+    <div class="seg" id="bg"><button data-b="#0b0d12" class="on">Midnight</button><button data-b="#000000">Black</button><button data-b="#f3efe6">Paper</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-share"><summary><span class="gt">Save, share &amp; record</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="btns"><button class="btn" id="snap">Save image (PNG)</button></div><p class="note" id="dlnote">Saves exactly what you see.</p></div>
+  <div class="sec">
+    <div class="lbl">Share this view</div>
+    <p class="note" style="margin:0 0 8px">The link records the labyrinth and its settings. A maze link carries its number, so a friend can race the same maze.</p>
+    <input type="text" id="linkBox" readonly class="txt" spellcheck="false">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="copyLink">Copy link</button></div>
+    <div class="lbl" style="margin-top:12px">Load a view</div>
+    <input type="text" id="viewIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Paste a view link or code">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+    <p class="note" id="shareNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-info"><summary><span class="gt">Numbers</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="stats">
+    <div class="stat"><b id="s1">–</b><small id="s1l"></small></div>
+    <div class="stat"><b id="s2">–</b><small id="s2l"></small></div>
+    <div class="stat"><b id="s3">–</b><small id="s3l"></small></div>
+  </div><p class="note" id="statNote"></p></div>
+</div></details>
+
+<details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv"></span></summary><div class="gb">
+  <div class="explain">
+    <p id="about"></p>
+    <details class="topic"><summary>Two worlds in one space</summary>
+      <p>An endless labyrinth like the gyroid is one surface that splits all of space into two separate tunnel systems. They wind round each other forever but never meet: to get from one to the other you must go through the wall. Fly through one (G), then press <strong>N</strong> to step through the wall into the other. Try the beacon game: some beacons are in the other maze.</p>
+      <div class="btns"><button class="btn try" data-try="tpms|gyroid|fly">Fly the gyroid</button><button class="btn try" data-try="tpms|schwarzP|beacon">Find the beacon</button></div>
+    </details>
+    <details class="topic"><summary>The best way to fill space with bubbles</summary>
+      <p>Soap films meet in threes along every edge, at 120°, and edges meet in fours at every corner: Joseph Plateau's laws (1873). Kelvin's foam obeys them with one shape of bubble; Weaire and Phelan found a mix of two shapes that uses less film. Is there a better one still? Nobody knows.</p>
+      <div class="btns"><button class="btn try" data-try="foam|kelvin">Kelvin's foam</button><button class="btn try" data-try="foam|wp|fly">Fly through Weaire–Phelan</button></div>
+    </details>
+    <details class="topic"><summary>A maze is a tree</summary>
+      <p>Draw a dot in every room and a line through every doorway. In a "perfect" maze there's exactly one route between any two rooms, so the picture is a <strong>tree</strong>: it reaches everywhere and never loops back. How the tree is grown gives the maze its character. Wandering makes long winding corridors; growing outward makes lots of short dead ends; random walks pick perfectly at random among all possible mazes.</p>
+      <div class="btns"><button class="btn try" data-try="maze|build">Watch one being built</button><button class="btn try" data-try="maze|prim">A growing maze</button></div>
+    </details>
+    <details class="topic"><summary>The shortest way out</summary>
+      <p>The computer finds the shortest route by spreading out from where you stand, one step at a time in every direction at once, until it reaches the exit (breadth-first search). Press G to watch it drive that route. Then drive it yourself: your score is the shortest route divided by the route you took, so 100% means perfect.</p>
+      <div class="btns"><button class="btn try" data-try="maze|race">Race the solver</button></div>
+    </details>
+    <details class="topic"><summary>Keep your hand on the wall</summary>
+      <p>In a maze on one floor with no loops, keeping one hand on the wall always gets you out. Add loops and put the goal in the middle, and your hand can lead you round an island forever. In 3D there's no "left wall" to follow at all. Charles Trémaux's 19th-century method works in any maze: mark each passage as you go, and never take a passage marked twice. The breadcrumbs here are his marks.</p>
+      <div class="btns"><button class="btn try" data-try="maze|hand">Left hand, no loops</button><button class="btn try" data-try="maze|handloops">Left hand, loops and the centre</button></div>
+    </details>
+    <details class="topic"><summary>Labyrinth or maze?</summary>
+      <p>A maze has choices and dead ends. A labyrinth, in the old sense, has none: one path winds back and forth and must reach the centre. The Cretan labyrinth on ancient coins visits its seven rings in the order 3, 2, 1, 4, 7, 6, 5. Count the possible orders that never cross and you get 1, 1, 2, 3, 8, 14, 42, 81, 262… the "open meander" numbers: there are 42 different seven-ring labyrinths.</p>
+      <div class="btns"><button class="btn try" data-try="classic|cretan|walk">Walk the Cretan labyrinth</button><button class="btn try" data-try="classic|random">A new one</button></div>
+    </details>
+  </div>
+</div></details>
+
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <p class="note" style="margin-top:0" id="prAbout"></p>
+    <div class="lbl" style="margin-top:8px">Size (longest side)</div>
+    <div class="seg" id="prSize"><button data-mm="50">50 mm</button><button data-mm="80" class="on">80 mm</button><button data-mm="120">120 mm</button></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="prBtn">Download STL</button></div>
+    <p class="note" id="prNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><table class="keys" id="keyTable"></table></div>
+  <div class="sec"><label class="check" style="margin-top:0"><input type="checkbox" id="invertY"> Invert up / down (aeroplane style: ↑ tips the view down)</label>
+    <div class="row" style="margin-top:8px"><span style="width:110px">Navigation speed</span><input type="range" id="navSpeed" min="0.1" max="2" step="0.05" value="0.5"><output id="navSpeedo">0.50×</output></div>
+    <p class="note">Both are shared by every explorer and remembered in this browser.</p></div>
+</div></details>

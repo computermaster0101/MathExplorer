@@ -1,0 +1,8 @@
+/* Surfaces: rules on top of css/app.css */
+.app[data-explorer="surface"] #sc{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.app[data-explorer="surface"] #sc:active{cursor:grabbing}
+.app[data-explorer="surface"] .shapeGroup + .shapeGroup{margin-top:12px}
+.app.zen[data-explorer="surface"] #sc{cursor:none}
+/* the Paper background: darker stage text */
+.app.light[data-explorer="surface"] .hud h1{color:#2b303b}
+.app.light[data-explorer="surface"] .hud .sub, .app.light[data-explorer="surface"] .legend, .app.light[data-explorer="surface"] .hint{color:#5b6170}

@@ -1,0 +1,133 @@
+<details class="grp" id="g-shapes"><summary><span class="gt">Patterns</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="seg shapes" id="modeList">
+      <button data-m="life">Life<small>cells live or die by their neighbours</small></button>
+      <button data-m="lenia">Lenia<small>smooth life: soft cells, soft rules</small></button>
+      <button data-m="rd">Reaction–diffusion<small>two chemicals make spots and stripes</small></button>
+    </div>
+  </div>
+  <div class="sec" id="lifeRules">
+    <div class="lbl">Rule</div>
+    <div class="seg g2" id="ruleList"></div>
+    <div class="row" style="margin-top:8px"><input type="text" id="ruleIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Your own, e.g. B36/S23" style="flex:1"><button class="btn" id="ruleApply">Use</button></div>
+    <p class="note" id="ruleNote"></p>
+  </div>
+  <div class="sec" id="leniaPre" hidden>
+    <div class="lbl">Kind</div>
+    <div class="seg g3" id="leniaList"><button data-p="tangle">Coral tangle</button><button data-p="stripes">Fingerprints</button><button data-p="broad">Broad stripes</button></div>
+  </div>
+  <div class="sec" id="leniaCtl" hidden>
+    <div class="row"><span style="width:96px">Growth centre</span><input type="range" id="mu" min="0.05" max="0.45" step="0.001" value="0.15"><output id="muo">0.150</output></div>
+    <div class="row"><span style="width:96px">Growth width</span><input type="range" id="sigma" min="0.003" max="0.08" step="0.0005" value="0.015"><output id="sigmao">0.015</output></div>
+  </div>
+  <div class="sec" id="rdPre" hidden>
+    <div class="lbl">Recipe</div>
+    <div class="seg g3" id="rdList"><button data-p="coral">Coral</button><button data-p="mitosis">Dividing cells</button><button data-p="spots">Spots</button><button data-p="maze">Maze</button><button data-p="holes">Holes</button><button data-p="beans">Beans</button><button data-p="worms">Worms</button><button data-p="uskate">Skaters</button><button data-p="bubbles">Bubbles</button><button data-p="waves">Waves</button><button data-p="pulse">Pulsing spots</button></div>
+  </div>
+  <div class="sec" id="rdCtl" hidden>
+    <div class="row"><span style="width:96px">Feed</span><input type="range" id="feed" min="0.005" max="0.1" step="0.0005" value="0.0545"><output id="feedo">0.0545</output></div>
+    <div class="row"><span style="width:96px">Kill</span><input type="range" id="kill" min="0.04" max="0.075" step="0.0005" value="0.062"><output id="killo">0.0620</output></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="btns"><button class="btn" id="goBtn">Pause</button><button class="btn" id="stepBtn">One step</button><button class="btn" id="newBtn">New start</button><button class="btn" id="clearBtn">Clear</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Speed</span><input type="range" id="speed" min="0.1" max="4" step="0.05" value="1"><output id="speedo">1.0×</output></div>
+    <div class="row" id="densRow"><span style="width:96px">Start density</span><input type="range" id="dens" min="0.05" max="0.9" step="0.01" value="0.3"><output id="denso">30%</output></div>
+  </div>
+  <div class="sec" id="lifePat">
+    <div class="lbl">Place a pattern in the middle</div>
+    <div class="seg g3" id="patList"><button data-p="glider">Glider</button><button data-p="lwss">Spaceship</button><button data-p="rpent">R-pentomino</button><button data-p="acorn">Acorn</button><button data-p="gun">Glider gun</button><button data-p="pulsar">Pulsar</button><button data-p="diehard">Diehard</button><button data-p="pentadecathlon">Pentadecathlon</button><button data-p="mwss">Middle spaceship</button><button data-p="hwss">Heavy spaceship</button><button data-p="copperhead">Copperhead</button><button data-p="galaxy">Kok's galaxy</button><button data-p="infinite">Grows forever</button></div>
+  </div>
+  <div class="sec">
+    <div class="lbl">Brush (drag on the picture)</div>
+    <div class="seg" id="brush"><button data-b="paint" class="on">Paint</button><button data-b="erase">Erase</button></div>
+    <div class="row" style="margin-top:8px"><span style="width:96px">Brush size</span><input type="range" id="bsize" min="1" max="40" step="1" value="6"><output id="bsizeo">6</output></div>
+    <label class="check"><input type="checkbox" id="beatSeed" checked> With music: each beat drops a seed</label>
+  </div>
+</div></details>
+
+<details class="grp" id="g-view"><summary><span class="gt">View &amp; detail</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="row"><span style="width:96px">Cell size</span><input type="range" id="cell" min="1" max="10" step="1" value="3"><output id="cello">3 px</output></div>
+    <p class="note" style="margin-top:2px">Smaller cells, a bigger world. Changing it starts again.</p>
+    <label class="check" id="trailRow"><input type="checkbox" id="trails" checked> Leave fading trails</label>
+    <label class="check" id="roundRow"><input type="checkbox" id="round" checked> Round, smooth cells</label>
+    <label class="check" id="reliefRow"><input type="checkbox" id="relief" checked> Light it like a surface</label>
+  </div>
+</div></details>
+
+<details class="grp" id="g-style"><summary><span class="gt">Colour &amp; style</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Palette</div>
+    <div class="swatches" id="palettes"></div>
+    <p class="note" id="palName" style="margin-top:6px"></p>
+    <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
+    <div class="lbl" style="margin-top:12px">Background</div>
+    <div class="seg" id="bg"><button data-b="#0b0d12" class="on">Midnight</button><button data-b="#000000">Black</button><button data-b="#f3efe6">Paper</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-share"><summary><span class="gt">Save, share &amp; record</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="btns"><button class="btn" id="snap">Save image (PNG)</button></div><p class="note" id="dlnote">Saves exactly what you see.</p></div>
+  <div class="sec">
+    <div class="lbl">Share this view</div>
+    <p class="note" style="margin:0 0 8px">The link records the rule, its numbers and the starting pattern (the same random start every time), not what you've painted.</p>
+    <input type="text" id="linkBox" readonly class="txt" spellcheck="false">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="copyLink">Copy link</button></div>
+    <div class="lbl" style="margin-top:12px">Load a view</div>
+    <input type="text" id="viewIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Paste a view link or code">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+    <p class="note" id="shareNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-info"><summary><span class="gt">Numbers</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="stats">
+    <div class="stat"><b id="s1">–</b><small id="s1l"></small></div>
+    <div class="stat"><b id="s2">–</b><small id="s2l"></small></div>
+    <div class="stat"><b id="s3">–</b><small id="s3l"></small></div>
+  </div><p class="note" id="statNote"></p></div>
+</div></details>
+
+<details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv"></span></summary><div class="gb">
+  <div class="explain">
+    <p id="about"></p>
+    <details class="topic"><summary>Three rules, endless life</summary>
+      <p>In 1970 John Conway invented a game with no players. Each square is alive or dead. Every step, a dead square with exactly three live neighbours comes alive, a live one with two or three survives, and all the rest die. That's all, yet out of it come gliders that crawl across the grid, guns that fire them forever, and even working computers built from glider streams.</p>
+      <div class="btns"><button class="btn try" data-try="life|conway|gun">A glider gun</button><button class="btn try" data-try="life|conway|acorn">An acorn: 7 cells, 5,206 steps of chaos</button></div>
+    </details>
+    <details class="topic"><summary>Change the rule, change the world</summary>
+      <p>The rule is written B (how many neighbours make a birth) / S (how many let a cell survive). Conway's is B3/S23. HighLife adds birth on six and grows replicators; Day &amp; Night is symmetric, so dead and alive behave alike; Maze grows corridors. Type your own and see what kind of world it makes.</p>
+      <div class="btns"><button class="btn try" data-try="life|wire">Wireworld circuits</button><button class="btn try" data-try="life|brain">Brian's Brain</button><button class="btn try" data-try="life|daynight">Day &amp; Night</button><button class="btn try" data-try="life|maze">Maze</button><button class="btn try" data-try="life|replicator">Replicator</button></div>
+    </details>
+    <details class="topic"><summary>Smooth life: Lenia</summary>
+      <p>Bert Chan's Lenia (2018) makes everything smooth: cells hold any amount between 0 and 1, they feel a soft ring of neighbours rather than eight squares, and they change a little at a time. With the right numbers and a carefully shaped start, creatures appear that hold their shape and glide, looking eerily like microscope life. From a random smear, as here, you more often see a world grow: coral-like tangles or fingerprint stripes spreading out from each patch. Try the two sliders: small changes decide whether everything dies, holds or takes over.</p>
+      <div class="btns"><button class="btn try" data-try="lenia|tangle">A coral tangle</button><button class="btn try" data-try="lenia|stripes">Fingerprints</button></div>
+    </details>
+    <details class="topic"><summary>How the leopard got its spots</summary>
+      <p>In 1952 Alan Turing asked how a smooth embryo could grow a pattern. His answer: two chemicals that spread at different speeds, one making more of itself and the other using it up. Here a feed brings in fresh chemical and a kill takes the other away. Small changes to those two numbers give spots, stripes, mazes or dividing cells, like the markings on fish, shells and big cats.</p>
+      <div class="btns"><button class="btn try" data-try="rd|mitosis">Cells that divide</button><button class="btn try" data-try="rd|maze">A maze, like a fingerprint</button><button class="btn try" data-try="rd|coral">Coral</button></div>
+    </details>
+  </div>
+</div></details>
+
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <p class="note" style="margin-top:0">Prints the pattern as a raised tile: live cells (or the strong chemical) stand up.</p>
+    <div class="lbl" style="margin-top:8px">Size (longest side)</div>
+    <div class="seg" id="prSize"><button data-mm="60">60 mm</button><button data-mm="90" class="on">90 mm</button><button data-mm="120">120 mm</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Height</span><input type="range" id="prHigh" min="0.6" max="5" step="0.1" value="1.6"><output id="prHigho">1.6 mm</output></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="prBtn">Download STL</button></div>
+    <p class="note" id="prNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><table class="keys" id="keyTable"></table></div>
+  <div class="sec"><label class="check" style="margin-top:0"><input type="checkbox" id="invertY"> Invert up / down (aeroplane style: ↑ tips the view down)</label>
+    <div class="row" style="margin-top:8px"><span style="width:110px">Navigation speed</span><input type="range" id="navSpeed" min="0.1" max="2" step="0.05" value="0.5"><output id="navSpeedo">0.50×</output></div>
+    <p class="note">Both are shared by every explorer and remembered in this browser.</p></div>
+</div></details>

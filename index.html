@@ -10,6 +10,14 @@
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="explorers/fractal/style.css">
 <link rel="stylesheet" href="explorers/polytope/style.css">
+<link rel="stylesheet" href="explorers/surface/style.css">
+<link rel="stylesheet" href="explorers/knot/style.css">
+<link rel="stylesheet" href="explorers/labyrinth/style.css">
+<link rel="stylesheet" href="explorers/complex/style.css">
+<link rel="stylesheet" href="explorers/attractor/style.css">
+<link rel="stylesheet" href="explorers/tiling/style.css">
+<link rel="stylesheet" href="explorers/wave/style.css">
+<link rel="stylesheet" href="explorers/life/style.css">
 <script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js" } }</script>
 </head>
 <body>
@@ -17,17 +25,28 @@
   <div class="stage" id="stage">
     <!-- each explorer's canvases, title and legend are mounted here (explorers/<name>/stage.html) -->
     <div class="loading" id="loading">Loading…</div>
-    <div id="stageBtns"><button class="sbtn" id="panelBtn">Hide panel</button><button class="sbtn" id="zenBtn">Full screen</button><button class="sbtn" id="resetBtn">Reset view</button></div>
+    <div id="stageBtns"><button class="sbtn" id="panelBtn">Hide panel</button><button class="sbtn" id="zenBtn">Full screen</button><button class="sbtn" id="resetBtn">Reset view</button><button class="sbtn" id="vizStageBtn" hidden title="Turn this explorer into a music visualizer">♫ Visualizer</button></div>
     <button class="sbtn" id="zenExit">Exit full screen ✕</button>
     <div id="pausedTag" hidden>Paused · Space to resume</div>
   </div>
 
   <aside id="panel">
     <div class="brand"><b>Math Explorer</b><small>pick an explorer</small></div>
-    <nav class="seg switcher" id="switcher">
-      <a href="#/fractal" data-explorer="fractal">Fractals</a>
-      <a href="#/polytope" data-explorer="polytope">4D Polytopes</a>
-    </nav>
+    <div class="xmenu" id="switcher">
+      <button class="xbtn" id="xBtn" aria-haspopup="true" aria-expanded="false"><span id="xName">Fractals</span><span class="xcaret">▾</span></button>
+      <nav class="xlist" id="xList" hidden>
+        <a href="#/fractal" data-explorer="fractal"><b>Fractals</b><small>Mandelbrot, Julia sets, 3D fractals</small></a>
+        <a href="#/polytope" data-explorer="polytope"><b>4D Polytopes</b><small>shapes from the fourth dimension</small></a>
+        <a href="#/surface" data-explorer="surface"><b>Surfaces</b><small>one-sided surfaces, soap films, curvature</small></a>
+        <a href="#/knot" data-explorer="knot"><b>Knots &amp; Links</b><small>knots, links, and a ride along them</small></a>
+        <a href="#/labyrinth" data-explorer="labyrinth"><b>Labyrinths</b><small>endless labyrinths, foams, mazes to solve</small></a>
+        <a href="#/complex" data-explorer="complex"><b>Complex Functions</b><small>colour the plane by where each point goes</small></a>
+        <a href="#/attractor" data-explorer="attractor"><b>Strange Attractors</b><small>chaos traced through time</small></a>
+        <a href="#/tiling" data-explorer="tiling"><b>Tilings</b><small>hyperbolic, kaleidoscope, never repeating</small></a>
+        <a href="#/wave" data-explorer="wave"><b>Waves &amp; Cymatics</b><small>ripples, Chladni plates, music you can see</small></a>
+        <a href="#/life" data-explorer="life"><b>Growing Patterns</b><small>Life, Lenia, reaction–diffusion</small></a>
+      </nav>
+    </div>
     <!-- each explorer's controls are mounted here (explorers/<name>/panel.html) -->
   </aside>
 </div>
@@ -47,6 +66,9 @@
     <div class="sec">
       <label class="check" style="margin-top:0"><input type="checkbox" id="sndOn" checked> React to the music</label>
       <div class="row"><span style="width:74px">Strength</span><input type="range" id="sndAmt" min="0" max="2" step="0.05" value="1"><output id="sndAmto">1.0×</output></div>
+      <div class="lbl" style="margin-top:12px">Intensity</div>
+      <div class="seg" id="sndIntensity"><button data-i="calm" class="on">Calm</button><button data-i="lively">Lively</button><button data-i="wild">Wild</button></div>
+      <p class="note" style="margin-top:6px">How big the reactions are in the newer explorers (Fractals and 4D Polytopes stay calm). Lively and Wild grow in loud passages and when a chorus or drop comes in. Their Visualizer starts at Lively.</p>
       <div class="lbl" style="margin-top:12px">What reacts</div>
       <label class="check" style="margin-top:0"><input type="checkbox" id="sndBeats" checked> Beats: something happens on every hit</label>
       <div class="seg" id="sndBeatStyle" style="margin-top:8px"><button data-s="flash" class="on">Flash</button><button data-s="pulse">Pulse the shape</button></div>

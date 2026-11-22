@@ -14,13 +14,19 @@
 //   locked                true when the tempo is steady enough for motion to follow it
 //   beats                 musical time in beats at the moment being heard (whole numbers fall on the beat)
 //   barOffset             which beat of four starts the bar (0..3)
+//   kick, snare           0..1, like beat but only for hits carried by the bass (kicks) or by the mids (snares, claps)
+//   kickCount, snareCount increase by one on each of those hits
+//   section, sectionKind  section counts the song's big changes: 'drop' when the energy jumps well above the last ten
+//                         seconds (a chorus or a drop comes in), 'calm' when it falls well below (a breakdown)
+//   lift                  0..1, jumps to 1 at a drop and fades over about two seconds
 import { FFT_SIZE, HOP } from './frames.js';
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 const ease = (dt, tau) => 1 - Math.exp(-dt / tau);   // fraction of the way to move for time constant tau
 
 /** Features at rest: what explorers see before any music has played. */
-export const restingFeatures = () => ({ playing: false, bass: 0, voice: 0, voiceSway: 0, frameDt: 1 / 60, treble: 0, level: 0, energy: 0, beat: 0, beatCount: 0, bpm: 0, tempoConf: 0, locked: false, beats: 0, barOffset: 0 });
+export const restingFeatures = () => ({ playing: false, bass: 0, voice: 0, voiceSway: 0, frameDt: 1 / 60, treble: 0, level: 0, energy: 0, beat: 0, beatCount: 0, bpm: 0, tempoConf: 0, locked: false, beats: 0, barOffset: 0,
+  kick: 0, snare: 0, kickCount: 0, snareCount: 0, section: 0, sectionKind: '', lift: 0 });
 
 // Follows the recent range of a value in dB (top falls slowly, bottom rises slowly) and maps it to 0..1.
 class Leveller {
@@ -63,7 +69,8 @@ export class Analysis {
     this.o1 = 0; this.o2 = 0; this.low1 = 0; this.lastHit = -1; this.nextEstimate = 0;
     this.cand = null; this.candN = 0; this.slot = [0, 0, 0, 0];
     this.beatPos = 0; this.bpT = 0; this.corr = 0;   // beat clock: beatPos beats at audio time bpT; corr = correction still to glide in
-    this.beatRaw = 0; this.voiceSlow = 0; this.voiceMean = 0;
+    this.beatRaw = 0; this.voiceSlow = 0; this.voiceMean = 0; this.kickRaw = 0; this.snareRaw = 0; this.liftRaw = 0; this.mid1 = 0;
+    this.eSlow = null; this.lastSection = -Infinity; this.tFirst = null;   // sections: the energy's slow average, and when the last change came
     this.loudSmooth = null; this.tShown = null; this.pausedAt = null; this.skipUntil = -Infinity;
   }
 
@@ -93,10 +100,24 @@ export class Analysis {
     const thr = this.onset.mean + 2 * this.onset.sd;
     if (this.o1 > thr && this.o1 > 1.6 && this.o1 >= this.o2 && this.o1 >= o && t - dt - this.lastHit > 0.12) {
       const rel = (this.o1 - thr) / (thr + 1e-6);
-      this.hit(t - dt, clamp(0.3 + 0.6 * rel, 0, 1) * (0.45 + 0.55 * clamp(this.low1 / 2, 0, 1)));
+      const lowShare = 0.65 * this.low1 / (this.o1 + 1e-6);   // how much of this hit is bass: a kick, or a snare / clap
+      this.hit(t - dt, clamp(0.3 + 0.6 * rel, 0, 1) * (0.45 + 0.55 * clamp(this.low1 / 2, 0, 1)), lowShare > 0.55 ? 'kick' : this.mid1 > 1.4 ? 'snare' : '');
     }
     this.onset.update(o, dt);
-    this.o2 = this.o1; this.o1 = o; this.low1 = low;
+    this.o2 = this.o1; this.o1 = o; this.low1 = low; this.mid1 = mid;
+
+    // sections: the energy (about the last second) against its slow average (about ten seconds). A big rise is a drop or
+    // a chorus coming in, a big fall a breakdown. Not in the first twelve seconds (the song's range isn't known yet), and
+    // at least sixteen seconds apart (a song section lasts longer than that).
+    if (!silent) {
+      if (this.tFirst === null) this.tFirst = t;
+      this.eSlow = this.eSlow === null ? f.energy : this.eSlow + (f.energy - this.eSlow) * ease(dt, 10);
+      if (t - this.tFirst > 12 && t - this.lastSection > 16) {
+        const d = f.energy - this.eSlow;
+        if (d > 0.2 && f.energy > 0.55) { f.section++; f.sectionKind = 'drop'; this.liftRaw = 1; this.lastSection = t; }
+        else if (d < -0.2 && f.energy < 0.45) { f.section++; f.sectionKind = 'calm'; this.lastSection = t; }
+      }
+    }
 
     // onset history for tempo, phase and bar
     const i = this.n++ % this.len; this.envLow[i] = low; this.envMid[i] = mid;
@@ -104,9 +125,10 @@ export class Analysis {
     if (t >= this.nextEstimate) { this.nextEstimate = t + 0.5; this.estimateTempo(t); if (f.bpm) { this.alignPhase(t); this.alignBar(t); } }
   }
 
-  hit(t, strength) {
+  hit(t, strength, kind) {
     const f = this.f; this.lastHit = t; f.beatCount++;
     this.beatRaw = Math.max(this.beatRaw, strength);
+    if (kind === 'kick') { this.kickRaw = Math.max(this.kickRaw, strength); f.kickCount++; } else if (kind === 'snare') { this.snareRaw = Math.max(this.snareRaw, strength); f.snareCount++; }
     if (this.hits) this.hits.push([t, f.bpm ? this.posAt(t) : NaN, strength]);
     if (!f.bpm) return;
     // a strong hit close to a beat nudges the clock a little between the twice-a-second phase checks
@@ -134,6 +156,11 @@ export class Analysis {
     // the punch: the hit's raw envelope fades over 0.25 s; what explorers see rises towards it over at least ~1.5 frames
     this.beatRaw *= Math.exp(-dt / 0.25);
     f.beat += (this.beatRaw - f.beat) * ease(dt, this.beatRaw > f.beat ? Math.max(0.035, 1.5 * f.frameDt) : 0.06);
+    // kicks and snares the same way (a little shorter), and the lift after a drop over about two seconds
+    this.kickRaw *= Math.exp(-dt / 0.2); this.snareRaw *= Math.exp(-dt / 0.2); this.liftRaw *= Math.exp(-dt / 2);
+    const rise = Math.max(0.035, 1.5 * f.frameDt);
+    f.kick += (this.kickRaw - f.kick) * ease(dt, this.kickRaw > f.kick ? rise : 0.05); f.snare += (this.snareRaw - f.snare) * ease(dt, this.snareRaw > f.snare ? rise : 0.05);
+    f.lift += (this.liftRaw - f.lift) * ease(dt, this.liftRaw > f.lift ? 0.15 : 0.3);
     // vocals as a slow sway around their own recent level
     this.voiceSlow += (f.voice - this.voiceSlow) * ease(dt, 0.5); this.voiceMean += (f.voice - this.voiceMean) * ease(dt, 8);
     f.voiceSway = playing ? clamp((this.voiceSlow - this.voiceMean) * 3, -1, 1) : f.voiceSway * (1 - ease(dt, 0.3));

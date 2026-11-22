@@ -1,0 +1,109 @@
+<details class="grp" id="g-shapes"><summary><span class="gt">Knots &amp; links</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+  <div class="sec" id="shapeLists"></div>
+  <div class="sec" id="paramSec"><div id="params"></div></div>
+</div></details>
+
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="btns"><button class="btn primary" id="rideBtn">Ride the knot</button><button class="btn" id="resetBtn2">Reset view</button></div>
+    <p class="note" id="rideNote">Travel along the knot like a roller coaster. Arrows look around, A and D slide you round the tube, + and − change speed.</p>
+    <div class="lbl" style="margin-top:10px">Seat</div>
+    <div class="seg" id="seat"><button data-s="top" class="on">Riding on top</button><button data-s="inside">Inside the tube</button></div>
+    <label class="check"><input type="checkbox" id="watch"> Watch the other strands as they pass (T)</label>
+    <div class="row"><span style="width:74px">Ride speed</span><input type="range" id="rideSpeed" min="0.1" max="3" step="0.05" value="1"><output id="rideSpeedo">1.0×</output></div>
+  </div>
+  <div class="sec">
+    <label class="check" style="margin-top:0"><input type="checkbox" id="spin" checked> Keep turning (when not riding)</label>
+    <div class="row"><span style="width:74px">Turn speed</span><input type="range" id="speed" min="-3" max="3" step="0.05" value="0.5"><output id="speedo">0.5×</output></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-view"><summary><span class="gt">View &amp; detail</span><span class="gv" id="gv-view"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="row"><span style="width:74px">Detail</span><input type="range" id="detail" min="1" max="5" step="1" value="3"><output id="detailo">3</output></div>
+    <div class="row"><span style="width:74px">Tube</span><input type="range" id="tube" min="0.02" max="0.14" step="0.005" value="0.07"><output id="tubeo">0.07</output></div>
+    <div class="lbl" style="margin-top:10px">Draw as</div>
+    <div class="seg" id="drawMode"><button data-d="solid" class="on">Solid tube</button><button data-d="wire">Wire</button><button data-d="both">Both</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-style"><summary><span class="gt">Colour &amp; style</span><span class="gv" id="gv-style"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Colour by</div>
+    <div class="seg g3" id="cmode"><button data-c="along" class="on">Along</button><button data-c="ring">Each ring</button><button data-c="height">Height</button><button data-c="bands">Bands</button><button data-c="stripe">Stripe</button><button data-c="solid">One colour</button></div>
+    <p class="note" id="cmodeNote"></p>
+    <div class="lbl" style="margin-top:12px">Palette</div>
+    <div class="swatches" id="palettes"></div>
+    <p class="note" id="palName" style="margin-top:6px"></p>
+    <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+    <div class="row" style="margin-top:10px"><span style="width:74px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
+    <div class="lbl" style="margin-top:12px">Finish</div>
+    <div class="seg" id="finish"><button data-f="satin" class="on">Satin</button><button data-f="gloss">Glossy</button><button data-f="metal">Metal</button><button data-f="flat">Neon</button><button data-f="bubble">Bubble</button></div>
+    <div class="lbl" style="margin-top:12px">Background</div>
+    <div class="seg" id="bg"><button data-b="#0b0d12" class="on">Midnight</button><button data-b="#000000">Black</button><button data-b="#f3efe6">Paper</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-share"><summary><span class="gt">Save, share &amp; record</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="btns"><button class="btn" id="snap">Save image (PNG)</button></div><p class="note" id="dlnote">Saves exactly what you see.</p></div>
+  <div class="sec">
+    <div class="lbl">Share this view</div>
+    <p class="note" style="margin:0 0 8px">The link records the knot, its settings, the colours and the view.</p>
+    <input type="text" id="linkBox" readonly class="txt" spellcheck="false">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="copyLink">Copy link</button></div>
+    <div class="lbl" style="margin-top:12px">Load a view</div>
+    <input type="text" id="viewIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Paste a view link or code">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+    <p class="note" id="shareNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-info"><summary><span class="gt">Numbers</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="stats">
+    <div class="stat"><b id="s1">–</b><small id="s1l"></small></div>
+    <div class="stat"><b id="s2">–</b><small id="s2l"></small></div>
+    <div class="stat"><b id="s3">–</b><small id="s3l"></small></div>
+  </div><p class="note" id="statNote"></p></div>
+</div></details>
+
+<details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv"></span></summary><div class="gb">
+  <div class="explain">
+    <p id="about"></p>
+    <details class="topic"><summary>When are two tangles the same?</summary>
+      <p>A mathematical knot is a loop with its ends joined, so it can't be untied. Two knots are the same if one can be wiggled into the other without cutting. The <strong>crossing number</strong> is the fewest crossings any drawing of it can have: 3 for the trefoil, 4 for the figure-eight. The <strong>unknotting number</strong> is how many crossings you must swap to undo it.</p>
+      <div class="btns"><button class="btn try" data-try="trefoil">Trefoil</button><button class="btn try" data-try="figure8">Figure-eight</button><button class="btn try" data-try="lissajous">The same knot as 5₂, drawn differently</button></div>
+    </details>
+    <details class="topic"><summary>Riding a knot</summary>
+      <p>Press <strong>G</strong> and you travel along the knot. From <strong>on top</strong> you see the other strands sweep over and under you at every crossing: that over-and-under pattern is what makes it a knot. Ride round the trefoil and you pass under, over, under, over… and arrive back where you started without ever coming to an end.</p>
+      <div class="btns"><button class="btn try" data-try="trefoil|ride">Ride the trefoil</button><button class="btn try" data-try="k74|ride">Ride the endless knot</button></div>
+    </details>
+    <details class="topic"><summary>Links and linking numbers</summary>
+      <p>Several loops tangled together make a <strong>link</strong>. Count how many times one loop winds round another: that's the <strong>linking number</strong>. Two rings of a chain have linking number 1. But the number doesn't tell the whole story: the Whitehead link has linking number 0 and still can't be pulled apart, and the Borromean rings fall apart if you cut any one of them.</p>
+      <div class="btns"><button class="btn try" data-try="whitehead">Whitehead link</button><button class="btn try" data-try="borromean">Borromean rings</button><button class="btn try" data-try="borromean|ride">Ride one Borromean ring</button></div>
+    </details>
+    <details class="topic"><summary>Knots on a doughnut</summary>
+      <p>Wind a string p times the long way round a doughnut and q times the short way and you get the torus knot (p, q). When p and q share no factor it's one knot; when they do, it falls into several linked loops. The trefoil is (3, 2) and the cinquefoil (5, 2).</p>
+      <div class="btns"><button class="btn try" data-try="torusknot">Torus knots</button></div>
+    </details>
+    <details class="topic"><summary>Granny and square</summary>
+      <p>Tie two trefoils one after the other. If both twist the same way you get the granny knot; if one is the mirror image of the other you get the square (reef) knot. They are made of the same pieces and have the same Alexander polynomial, yet no wiggling turns one into the other. Sailors know the difference: the granny slips.</p>
+      <div class="btns"><button class="btn try" data-try="granny">Granny</button><button class="btn try" data-try="square">Square</button></div>
+    </details>
+  </div>
+</div></details>
+
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Size (longest side)</div>
+    <div class="seg" id="prSize"><button data-mm="60">60 mm</button><button data-mm="80" class="on">80 mm</button><button data-mm="120">120 mm</button></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="prBtn">Download STL</button></div>
+    <p class="note" id="prNote">Knots print as solid tubes, at least 1.8 mm thick.</p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><table class="keys" id="keyTable"></table></div>
+  <div class="sec"><label class="check" style="margin-top:0"><input type="checkbox" id="invertY"> Invert up / down (aeroplane style: ↑ tips the view down)</label>
+    <div class="row" style="margin-top:8px"><span style="width:110px">Navigation speed</span><input type="range" id="navSpeed" min="0.1" max="2" step="0.05" value="0.5"><output id="navSpeedo">0.50×</output></div>
+    <p class="note">Both are shared by every explorer and remembered in this browser.</p></div>
+</div></details>

@@ -1,0 +1,149 @@
+<details class="grp" id="g-shapes"><summary><span class="gt">Tilings</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">On a sphere</div>
+    <div class="seg g3 shapes" id="sphList"></div>
+    <div class="lbl" style="margin-top:10px">Flat</div>
+    <div class="seg g3 shapes" id="flatList"></div>
+    <div class="lbl" style="margin-top:10px">Hyperbolic</div>
+    <div class="seg g3 shapes" id="hypList"></div>
+    <div class="lbl" style="margin-top:10px">Uniform: two or three kinds of tile</div>
+    <div class="seg g3 shapes" id="uniList"></div>
+    <div class="lbl" style="margin-top:10px">Never repeating</div>
+    <div class="seg g2 shapes" id="penList"><button data-pen="rh">Penrose rhombs</button><button data-pen="kd">Kites &amp; darts</button></div>
+    <div class="seg g2 shapes" id="qcList" style="margin-top:6px"></div>
+    <div class="lbl" style="margin-top:10px">More Archimedean (not from mirrors)</div>
+    <div class="seg g3 shapes" id="archList"></div>
+    <div class="lbl" style="margin-top:10px">The 17 wallpaper groups</div>
+    <div class="seg g4 shapes" id="wallList"></div>
+    <div class="lbl" style="margin-top:10px">Truchet tiles</div>
+    <div class="seg g3 shapes" id="truList"></div>
+  </div>
+  <div class="sec" id="pqSec">
+    <div class="row"><span style="width:96px">Sides (p)</span><input type="range" id="pIn" min="3" max="12" step="1" value="7"><output id="pIno">7</output></div>
+    <div class="row"><span style="width:96px">At each corner (q)</span><input type="range" id="qIn" min="3" max="12" step="1" value="3"><output id="qIno">3</output></div>
+    <p class="note" id="pqNote"></p>
+    <div class="lbl" style="margin-top:10px">Kind (Wythoff's construction)</div>
+    <div class="seg g2" id="wyKind"></div>
+    <p class="note" id="wyNote"></p>
+  </div>
+  <div class="sec" id="penSec" hidden>
+    <div class="row"><span style="width:96px">Steps</span><input type="range" id="level" min="0" max="9" step="1" value="6"><output id="levelo">6</output></div>
+    <p class="note" style="margin-top:2px">Each step cuts every tile into smaller copies of the two shapes. G takes one more step.</p>
+    <div class="btns" style="margin-top:8px"><button class="btn" id="penGo">One more step</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+  <div class="sec" id="glideSec">
+    <div class="btns"><button class="btn" id="goBtn">Glide</button><button class="btn" id="resetBtn2">Back to the middle</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Glide speed</span><input type="range" id="speed" min="0.1" max="3" step="0.05" value="1"><output id="speedo">1.0×</output></div>
+    <label class="check"><input type="checkbox" id="spin"> Keep turning</label>
+  </div>
+  <div class="sec" id="patSec" hidden>
+    <div class="btns"><button class="btn" id="patNew">A new random pattern</button></div>
+    <p class="note" style="margin-top:6px">Truchet tiles and quasicrystals are laid out from a random number, and wallpaper motifs are drawn from one: this makes a fresh one. G and N do the same.</p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-view"><summary><span class="gt">View &amp; detail</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec" id="modelSec">
+    <div class="lbl">Drawn as</div>
+    <div class="seg" id="model"></div>
+    <p class="note" id="modelNote"></p>
+  </div>
+  <div class="sec">
+    <label class="check" style="margin-top:0"><input type="checkbox" id="edges" checked> Tile edges</label>
+    <label class="check" id="dualRow"><input type="checkbox" id="dual"> The dual tiling (centres joined across each edge)</label>
+    <label class="check" id="triRow"><input type="checkbox" id="tri"> The mirror lines (each tile cut into triangles)</label>
+    <div class="row" style="margin-top:8px"><span style="width:96px">Line width</span><input type="range" id="lw" min="0.2" max="3" step="0.05" value="1"><output id="lwo">1.0×</output></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-style"><summary><span class="gt">Colour &amp; style</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Colour by</div>
+    <div class="seg g2" id="cmode"></div>
+    <p class="note" id="cmodeNote"></p>
+    <div class="lbl" style="margin-top:12px">Palette</div>
+    <div class="swatches" id="palettes"></div>
+    <p class="note" id="palName" style="margin-top:6px"></p>
+    <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
+    <div class="lbl" style="margin-top:12px">Background</div>
+    <div class="seg" id="bg"><button data-b="#0b0d12" class="on">Midnight</button><button data-b="#000000">Black</button><button data-b="#f3efe6">Paper</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-share"><summary><span class="gt">Save, share &amp; record</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="btns"><button class="btn" id="snap">Save image (PNG)</button></div><p class="note" id="dlnote">Saves exactly what you see.</p></div>
+  <div class="sec">
+    <div class="lbl">Share this view</div>
+    <p class="note" style="margin:0 0 8px">The link records the tiling, where you've glided to, the colours and the view.</p>
+    <input type="text" id="linkBox" readonly class="txt" spellcheck="false">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="copyLink">Copy link</button></div>
+    <div class="lbl" style="margin-top:12px">Load a view</div>
+    <input type="text" id="viewIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Paste a view link or code">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+    <p class="note" id="shareNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-info"><summary><span class="gt">Numbers</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="stats">
+    <div class="stat"><b id="s1">–</b><small id="s1l"></small></div>
+    <div class="stat"><b id="s2">–</b><small id="s2l"></small></div>
+    <div class="stat"><b id="s3">–</b><small id="s3l"></small></div>
+  </div><p class="note" id="statNote"></p></div>
+</div></details>
+
+<details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv"></span></summary><div class="gb">
+  <div class="explain">
+    <p id="about"></p>
+    <details class="topic"><summary>The corners decide the world</summary>
+      <p>Put q tiles with p sides round every corner. Each corner of a flat p-sided tile is 180 − 360 ÷ p degrees. If q of them add up to exactly 360, the tiles lie flat: that only happens for squares (4 round a corner), triangles (6) and hexagons (3). If they add up to less, the tiles fold up into a <strong>ball</strong>: the five Platonic solids. If they add up to more, there's too much tile to lie flat: it ruffles into the <strong>hyperbolic plane</strong>, which never runs out of room.</p>
+      <div class="btns"><button class="btn try" data-try="4|4">Squares</button><button class="btn try" data-try="5|3">Pentagons on a ball</button><button class="btn try" data-try="5|4">Pentagons, hyperbolic</button></div>
+    </details>
+    <details class="topic"><summary>The hyperbolic disc</summary>
+      <p>Henri Poincaré's map squeezes the whole infinite hyperbolic plane into a disc. Every tile here is really the same size; they only look smaller near the rim, which is infinitely far away. Straight lines are drawn as arcs that meet the rim at right angles. M. C. Escher used this map for his <em>Circle Limit</em> prints. Press <strong>G</strong> to glide and you're walking through it: the tiles keep coming, and there are always more.</p>
+      <div class="btns"><button class="btn try" data-try="7|3|glide">Glide through {7, 3}</button><button class="btn try" data-try="4|6|half">The half-plane map</button></div>
+    </details>
+    <details class="topic"><summary>Mirrors make the whole pattern</summary>
+      <p>Turn on <strong>The mirror lines</strong>: every tile is cut into 2p identical triangles, each the mirror image of its neighbours. One triangle, reflected over and over in its three sides, makes the whole tiling. That's exactly how this picture is drawn: each point on screen is reflected back into the first triangle, counting how many mirrors it crossed.</p>
+      <div class="btns"><button class="btn try" data-try="3|7|tri">Triangles in {3, 7}</button><button class="btn try" data-try="4|3|tri">On a cube</button></div>
+    </details>
+    <details class="topic"><summary>One triangle, seven tilings</summary>
+      <p>Willem Abraham Wythoff noticed in 1918 that the mirror triangle makes more than the regular tiling. Put the corner of the tiles somewhere else in the triangle, at the same distance from some of its mirrors, and reflect: the edges from that point make new tilings with two or three kinds of tile, all with every corner alike. From the dodecahedron's triangle come the icosidodecahedron, the rhombicosidodecahedron and the truncated icosahedron, which is the pattern on a football.</p>
+      <div class="btns"><button class="btn try" data-try="5|3|bitruncated">A football</button><button class="btn try" data-try="6|3|cantellated">3.4.6.4</button><button class="btn try" data-try="7|3|bitruncated">A hyperbolic football</button></div>
+    </details>
+    <details class="topic"><summary>Dual tilings</summary>
+      <p>Put a dot in every tile and join the dots of tiles that share an edge. You get another tiling, the <strong>dual</strong>, with p and q swapped: hexagons give triangles, the cube gives the octahedron. Turn on <strong>The dual tiling</strong> to see both at once.</p>
+      <div class="btns"><button class="btn try" data-try="6|3|dual">Hexagons and their dual</button></div>
+    </details>
+    <details class="topic"><summary>Seventeen ways to repeat</summary>
+      <p>Wallpaper, tiled floors and fabric repeat in two directions. Besides sliding, a pattern can have turns (by a half, a third, a quarter or a sixth), mirrors, and glides (a mirror and a slide at once). There are exactly 17 ways to combine them, no more. The motif here has no symmetry of its own, so you can see each copy turned or mirrored.</p>
+      <div class="btns"><button class="btn try" data-try="pat|wp_p4g">p4g</button><button class="btn try" data-try="pat|wp_pgg">pgg: glides, no mirrors</button><button class="btn try" data-try="pat|wp_p6m">p6m</button></div>
+    </details>
+    <details class="topic"><summary>Patterns that never repeat</summary>
+      <p>In 1974 Roger Penrose found two tile shapes that can cover the whole plane, but never in a repeating pattern: slide a copy of it any distance and it never fits back on itself. Yet it's far from random. It has five-fold symmetry (impossible for any repeating pattern), and the count of the two tiles tends to the <strong>golden ratio</strong>, 1.618…. In 1982 Dan Shechtman found crystals arranged this way, quasicrystals, and won a Nobel Prize for it.</p>
+      <div class="btns"><button class="btn try" data-try="pen|rh">Penrose rhombs</button><button class="btn try" data-try="pen|kd">Kites and darts</button><button class="btn try" data-try="pat|qc8">Ammann–Beenker</button><button class="btn try" data-try="pat|hat">The hat</button></div>
+    </details>
+  </div>
+</div></details>
+
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <p class="note" style="margin-top:0">Prints the view as a tile: a base with the edges standing up, like a coaster or a stamp.</p>
+    <div class="lbl" style="margin-top:8px">Size (longest side)</div>
+    <div class="seg" id="prSize"><button data-mm="60">60 mm</button><button data-mm="90" class="on">90 mm</button><button data-mm="120">120 mm</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Height</span><input type="range" id="prHigh" min="0.6" max="4" step="0.1" value="1.6"><output id="prHigho">1.6 mm</output></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="prBtn">Download STL</button></div>
+    <p class="note" id="prNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><table class="keys" id="keyTable"></table></div>
+  <div class="sec"><label class="check" style="margin-top:0"><input type="checkbox" id="invertY"> Invert up / down (aeroplane style: ↑ tips the view down)</label>
+    <div class="row" style="margin-top:8px"><span style="width:110px">Navigation speed</span><input type="range" id="navSpeed" min="0.1" max="2" step="0.05" value="0.5"><output id="navSpeedo">0.50×</output></div>
+    <p class="note">Both are shared by every explorer and remembered in this browser.</p></div>
+</div></details>

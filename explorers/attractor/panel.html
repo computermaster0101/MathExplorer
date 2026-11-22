@@ -1,0 +1,115 @@
+<details class="grp" id="g-shapes"><summary><span class="gt">Shapes</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Flows (a point moving through time, in 3D)</div>
+    <div class="seg g2 shapes" id="flowList"></div>
+    <div class="lbl" style="margin-top:12px">Maps (a point jumping, again and again, in 2D)</div>
+    <div class="seg g3 shapes" id="mapList"></div>
+  </div>
+  <div class="sec" id="paramSec">
+    <div class="lbl">The rule's numbers</div>
+    <div id="params"></div>
+    <div class="btns" style="margin-top:8px"><button class="btn" id="defaultsBtn">Back to the usual numbers</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+  <div class="sec" id="viewSec">
+    <div class="lbl">Show</div>
+    <div class="seg" id="mode"><button data-m="path" class="on">Path</button><button data-m="swarm">Swarm</button><button data-m="butterfly">Butterfly effect</button></div>
+    <p class="note" id="modeNote"></p>
+  </div>
+  <div class="sec">
+    <div class="btns"><button class="btn" id="goBtn">Start again</button><button class="btn" id="newBtn">New starting point</button></div>
+    <div class="row" style="margin-top:8px"><span style="width:74px">Speed</span><input type="range" id="speed" min="0.1" max="4" step="0.05" value="1"><output id="speedo">1.0×</output></div>
+    <label class="check" id="spinRow"><input type="checkbox" id="spin" checked> Keep turning</label>
+  </div>
+</div></details>
+
+<details class="grp" id="g-view"><summary><span class="gt">View &amp; detail</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec" id="flowView">
+    <div class="row"><span style="width:84px">Path length</span><input type="range" id="pathLen" min="2000" max="60000" step="1000" value="20000"><output id="pathLeno">20k</output></div>
+    <div class="row"><span style="width:84px">Particles</span><input type="range" id="count" min="50" max="3000" step="50" value="800"><output id="counto">800</output></div>
+    <div class="row"><span style="width:84px">Trails</span><input type="range" id="trail" min="10" max="200" step="5" value="60"><output id="trailo">60</output></div>
+  </div>
+  <div class="sec" id="mapView" hidden>
+    <p class="note" style="margin-top:0">Drag to move and scroll to zoom: the picture builds up again at every new view. Hénon's curves split into finer curves as you zoom.</p>
+    <div class="row"><span style="width:84px">Exposure</span><input type="range" id="expo" min="0.3" max="3" step="0.05" value="1"><output id="expoo">1.0×</output></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-style"><summary><span class="gt">Colour &amp; style</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Colour by</div>
+    <div class="seg" id="cmode"><button data-c="speed" class="on">Speed</button><button data-c="height">Height</button><button data-c="age">Age</button></div>
+    <div class="lbl" style="margin-top:12px">Palette</div>
+    <div class="swatches" id="palettes"></div>
+    <p class="note" id="palName" style="margin-top:6px"></p>
+    <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+    <div class="row" style="margin-top:10px"><span style="width:74px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
+    <div class="lbl" style="margin-top:12px">Finish</div>
+    <div class="seg" id="finish"><button data-f="lines" class="on">Lines</button><button data-f="glow">Glow</button></div>
+    <div class="lbl" style="margin-top:12px">Background</div>
+    <div class="seg" id="bg"><button data-b="#0b0d12" class="on">Midnight</button><button data-b="#000000">Black</button><button data-b="#f3efe6">Paper</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-share"><summary><span class="gt">Save, share &amp; record</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="btns"><button class="btn" id="snap">Save image (PNG)</button></div><p class="note" id="dlnote">Saves exactly what you see.</p></div>
+  <div class="sec">
+    <div class="lbl">Share this view</div>
+    <p class="note" style="margin:0 0 8px">The link records the system, its numbers, what's shown, the colours and the view.</p>
+    <input type="text" id="linkBox" readonly class="txt" spellcheck="false">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="copyLink">Copy link</button></div>
+    <div class="lbl" style="margin-top:12px">Load a view</div>
+    <input type="text" id="viewIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Paste a view link or code">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+    <p class="note" id="shareNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-info"><summary><span class="gt">Numbers</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="stats">
+    <div class="stat"><b id="s1">–</b><small id="s1l"></small></div>
+    <div class="stat"><b id="s2">–</b><small id="s2l"></small></div>
+    <div class="stat"><b id="s3">–</b><small id="s3l"></small></div>
+  </div><p class="note">The chaos rate (largest Lyapunov exponent) is measured live: how fast two neighbouring starts drift apart. Above zero means chaos.</p></div>
+</div></details>
+
+<details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv"></span></summary><div class="gb">
+  <div class="explain">
+    <p id="about"></p>
+    <details class="topic"><summary>Chaos: rules without randomness</summary>
+      <p>Every system here follows an exact rule: nothing is random. Yet the path never repeats, and you can't predict it far ahead. That is <strong>chaos</strong>: tiny differences at the start grow, doubling again and again, until two paths that began side by side have nothing in common. The chaos rate in Numbers measures how fast.</p>
+      <div class="btns"><button class="btn try" data-try="lorenz|butterfly">Try it: the butterfly effect</button></div>
+    </details>
+    <details class="topic"><summary>Strange attractors</summary>
+      <p>Wherever you start, the point is pulled onto the same shape and then wanders over it forever. That shape is an <strong>attractor</strong>. These ones are <strong>strange</strong>: they are fractals, with structure at every scale, so their dimension isn't a whole number. The Lorenz attractor is about 2.06-dimensional: a little more than a surface.</p>
+      <div class="btns"><button class="btn try" data-try="lorenz|swarm">A swarm on the Lorenz attractor</button><button class="btn try" data-try="aizawa|path">Aizawa</button></div>
+    </details>
+    <details class="topic"><summary>Stretch and fold</summary>
+      <p>How can paths spread apart forever and still stay on a shape of fixed size? The flow stretches every small blob of starting points, then folds it back over itself, like kneading dough. Watch the Rössler band: it spreads out flat, lifts, folds over and falls back in. Do that again and again and you get chaos.</p>
+      <div class="btns"><button class="btn try" data-try="rossler|swarm">Watch Rössler fold</button></div>
+    </details>
+    <details class="topic"><summary>Maps: jumping instead of flowing</summary>
+      <p>A <strong>map</strong> jumps the point straight to its next place instead of moving it smoothly. Jump millions of times and colour each spot by how often it was landed on, and the picture appears like a photograph developing. The Hénon map is the simplest chaotic one: zoom into its curve and each line becomes a bundle of finer lines.</p>
+      <div class="btns"><button class="btn try" data-try="henon|map">The Hénon map</button><button class="btn try" data-try="clifford|map">Clifford</button></div>
+    </details>
+  </div>
+</div></details>
+
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Size (longest side)</div>
+    <div class="seg" id="prSize"><button data-mm="60">60 mm</button><button data-mm="80" class="on">80 mm</button><button data-mm="120">120 mm</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:74px">Thickness</span><input type="range" id="prThick" min="0.8" max="3" step="0.1" value="1.2"><output id="prThicko">1.2 mm</output></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="prBtn">Download STL</button></div>
+    <p class="note" id="prNote">Flows print as a tube along the path; maps print as a relief tile, higher where the point landed more often.</p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><table class="keys" id="keyTable"></table></div>
+  <div class="sec"><label class="check" style="margin-top:0"><input type="checkbox" id="invertY"> Invert up / down (aeroplane style: ↑ tips the view down)</label>
+    <div class="row" style="margin-top:8px"><span style="width:110px">Navigation speed</span><input type="range" id="navSpeed" min="0.1" max="2" step="0.05" value="0.5"><output id="navSpeedo">0.50×</output></div>
+    <p class="note">Both are shared by every explorer and remembered in this browser.</p></div>
+</div></details>

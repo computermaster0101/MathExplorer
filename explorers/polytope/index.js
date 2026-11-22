@@ -40,6 +40,9 @@ import { resize, startLoop, stopLoop } from './loop.js';
 import { applyView, showView } from './io/share.js';
 import { onKey } from './input/keyboard.js';
 import { parseRoute } from '../../js/shell/route.js';
+import { addRecorder } from '../../js/common/motion.js';
+import { st } from './state.js';
+import { SHAPES } from './geometry/polytopes.js';
 
 applyMorph(false);
 setMode('explore'); setZoomZ(8.5); resize();
@@ -47,7 +50,9 @@ setMode('explore'); setZoomZ(8.5); resize();
 
 // ---------- lifecycle (see js/main.js) ----------
 export function start(){ resize(); startLoop(); }
-export function stop(){ stopLoop(); }
+// Record video (the 3D view and any insets on screen), with the music
+const REC = addRecorder({ stage: document.getElementById('c').parentElement, name: () => (st.mode === 'explore' || st.mode === 'slice' ? SHAPES[st.shape].name : 'tesseract-' + st.mode), bg: () => st.bg });
+export function stop(){ stopLoop(); REC.stop(); }
 export const reset = resetAll;
 export const layoutChanged = resize;
 export { onKey, showView };

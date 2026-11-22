@@ -22,8 +22,16 @@ import { setKeyHandler, syncKeyPrefs } from './shell/keys.js';
 import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
 
 const EXPLORERS = {
-  fractal:  { title: 'Fractals' },
-  polytope: { title: '4D Polytopes' },
+  fractal:   { title: 'Fractals' },
+  polytope:  { title: '4D Polytopes' },
+  surface:   { title: 'Surfaces' },
+  knot:      { title: 'Knots & Links' },
+  labyrinth: { title: 'Labyrinths' },
+  complex:   { title: 'Complex Functions' },
+  attractor: { title: 'Strange Attractors' },
+  tiling:    { title: 'Tilings' },
+  wave:      { title: 'Waves & Cymatics' },
+  life:      { title: 'Growing Patterns' },
 };
 
 const $ = id => document.getElementById(id);
@@ -47,6 +55,7 @@ async function mount(name) {
 // shared panel groups (Music & sound) sit inside the active explorer's panel, right after its Colour & style group
 function attach({ stageEl, panelEl }) {
   stage.insertBefore(stageEl, $('stageBtns')); panel.append(panelEl); syncKeyPrefs(panelEl);
+  $('vizStageBtn').hidden = true;   // the explorer's Visualizer (js/common/visualizer.js) shows it again if it has one
   const ctl = panelEl.querySelector('#g-style');
   panelEl.insertBefore(soundGroup, ctl ? ctl.nextSibling : null);
 }
@@ -54,14 +63,21 @@ function detach({ stageEl, panelEl }) { $('shellParts').append(soundGroup); stag
 
 function markSwitcher(name) {
   for (const a of document.querySelectorAll('#switcher a')) a.classList.toggle('on', a.dataset.explorer === name);
+  $('xName').textContent = EXPLORERS[name].title;
   document.title = `${EXPLORERS[name].title} · Math Explorer`;
 }
 
 let queue = Promise.resolve();
 const route = () => { queue = queue.then(show).catch(e => console.error(e)); };
 
+// shapes that moved to their own explorer: old links to them still open them, in their new home
+const MOVED = { surface: { knot: ['unknot', 'trefoil', 'figure8', 'cinquefoil', 'torusknot', 'lissajous', 'k61', 'k62', 'k63', 'k72', 'k73', 'k74', 'granny', 'square', 'hopf', 'solomon', 'whitehead', 'chain', 'olympic', 'borromean'],
+  labyrinth: ['gyroid', 'schwarzP', 'schwarzD', 'neovius', 'lidinoid', 'iwp'] } };
+function movedTo(name, code) { const m = MOVED[name], k = new URLSearchParams(code).get('s'); if (!m || !k) return null; for (const to in m) if (EXPLORERS[to] && m[to].includes(k)) return to; return null; }
+
 async function show() {
   let { explorer: name, code } = parseRoute();
+  const to = movedTo(name, code); if (to) { name = to; try { history.replaceState(null, '', '#/' + name + '/' + code); } catch (e) { /* sandboxed */ } }
   if (!EXPLORERS[name]) { name = DEFAULT_EXPLORER; code = ''; try { history.replaceState(null, '', '#/' + name); } catch (e) { /* sandboxed */ } }
   if (name === current) { if (code) (await loaded[name]).showView?.(code); return; }
 
@@ -92,8 +108,14 @@ async function show() {
   api.start?.();
 }
 
+// the explorer menu: the button opens the list; choosing one (or clicking elsewhere, or Esc) closes it
+const xBtn = $('xBtn'), xList = $('xList');
+const setMenu = open => { xList.hidden = !open; xBtn.setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) (xList.querySelector('a.on') || xList.querySelector('a')).focus(); };
+xBtn.addEventListener('click', () => setMenu(xList.hidden));
+document.addEventListener('pointerdown', e => { if (!xList.hidden && !e.target.closest('#switcher')) setMenu(false); });
+document.addEventListener('keydown', e => { if (!xList.hidden && e.key === 'Escape') { setMenu(false); xBtn.focus(); e.stopPropagation(); } }, true);
 // clicking the explorer already on screen would drop its view code from the address
-$('switcher').addEventListener('click', e => { const a = e.target.closest('a'); if (a && a.dataset.explorer === current) e.preventDefault(); });
+$('switcher').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; setMenu(false); if (a.dataset.explorer === current) e.preventDefault(); });
 $('resetBtn').addEventListener('click', async () => { if (current) (await loaded[current].catch(() => null))?.reset?.(); });
 window.addEventListener('hashchange', route);
 route();

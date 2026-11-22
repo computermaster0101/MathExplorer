@@ -1,0 +1,157 @@
+<details class="grp" id="g-shapes"><summary><span class="gt">Waves</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="seg g2 shapes" id="modeList">
+      <button data-m="ripple">Ripples<small>waves from points, adding up</small></button>
+      <button data-m="tank">Wave tank<small>splashes, slits and walls</small></button>
+      <button data-m="plate">Chladni plate<small>sand finds the still lines</small></button>
+      <button data-m="string">A string<small>harmonics of a pluck</small></button>
+      <button data-m="epi">Epicycles<small>any drawing from circles</small></button>
+    </div>
+  </div>
+  <div class="sec" id="s-plate" hidden>
+    <div class="lbl">Plate</div>
+    <div class="seg g3" id="plateShape"><button data-s="square" class="on">Square</button><button data-s="round">Round (a drum)</button><button data-s="guitar">Guitar</button><button data-s="triangle">Triangle</button><button data-s="stadium">Stadium</button><button data-s="rectangle">Rectangle</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Pattern</span><input type="range" id="pmode" min="0" max="17" step="1" value="4"><output id="pmodeo"></output></div>
+  </div>
+  <div class="sec" id="s-epi" hidden>
+    <div class="lbl">Drawing</div>
+    <div class="seg g3" id="curveList"></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+  <div class="sec" id="c-ripple">
+    <div class="lbl">Start with</div>
+    <div class="seg g2" id="ripPre"><button data-p="two">Two sources</button><button data-p="three">Three in a row</button><button data-p="ring">A ring, focusing</button><button data-p="one">Just one</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Wavelength</span><input type="range" id="wlen" min="0.04" max="0.5" step="0.005" value="0.14"><output id="wleno">0.14</output></div>
+    <div class="row"><span style="width:96px">Fading</span><input type="range" id="fade" min="0" max="2" step="0.05" value="0.6"><output id="fadeo">0.6</output></div>
+    <div class="btns" style="margin-top:8px"><button class="btn" id="addSrc">+ source</button><button class="btn" id="delSrc">Remove one</button></div>
+    <p class="note">Drag a source (the white dots) to move it. Click anywhere else to move the nearest one there.</p>
+  </div>
+  <div class="sec" id="c-tank" hidden>
+    <div class="lbl">Start with</div>
+    <div class="seg g2" id="tankPre"><button data-p="splash">Splashes</button><button data-p="double">Two slits</button><button data-p="single">One slit</button><button data-p="doppler">Moving source</button><button data-p="lens">A lens</button><button data-p="corner">Round a corner</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Wavelength</span><input type="range" id="twlen" min="8" max="60" step="1" value="22"><output id="twleno">22</output></div>
+    <div class="row" id="machRow"><span style="width:96px">Source speed</span><input type="range" id="mach" min="0.1" max="1.8" step="0.05" value="0.6"><output id="macho">0.60× wave</output></div>
+    <div class="lbl" style="margin-top:8px">Dragging</div>
+    <div class="seg" id="tankDraw"><button data-d="splash" class="on">Splashes</button><button data-d="wall">Draws walls</button><button data-d="erase">Erases walls</button></div>
+    <div class="btns" style="margin-top:8px"><button class="btn" id="calm">Calm the water</button><button class="btn" id="clearWalls">Clear walls</button></div>
+  </div>
+  <div class="sec" id="c-plate" hidden>
+    <div class="row"><span style="width:96px">Sand</span><input type="range" id="grains" min="2000" max="40000" step="1000" value="16000"><output id="grainso">16k</output></div>
+    <div class="row"><span style="width:96px">Shaking</span><input type="range" id="shake" min="0.1" max="3" step="0.05" value="1"><output id="shakeo">1.0×</output></div>
+    <label class="check"><input type="checkbox" id="showPlate" checked> Show how the plate moves (colour)</label>
+    <label class="check"><input type="checkbox" id="beatMode"> With music: a new pattern every 8 beats</label>
+    <div class="btns" style="margin-top:8px"><button class="btn" id="newSand">Fresh sand</button></div>
+  </div>
+  <div class="sec" id="c-string" hidden>
+    <div class="row"><span style="width:96px">Pluck at</span><input type="range" id="pluck" min="0.03" max="0.5" step="0.01" value="0.2"><output id="plucko">20%</output></div>
+    <div class="row"><span style="width:96px">Harmonics</span><input type="range" id="harm" min="1" max="40" step="1" value="12"><output id="harmo">12</output></div>
+    <div class="row"><span style="width:96px">Ring time</span><input type="range" id="damp" min="0" max="2" step="0.05" value="0.5"><output id="dampo">0.5</output></div>
+    <label class="check"><input type="checkbox" id="showParts" checked> Show each harmonic on its own</label>
+    <p class="note">Drag on the string to pluck it somewhere else. G plucks again.</p>
+  </div>
+  <div class="sec" id="c-epi" hidden>
+    <div class="row"><span style="width:96px">Circles</span><input type="range" id="ncirc" min="1" max="200" step="1" value="40"><output id="ncirco">40</output></div>
+    <label class="check"><input type="checkbox" id="showCirc" checked> Show the circles</label>
+    <label class="check"><input type="checkbox" id="showTarget"> Show the original drawing</label>
+    <p class="note">Or draw your own: press on the picture and draw one closed line.</p>
+  </div>
+  <div class="sec">
+    <div class="btns"><button class="btn" id="goBtn">Go</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Speed</span><input type="range" id="speed" min="0.1" max="3" step="0.05" value="1"><output id="speedo">1.0×</output></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-view"><summary><span class="gt">View &amp; detail</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl" id="showLbl">Show</div>
+    <div class="seg" id="show"><button data-v="wave" class="on">The waves</button><button data-v="loud">How loud (on average)</button></div>
+    <p class="note" id="showNote"></p>
+    <label class="check"><input type="checkbox" id="relief" checked> Light it like a surface</label>
+  </div>
+</div></details>
+
+<details class="grp" id="g-style"><summary><span class="gt">Colour &amp; style</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Palette</div>
+    <div class="swatches" id="palettes"></div>
+    <p class="note" id="palName" style="margin-top:6px"></p>
+    <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
+    <div id="bgSec">
+    <div class="lbl" style="margin-top:12px">Background</div>
+    <div class="seg" id="bg"><button data-b="#0b0d12" class="on">Midnight</button><button data-b="#000000">Black</button><button data-b="#f3efe6">Paper</button></div>
+    </div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-share"><summary><span class="gt">Save, share &amp; record</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="btns"><button class="btn" id="snap">Save image (PNG)</button></div><p class="note" id="dlnote">Saves exactly what you see.</p></div>
+  <div class="sec">
+    <div class="lbl">Share this view</div>
+    <p class="note" style="margin:0 0 8px">The link records the kind of wave, its settings and the colours.</p>
+    <input type="text" id="linkBox" readonly class="txt" spellcheck="false">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="copyLink">Copy link</button></div>
+    <div class="lbl" style="margin-top:12px">Load a view</div>
+    <input type="text" id="viewIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Paste a view link or code">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+    <p class="note" id="shareNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-info"><summary><span class="gt">Numbers</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="stats">
+    <div class="stat"><b id="s1">–</b><small id="s1l"></small></div>
+    <div class="stat"><b id="s2">–</b><small id="s2l"></small></div>
+    <div class="stat"><b id="s3">–</b><small id="s3l"></small></div>
+  </div><p class="note" id="statNote"></p></div>
+</div></details>
+
+<details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv"></span></summary><div class="gb">
+  <div class="explain">
+    <p id="about"></p>
+    <details class="topic"><summary>Waves add up</summary>
+      <p>Where two waves arrive in step, crest on crest, they add into a bigger wave. Where one's crest meets the other's trough, they cancel and the water stays still. Switch to <strong>How loud</strong> and you see the still lines fan out between two sources: that's how noise-cancelling headphones work, and why some seats in a hall sound dull.</p>
+      <div class="btns"><button class="btn try" data-try="ripple|two|loud">Two sources, how loud</button><button class="btn try" data-try="ripple|ring">A ring focusing to a point</button></div>
+    </details>
+    <details class="topic"><summary>Light through two slits</summary>
+      <p>Send a straight wave at a wall with two narrow gaps. Each gap starts a new ring of waves, and the two rings add up into bright and dark bands beyond. In 1801 Thomas Young did this with light and showed that light is a wave. Narrow one gap and the waves bend round its edges: diffraction.</p>
+      <div class="btns"><button class="btn try" data-try="tank|double">Two slits</button><button class="btn try" data-try="tank|single">One slit</button></div>
+    </details>
+    <details class="topic"><summary>The Doppler effect and the sound barrier</summary>
+      <p>A moving source bunches up the waves in front of it and stretches them out behind: that's why a passing siren drops in pitch. Push the source faster than the waves themselves can travel and they pile up into a V, a shock wave: the boom of a jet breaking the sound barrier, or the wake of a boat.</p>
+      <div class="btns"><button class="btn try" data-try="tank|doppler|0.6">Slower than sound</button><button class="btn try" data-try="tank|doppler|1.5">Faster than sound</button></div>
+    </details>
+    <details class="topic"><summary>Chladni's sand</summary>
+      <p>In 1787 Ernst Chladni scattered sand on a metal plate and stroked its edge with a violin bow. The plate rang, and the sand jumped away from the moving parts and gathered on the lines that stay still: the <strong>nodal lines</strong>. Each note gives its own pattern; higher notes make busier ones. Instrument makers still use this to tune violin backs and guitar tops.</p>
+      <div class="btns"><button class="btn try" data-try="plate|square">A square plate</button><button class="btn try" data-try="plate|round">A drum skin</button><button class="btn try" data-try="plate|guitar">A guitar top</button><button class="btn try" data-try="plate|stadium">A chaotic stadium</button></div>
+    </details>
+    <details class="topic"><summary>Why a guitar doesn't sound like a flute</summary>
+      <p>A plucked string doesn't just swing in one big arc. It vibrates in halves, thirds, quarters… all at once, each a <strong>harmonic</strong> at 2, 3, 4… times the pitch. Where you pluck decides how much of each: pluck near the end and you get lots of high harmonics, a bright twang; pluck in the middle and the even ones vanish, a soft round tone. That mix is the instrument's voice.</p>
+      <div class="btns"><button class="btn try" data-try="string|0.5">Pluck in the middle</button><button class="btn try" data-try="string|0.07">Pluck near the end</button></div>
+    </details>
+    <details class="topic"><summary>Any drawing from circles</summary>
+      <p>Joseph Fourier showed that any repeating motion is a sum of simple circular ones. Here each circle spins at a whole number of turns per lap, riding on the one before, and the pen at the end draws the shape. A few circles give a rough sketch; more circles add the corners. The same idea compresses music into MP3s and photos into JPEGs: keep the big circles, drop the tiny ones.</p>
+      <div class="btns"><button class="btn try" data-try="epi|heart|3">A heart from 3 circles</button><button class="btn try" data-try="epi|square|60">A square from 60</button></div>
+    </details>
+  </div>
+</div></details>
+
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <p class="note" style="margin-top:0" id="prAbout">Prints the picture as a landscape: high where the wave is high (or loud), low where it's low.</p>
+    <div class="lbl" style="margin-top:8px">Size (longest side)</div>
+    <div class="seg" id="prSize"><button data-mm="60">60 mm</button><button data-mm="90" class="on">90 mm</button><button data-mm="120">120 mm</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:96px">Height</span><input type="range" id="prHigh" min="1" max="12" step="0.5" value="4"><output id="prHigho">4 mm</output></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="prBtn">Download STL</button></div>
+    <p class="note" id="prNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><table class="keys" id="keyTable"></table></div>
+  <div class="sec"><label class="check" style="margin-top:0"><input type="checkbox" id="invertY"> Invert up / down (aeroplane style: ↑ tips the view down)</label>
+    <div class="row" style="margin-top:8px"><span style="width:110px">Navigation speed</span><input type="range" id="navSpeed" min="0.1" max="2" step="0.05" value="0.5"><output id="navSpeedo">0.50×</output></div>
+    <p class="note">Both are shared by every explorer and remembered in this browser.</p></div>
+</div></details>

@@ -1,0 +1,119 @@
+<details class="grp" id="g-shapes"><summary><span class="gt">Shapes</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+  <div class="sec" id="shapeLists"></div>
+  <div class="sec" id="paramSec"><div id="params"></div></div>
+</div></details>
+
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="btns" style="margin-top:8px"><button class="btn" id="playBtn">Play</button></div>
+    <p class="note" id="playNote"></p>
+  </div>
+  <div class="sec">
+    <div class="btns"><button class="btn primary" id="walkBtn">Walk on it</button><button class="btn" id="resetBtn2">Reset view</button></div>
+    <p class="note">Stand on the surface and walk across it. ← → turn, ↑ ↓ look, A D step sideways, W S and + − change pace.</p>
+    <label class="check"><input type="checkbox" id="autoRound"> Keep going the long way round (T)</label>
+    <div class="row"><span style="width:74px">Pace</span><input type="range" id="walkSpeed" min="0.1" max="3" step="0.05" value="1"><output id="walkSpeedo">1.0×</output></div>
+  </div>
+  <div class="sec">
+    <label class="check" style="margin-top:0"><input type="checkbox" id="spin" checked> Keep turning (when not walking)</label>
+    <div class="row"><span style="width:74px">Turn speed</span><input type="range" id="speed" min="-3" max="3" step="0.05" value="0.5"><output id="speedo">0.5×</output></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-view"><summary><span class="gt">View &amp; detail</span><span class="gv" id="gv-view"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="row"><span style="width:74px">Detail</span><input type="range" id="detail" min="1" max="5" step="1" value="3"><output id="detailo">3</output></div>
+    <div class="lbl" style="margin-top:10px">Draw as</div>
+    <div class="seg" id="drawMode"><button data-d="solid" class="on">Solid</button><button data-d="wire">Wire grid</button><button data-d="both">Both</button></div>
+  </div>
+  <div class="sec" id="sliceSec">
+    <label class="check" style="margin-top:0"><input type="checkbox" id="sliceChk"> Slice it (cut away everything past a plane)</label>
+    <div class="row" id="sliceRow" hidden><span style="width:74px">Plane</span><input type="range" id="slice" min="-1" max="1" step="0.01" value="0"><output id="sliceo">0.00</output></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-style"><summary><span class="gt">Colour &amp; style</span><span class="gv" id="gv-style"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Colour by</div>
+    <div class="seg g3" id="cmode"><button data-c="height" class="on">Height</button><button data-c="along">Along</button><button data-c="across">Across</button><button data-c="curv">Curvature</button><button data-c="check">Checks</button><button data-c="solid">One colour</button></div>
+    <label class="check"><input type="checkbox" id="twoSide"> Colour the two sides differently (shows one-sided surfaces)</label>
+    <div class="lbl" style="margin-top:12px">Palette</div>
+    <div class="swatches" id="palettes"></div>
+    <p class="note" id="palName" style="margin-top:6px"></p>
+    <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+    <div class="row" style="margin-top:10px"><span style="width:74px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
+    <div class="lbl" style="margin-top:12px">Finish</div>
+    <div class="seg" id="finish"><button data-f="satin" class="on">Satin</button><button data-f="gloss">Glossy</button><button data-f="metal">Metal</button><button data-f="flat">Neon</button><button data-f="bubble">Bubble</button></div>
+    <div class="lbl" style="margin-top:12px">Background</div>
+    <div class="seg" id="bg"><button data-b="#0b0d12" class="on">Midnight</button><button data-b="#000000">Black</button><button data-b="#f3efe6">Paper</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-share"><summary><span class="gt">Save, share &amp; record</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="btns"><button class="btn" id="snap">Save image (PNG)</button></div><p class="note" id="dlnote">Saves exactly what you see.</p></div>
+  <div class="sec">
+    <div class="lbl">Share this view</div>
+    <p class="note" style="margin:0 0 8px">The link records the shape, its settings, the colours and the view.</p>
+    <input type="text" id="linkBox" readonly class="txt" spellcheck="false">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="copyLink">Copy link</button></div>
+    <div class="lbl" style="margin-top:12px">Load a view</div>
+    <input type="text" id="viewIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Paste a view link or code">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+    <p class="note" id="shareNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-info"><summary><span class="gt">Numbers</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="stats">
+    <div class="stat"><b id="s1">–</b><small id="s1l"></small></div>
+    <div class="stat"><b id="s2">–</b><small id="s2l"></small></div>
+    <div class="stat"><b id="s3">–</b><small id="s3l"></small></div>
+  </div><p class="note" id="statNote"></p></div>
+</div></details>
+
+<details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv"></span></summary><div class="gb">
+  <div class="explain">
+    <p id="about"></p>
+    <details class="topic"><summary>One side or two?</summary>
+      <p>A sheet of paper has two sides. Glue a strip into a loop with a half twist and it has only one: run a finger along the middle and you come back on the "other" side without crossing an edge. Surfaces like this are called <strong>non-orientable</strong>. Tick <strong>Colour the two sides differently</strong> and follow the colour round: on a one-sided surface it swaps where the surface joins up, because there was never a second side.</p>
+      <div class="btns"><button class="btn try" data-try="band">Try it: the Möbius strip</button><button class="btn try" data-try="klein">The Klein bottle</button></div>
+    </details>
+    <details class="topic"><summary>Counting a surface: the Euler number</summary>
+      <p>Cover any closed surface with polygons and work out corners − edges + faces. The answer doesn't depend on how you cut it up: it is 2 for a sphere, 0 for a torus or a Klein bottle, 1 for the projective plane (Boy's surface), and drops by 2 for every extra handle. Together with "one side or two", this number tells every closed surface apart.</p>
+      <div class="btns"><button class="btn try" data-try="sphere">Sphere</button><button class="btn try" data-try="torus">Torus</button><button class="btn try" data-try="boy">Boy's surface</button></div>
+    </details>
+    <details class="topic"><summary>Cutting a Möbius strip down the middle</summary>
+      <p>Cut a plain loop down the middle and you get two loops. Cut a Möbius strip down the middle and you get <em>one</em> loop, twice as long, with two full twists. Cut a strip with two half twists and you get two loops linked together. Choose <strong>Twisted band</strong>, set the half twists, and press <strong>Cut down the middle</strong> (or N) to make the cut.</p>
+      <div class="btns"><button class="btn try" data-try="band|1|cut">Cut a Möbius strip</button><button class="btn try" data-try="band|2|cut">Cut two half twists</button></div>
+    </details>
+    <details class="topic"><summary>Soap films and minimal surfaces</summary>
+      <p>A soap film pulls itself as tight as it can, so it settles into the surface with the least area for its frame. At every point it curves up one way exactly as much as it curves down the other, so its <strong>mean curvature</strong> is zero. These are minimal surfaces. Some go on forever in every direction, like the gyroid: you can fly through it in Labyrinths.</p>
+      <div class="btns"><button class="btn try" data-try="helicoid">Catenoid ↔ helicoid</button><button class="btn try" data-try="costa">Costa's surface</button></div>
+    </details>
+    <details class="topic"><summary>Walking round a Möbius strip</summary>
+      <p>Press <strong>G</strong> and you stand on the surface. Keep going the long way round (T). On a plain loop you come back on the same side. On a Möbius strip you come back <em>upside down</em>, on the "other" side, without ever crossing an edge; go round again and you're back where you started. The colours show which side the formula calls the front: on a one-sided surface it changes under your feet.</p>
+      <div class="btns"><button class="btn try" data-try="band|1|walk">Walk the Möbius strip</button><button class="btn try" data-try="torus||walk">Walk a torus</button><button class="btn try" data-try="klein||walk">Walk the Klein bottle</button></div>
+    </details>
+    <details class="topic"><summary>Curvature: bowls, saddles and horns</summary>
+      <p>A sphere curves the same way in every direction, like a bowl. A saddle curves up one way and down the other. Gauss found that this curvature can be measured by someone living on the surface, without ever leaving it, by drawing triangles: on a bowl their angles add up to more than 180°, on a saddle to less. The pseudosphere is a saddle everywhere, by the same amount.</p>
+      <div class="btns"><button class="btn try" data-try="pseudosphere||walk">Walk down the pseudosphere</button><button class="btn try" data-try="monkey">Monkey saddle</button><button class="btn try" data-try="dini">Dini's surface</button></div>
+    </details>
+  </div>
+</div></details>
+
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Size (longest side)</div>
+    <div class="seg" id="prSize"><button data-mm="60">60 mm</button><button data-mm="80" class="on">80 mm</button><button data-mm="120">120 mm</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:74px">Thickness</span><input type="range" id="prThick" min="0.8" max="4" step="0.1" value="1.6"><output id="prThicko">1.6 mm</output></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="prBtn">Download STL</button></div>
+    <p class="note" id="prNote">Surfaces are given this thickness so they can be printed.</p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><table class="keys" id="keyTable"></table></div>
+  <div class="sec"><label class="check" style="margin-top:0"><input type="checkbox" id="invertY"> Invert up / down (aeroplane style: ↑ tips the view down)</label>
+    <div class="row" style="margin-top:8px"><span style="width:110px">Navigation speed</span><input type="range" id="navSpeed" min="0.1" max="2" step="0.05" value="0.5"><output id="navSpeedo">0.50×</output></div>
+    <p class="note">Both are shared by every explorer and remembered in this browser.</p></div>
+</div></details>

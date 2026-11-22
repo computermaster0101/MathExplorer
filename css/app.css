@@ -15,7 +15,14 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 .brand{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 10px}
 .brand b{font:600 13px Inter,sans-serif;letter-spacing:.3px}
 .brand small{color:var(--mute);font-size:11px}
-.switcher{margin-bottom:18px}
+/* the explorer menu: a button showing the explorer on screen, opening a list of all of them */
+.xmenu{position:relative;margin-bottom:18px}
+.xbtn{width:100%;display:flex;align-items:center;justify-content:space-between;background:#0e1118;border:1px solid var(--line);border-radius:10px;color:var(--text);font:600 14px Inter,sans-serif;padding:10px 12px;cursor:pointer}
+.xbtn:hover{border-color:#36405a} .xbtn .xcaret{color:var(--mute);transition:transform .15s} .xbtn[aria-expanded="true"] .xcaret{transform:rotate(180deg)}
+.xlist{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:20;background:#11141c;border:1px solid var(--line);border-radius:12px;padding:5px;box-shadow:0 12px 30px rgba(0,0,0,.45);max-height:70vh;overflow-y:auto}
+.xlist a{display:block;text-decoration:none;color:var(--text);padding:8px 10px;border-radius:8px}
+.xlist a b{display:block;font:500 13px Inter,sans-serif} .xlist a small{display:block;color:var(--mute);font-size:11.5px;margin-top:1px}
+.xlist a:hover, .xlist a:focus-visible{background:#1b2030;outline:none} .xlist a.on{background:#222839} .xlist a.on b::after{content:' ✓';color:var(--accent)}
 .switcher a{display:block;text-align:center;text-decoration:none;color:var(--mute);font:500 13px Inter,sans-serif;padding:8px 4px;border-radius:7px}
 .switcher a.on{background:#222839;color:var(--text)}
 .switcher a:hover{color:var(--text)}
@@ -51,12 +58,13 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 .seg button.on{background:#222839;color:var(--text)}
 .seg.g2{grid-auto-flow:row;grid-template-columns:repeat(2,1fr)}
 .seg.g3{grid-auto-flow:row;grid-template-columns:repeat(3,1fr)}
+.seg.g4{grid-auto-flow:row;grid-template-columns:repeat(4,1fr)}
 .seg.g5{grid-auto-flow:row;grid-template-columns:repeat(5,1fr)} .seg.g5 button{padding-left:2px;padding-right:2px}
 .row{display:flex;align-items:center;gap:10px;margin:7px 0}
 .row span{width:30px;font:500 12px 'JetBrains Mono',monospace;color:var(--mute)}
 .row output{width:48px;text-align:right;font:500 12px 'JetBrains Mono',monospace}
 input[type=range]{flex:1;accent-color:var(--accent)}
-input.txt{width:100%;box-sizing:border-box;background:#0e1118;border:1px solid var(--line);border-radius:8px;color:var(--text);font:12px 'JetBrains Mono',monospace;padding:7px 8px}
+input.txt,select.txt{width:100%;box-sizing:border-box;background:#0e1118;border:1px solid var(--line);border-radius:8px;color:var(--text);font:12px 'JetBrains Mono',monospace;padding:7px 8px}
 .btns{display:flex;gap:8px}
 .btn{flex:1;background:#1c2130;border:1px solid var(--line);color:var(--text);font:500 13px Inter,sans-serif;padding:9px 10px;border-radius:9px;cursor:pointer}
 .btn:hover{border-color:#36405a}

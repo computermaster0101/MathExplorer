@@ -1,0 +1,131 @@
+<details class="grp" id="g-shapes"><summary><span class="gt">Functions</span><span class="gv" id="gv-shapes"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="seg g2 shapes" id="fnList"></div>
+    <div class="lbl" style="margin-top:12px">Your own function of z</div>
+    <input type="text" id="fnIn" class="txt" spellcheck="false" autocomplete="off" placeholder="e.g. (z^2 - 1) / (z^2 + 1)">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="fnApply">Draw it</button></div>
+    <p class="note" id="fnNote">Use z, the number c (set below), i, pi, e, + − × ÷ ^, brackets, and sin cos tan sinh cosh tanh exp log sqrt abs conj re im arg.</p>
+  </div>
+  <div class="sec" id="stepSec">
+    <div class="row"><span style="width:74px">Steps</span><input type="range" id="steps" min="1" max="40" step="1" value="1"><output id="stepso">1</output></div>
+    <p class="note" style="margin-top:2px">1 applies the function once. More steps feed each answer back in: with z² + c this grows into a Julia set.</p>
+    <div id="cRow">
+      <div class="row"><span style="width:74px">c (real)</span><input type="range" id="cre" min="-2" max="2" step="0.001" value="-0.8"><output id="creo">−0.80</output></div>
+      <div class="row"><span style="width:74px">c (imag.)</span><input type="range" id="cim" min="-2" max="2" step="0.001" value="0.156"><output id="cimo">0.16</output></div>
+      <label class="check"><input type="checkbox" id="cWander"> Let c wander slowly</label>
+    </div>
+  </div>
+  <div class="sec" id="rootSec" hidden>
+    <div class="lbl">Zeros and poles</div>
+    <p class="note" style="margin-top:0">Drag the markers. ○ is a zero (the function is 0 there), × is a pole (it shoots off to infinity).</p>
+    <div class="btns" style="margin-top:6px"><button class="btn" id="addZero">+ zero</button><button class="btn" id="addPole">+ pole</button><button class="btn" id="removeLast">Remove one</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="btns"><button class="btn" id="toFractal">Open in Fractals</button></div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-view"><summary><span class="gt">View &amp; detail</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Show it on</div>
+    <div class="seg" id="viewMode"><button data-v="plane" class="on">The plane</button><button data-v="sphere">The Riemann sphere</button></div>
+    <label class="check" id="spinRow" hidden><input type="checkbox" id="spin" checked> Keep turning the sphere</label>
+  </div>
+  <div class="sec">
+    <div class="row"><span style="width:74px">Lines</span><input type="range" id="dens" min="0.25" max="4" step="0.05" value="1"><output id="denso">1.0×</output></div>
+    <p class="note" style="margin-top:2px">How closely the rings, grid lines and checks are spaced.</p>
+    <label class="check"><input type="checkbox" id="axes"> Show the axes of the plane</label>
+  </div>
+</div></details>
+
+<details class="grp" id="g-style"><summary><span class="gt">Colour &amp; style</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <div class="lbl">Colour by</div>
+    <div class="seg g3" id="cmode"><button data-c="1" class="on">Angle + rings</button><button data-c="0">Angle</button><button data-c="2">Angle + size</button><button data-c="3">Grid</button><button data-c="4">Checks</button><button data-c="5">Size only</button></div>
+    <p class="note" id="cmodeNote"></p>
+    <div class="lbl" style="margin-top:12px">Angle colours</div>
+    <div class="seg" id="angleCol"><button data-a="0" class="on">Rainbow</button><button data-a="1">Palette</button></div>
+    <div class="lbl" style="margin-top:12px">Palette</div>
+    <div class="swatches" id="palettes"></div>
+    <p class="note" id="palName" style="margin-top:6px"></p>
+    <label class="check"><input type="checkbox" id="palRev"> Reverse the palette</label>
+    <div class="row" style="margin-top:10px"><span style="width:74px">Cycle</span><input type="range" id="cyc" min="0" max="5" step="0.05" value="0"><output id="cyco">off</output></div>
+    <div id="bgSec">
+    <div class="lbl" style="margin-top:12px">Background</div>
+    <div class="seg" id="bg"><button data-b="#0b0d12" class="on">Midnight</button><button data-b="#000000">Black</button><button data-b="#f3efe6">Paper</button></div>
+    </div>
+  </div>
+</div></details>
+
+<details class="grp" id="g-share"><summary><span class="gt">Save, share &amp; record</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="btns"><button class="btn" id="snap">Save image (PNG)</button></div><p class="note" id="dlnote">Saves exactly what you see.</p></div>
+  <div class="sec">
+    <div class="lbl">Share this view</div>
+    <p class="note" style="margin:0 0 8px">The link records the function, its settings, the colours and the view.</p>
+    <input type="text" id="linkBox" readonly class="txt" spellcheck="false">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="copyLink">Copy link</button></div>
+    <div class="lbl" style="margin-top:12px">Load a view</div>
+    <input type="text" id="viewIn" class="txt" spellcheck="false" autocomplete="off" placeholder="Paste a view link or code">
+    <div class="btns" style="margin-top:6px"><button class="btn" id="loadView">Load</button></div>
+    <p class="note" id="shareNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-info"><summary><span class="gt">Numbers</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><div class="stats">
+    <div class="stat"><b id="s1">–</b><small id="s1l"></small></div>
+    <div class="stat"><b id="s2">–</b><small id="s2l"></small></div>
+    <div class="stat"><b id="s3">–</b><small id="s3l"></small></div>
+  </div><p class="note" id="atPointer">Point at the picture to see where that z goes.</p></div>
+</div></details>
+
+<details class="grp" id="g-learn"><summary><span class="gt">Learn</span><span class="gv"></span></summary><div class="gb">
+  <div class="explain">
+    <p id="about"></p>
+    <details class="topic"><summary>Reading the colours</summary>
+      <p>Every point z of the plane is a complex number. The function sends it somewhere else, to w = f(z). The colour at z shows where w points: its <strong>angle</strong> sets the colour (red to the right, then round the rainbow), and with rings on, each ring is one doubling of its <strong>size</strong>. So the picture shows the whole function at once, every input with its output.</p>
+      <div class="btns"><button class="btn try" data-try="z">Try it: f(z) = z, the colour wheel itself</button></div>
+    </details>
+    <details class="topic"><summary>Zeros and poles</summary>
+      <p>Where every colour meets at one point, the function is zero (all angles are possible next to 0) or infinite. Go round a <strong>zero</strong> and the colours run one way round the rainbow; round a <strong>pole</strong> they run the other way. Count the trips round the rainbow and you know how many of each are inside: the argument principle.</p>
+      <div class="btns"><button class="btn try" data-try="roots">Place your own zeros and poles</button><button class="btn try" data-try="rational">(z² − 1) ÷ (z² + 1)</button></div>
+    </details>
+    <details class="topic"><summary>Angles kept: conformal maps</summary>
+      <p>Choose <strong>Grid</strong>: the lines show where the real and imaginary parts of w are whole numbers. Wherever the function is smooth they still cross at right angles, however bent they are. Complex functions keep angles (they are <strong>conformal</strong>), which is why they're used to draw maps, design aircraft wings (the Joukowski map) and solve flow problems.</p>
+      <div class="btns"><button class="btn try" data-try="joukowski|3">Joukowski's wing map</button><button class="btn try" data-try="exp|3">exp(z)</button></div>
+    </details>
+    <details class="topic"><summary>The Riemann sphere</summary>
+      <p>Wrap the whole plane round a ball, with 0 at the bottom and infinity at the top. Then a pole is just another point, and 1 ÷ z simply turns the ball upside down. Switch to <strong>The Riemann sphere</strong> to see all of a function at once, infinity included.</p>
+      <div class="btns"><button class="btn try" data-try="mobius|sphere">A Möbius map on the sphere</button></div>
+    </details>
+    <details class="topic"><summary>Famous functions</summary>
+      <p>Some functions are so useful they have names. The <strong>Gamma function</strong> carries factorials (1 × 2 × 3 × …) to every complex number. <strong>Riemann's zeta function</strong> encodes the prime numbers; whether all its interesting zeros lie on one straight line is the most famous unsolved problem in mathematics. <strong>Weierstrass's ℘</strong> repeats in two directions at once, like wallpaper.</p>
+      <div class="btns"><button class="btn try" data-try="zeta">The zeta function's zeros</button><button class="btn try" data-try="gamma">Gamma</button><button class="btn try" data-try="wp">Weierstrass ℘</button></div>
+    </details>
+    <details class="topic"><summary>From one step to a fractal</summary>
+      <p>Apply z² + c once and you get two smooth swirls. Feed the answer back in again and again (raise <strong>Steps</strong>) and the swirls fold into finer and finer detail: a Julia set appears. Fractals are complex functions applied over and over. <strong>Open in Fractals</strong> takes the same function across.</p>
+      <div class="btns"><button class="btn try" data-try="julia|steps">Grow a Julia set</button><button class="btn try" data-try="newton">Newton's fractal</button></div>
+    </details>
+  </div>
+</div></details>
+
+<details class="grp" id="g-print"><summary><span class="gt">3D print</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec">
+    <p class="note" style="margin-top:0">Prints the view as a landscape: high where the function is large, low near its zeros (poles are cut off flat at the top).</p>
+    <div class="lbl" style="margin-top:8px">Size (longest side)</div>
+    <div class="seg" id="prSize"><button data-mm="60">60 mm</button><button data-mm="80" class="on">80 mm</button><button data-mm="120">120 mm</button></div>
+    <div class="row" style="margin-top:10px"><span style="width:74px">Height</span><input type="range" id="prHigh" min="2" max="20" step="0.5" value="8"><output id="prHigho">8 mm</output></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="prBtn">Download STL</button></div>
+    <p class="note" id="prNote"></p>
+  </div>
+</div></details>
+
+<details class="grp" id="g-keys"><summary><span class="gt">Keyboard shortcuts</span><span class="gv"></span></summary><div class="gb">
+  <div class="sec"><table class="keys" id="keyTable"></table></div>
+  <div class="sec"><label class="check" style="margin-top:0"><input type="checkbox" id="invertY"> Invert up / down (aeroplane style: ↑ tips the view down)</label>
+    <div class="row" style="margin-top:8px"><span style="width:110px">Navigation speed</span><input type="range" id="navSpeed" min="0.1" max="2" step="0.05" value="0.5"><output id="navSpeedo">0.50×</output></div>
+    <p class="note">Both are shared by every explorer and remembered in this browser.</p></div>
+</div></details>
