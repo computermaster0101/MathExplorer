@@ -88,7 +88,7 @@ const stage = $('stage'), T = { down: null, n: 0, multi: false, last: 0, lastXY:
 export const touchTapping = () => performance.now() - (T.claim || 0) < 400;   // a tap the shell has taken (pause, full screen): explorers ignore it
 /** True just after any touch: a double tap that the browser also reports as a double click shouldn't zoom as well. */
 export const recentTouch = () => performance.now() - T.touch < 800;
-const onPicture = e => e.target && e.target.tagName === 'CANVAS';
+const onPicture = e => e.target && e.target.tagName === 'CANVAS' && !e.target.closest('#insets');   /* the panels over the picture keep their own taps */
 stage.addEventListener('pointerdown', e => {
   if (e.pointerType !== 'touch') { app.classList.remove('touch'); return; }
   app.classList.add('touch'); T.touch = performance.now();

@@ -70,22 +70,26 @@ function buildPresets(id){ $(id).innerHTML=JPRESETS.map((p,i)=>`<button data-i="
 buildPresets('jPresets'); buildPresets('jPresets2');
 for (const id of ['jPresets','jPresets2']) $(id).addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return; st.jc=JPRESETS[+b.dataset.i][1].slice();
   if (id==='jPresets2'){ st.link.auto=false; $('linkAuto').checked=false; } $('jco').textContent=fmtC(st.jc); setSeg($(id),b); refSlots[1].key=''; touch(); updateLabels(); });
-// ---------- the Julia set at a point, and back (the picture's Julia button, and J) ----------
-// From the fractal's map, pick a point: its Julia set opens, and "Back" returns to exactly the view you left.
-shared.juliaBack = null; shared.juliaPick = false;
+// ---------- swapping with the Julia panel (top right), and back: the picture's Julia button, a click on the panel, or J ----------
+// The panel shows the Julia set at the middle (at your pointer while it's over the picture); swapping puts that in the main
+// view, and the panel then shows where c sits on the map; swapping again returns to exactly the view you left.
+shared.juliaBack = null;
 export const juliaAvail = () => st.mode==='explore' && !!TYPES[st.type].julia;
 /** Open the Julia set of the point at (x, y) on the picture (CSS pixels). */
-export function juliaAt(x, y){ if (!juliaAvail() || st.julia) return; juliaPick(false);
+export function juliaAt(x, y){ if (!juliaAvail() || st.julia) return;
   const w=toWorld(viewDescs()[0], x, y); shared.juliaBack=structuredClone(st.vE); st.dive=false; st.endlessRun=false; st.fly=null; diveUI();
   setCheck('juliaChk', 1); st.jc=toMath(st.type, w); $('jco').textContent=fmtC(st.jc); touch(); updateLabels(); }
 /** Back from the Julia set to the fractal, at the view you left it. */
 export function juliaBack(){ if (!st.julia) return; st.dive=false; st.endlessRun=false; st.fly=null; diveUI(); setCheck('juliaChk', 0);
   if (shared.juliaBack){ st.vE=shared.juliaBack; shared.juliaBack=null; } touch(); updateLabels(); }
-/** Waiting for a click (or tap) on the picture: the cursor is a crosshair, and the shell leaves that tap alone. */
-export function juliaPick(on){ shared.juliaPick=!!on && juliaAvail() && !st.julia; glc.classList.toggle('picking', shared.juliaPick);
-  /* the tap that picks the point mustn't also reach the shell (a tap there dives), so the canvas keeps its taps a moment longer */
-  if (shared.juliaPick) glc.setAttribute('data-own-taps', ''); else setTimeout(()=>{ if (!shared.juliaPick) glc.removeAttribute('data-own-taps'); }, 700);
-  $('hint').textContent = shared.juliaPick ? 'Click a point to see its Julia set · press the Julia button again to cancel' : 'Drag to move · scroll / pinch to zoom'; }
+/** Swap the main view with what the Julia panel shows. */
+export function juliaSwap(){ if (!juliaAvail()) return; if (st.julia){ juliaBack(); return; }
+  const d=viewDescs()[0], p=st.hover || [d.x+d.w/2, d.y+d.h/2]; juliaAt(p[0], p[1]); }
+// the panel itself: a click (or a double tap) swaps
+{ const in2=$('in2'); let lastTap=0;
+  in2.addEventListener('pointerup', e=>{ if (!juliaAvail()) return;
+    if (e.pointerType!=='touch'){ juliaSwap(); return; }
+    const now=performance.now(); if (now-lastTap<400){ lastTap=0; juliaSwap(); } else lastTap=now; }); }
 // Julia link → the Julia set for the c chosen, on its own in Explore (where it can dive and drive), full screen
 $('linkOpen').addEventListener('click', ()=>{ st.link.auto=false; $('linkAuto').checked=false; setMode('explore');
   if (!st.julia) setCheck('juliaChk', 1); else { resetViews(); touch(); updateLabels(); } if (!inZen()) toggleZen(); });
