@@ -62,7 +62,7 @@ function recolour() {
   TWO.uTwo.value = st.twoSide ? 1 : 0; const back = sampleRamp(R, st.palRev ? 0 : 1); TWO.uBack.value.setRGB(...back.map(x => Math.min(1, x * 0.9 + 0.12)));   // the back: the bright end of the palette
   for (const mesh of meshes) {
     const g = mesh.geometry, pos = g.attributes.position.array, uv = g.attributes.uv.array, nV = pos.length / 3;
-    const col = g.attributes.color ? g.attributes.color.array : new Float32Array(nV * 3), curv = st.cmode === 'curv' ? curvature(g) : null;
+    const col = g.attributes.color ? g.attributes.color.array : new Float32Array(nV * 3), curv = st.cmode === 'curv' ? curvature(mesh) : null;
     const yMin = g.boundingBox.min.y, yMax = g.boundingBox.max.y;
     for (let i = 0; i < nV; i++) {
       let t;
@@ -79,14 +79,42 @@ function recolour() {
     if (!g.attributes.color) g.setAttribute('color', new THREE.BufferAttribute(col, 3)); else g.attributes.color.needsUpdate = true;
   }
   $('lgBar').style.background = rampCss(R);
-  const L = { height: ['low', 'high'], along: ['start', 'once round'], across: ['one edge', 'the other'], curv: ['flat', 'tightly curved'], check: ['', ''], solid: ['', ''] }[st.cmode];
+  const L = { height: ['low', 'high'], along: ['start', 'once round'], across: ['one edge', 'the other'], curv: ['saddle', 'bowl'], check: ['', ''], solid: ['', ''] }[st.cmode];
   $('lgL').textContent = L[0]; $('lgR').textContent = L[1]; $('legend').style.visibility = (st.cmode === 'check' || st.cmode === 'solid') ? 'hidden' : '';
 }
-// how sharply the surface bends at each point: the average change of surface direction to its neighbours, scaled 0..1
-function curvature(g) { const n = g.attributes.normal.array, idx = g.index.array, nV = n.length / 3, s = new Float32Array(nV), c = new Float32Array(nV);
-  for (let t = 0; t < idx.length; t += 3) for (let k = 0; k < 3; k++) { const a = idx[t + k], b = idx[t + (k + 1) % 3]; const d = Math.hypot(n[a * 3] - n[b * 3], n[a * 3 + 1] - n[b * 3 + 1], n[a * 3 + 2] - n[b * 3 + 2]); s[a] += d; s[b] += d; c[a]++; c[b]++; }
-  let mx = 0; for (let i = 0; i < nV; i++) { s[i] = c[i] ? s[i] / c[i] : 0; if (s[i] > mx) mx = s[i]; }
-  const q = [...s].sort((a, b) => a - b)[Math.floor(nV * 0.95)] || mx || 1; for (let i = 0; i < nV; i++) s[i] = Math.min(1, s[i] / q); return s; }
+// Gauss's curvature K at each point, from the surface's own formula (not the triangles, so it doesn't depend on Detail):
+// K = (LN − M²) ÷ (EG − F²), from first and second derivatives taken by small steps in u and v. K is positive on a bowl,
+// negative on a saddle and 0 where the surface is flat one way; it doesn't depend on which side is "up", so it works on
+// one-sided surfaces too. Shown 0..1 with flat (K = 0) in the middle of the palette, saddles below and bowls above, scaled
+// by the 90th percentile of |K| so a few sharp spots don't wash the rest out; a surface with the same K everywhere comes out
+// one colour. Kept on the mesh, since recolour runs every frame while the palette cycles.
+function curvature(mesh) {
+  if (mesh.userData.K) return mesh.userData.K;
+  const s = sh(), P = st.P[st.shape], uv = mesh.geometry.attributes.uv.array, idx = mesh.geometry.index.array, nV = uv.length / 2;
+  const [u0, u1] = s.u, [v0, v1] = s.v, h = 1e-3, K = new Float32Array(nV), ok = new Uint8Array(nV);
+  const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  for (let i = 0; i < nV; i++) {
+    const u = u0 + (u1 - u0) * uv[i * 2], v = v0 + (v1 - v0) * uv[i * 2 + 1], F = (a, b) => s.f(u + a * h, v + b * h, P);
+    const p = F(0, 0), pu = F(1, 0), mu = F(-1, 0), pv = F(0, 1), mv = F(0, -1), pp = F(1, 1), pm = F(1, -1), mp = F(-1, 1), mm = F(-1, -1);
+    if (![p, pu, mu, pv, mv, pp, pm, mp, mm].every(q => q && q.every(Number.isFinite))) continue;
+    const ru = sub(pu, mu), rv = sub(pv, mv), n = [ru[1] * rv[2] - ru[2] * rv[1], ru[2] * rv[0] - ru[0] * rv[2], ru[0] * rv[1] - ru[1] * rv[0]];
+    const W2 = dot(n, n); if (!(W2 > 1e-8 * dot(ru, ru) * dot(rv, rv) + 1e-30)) continue;   /* a pole or a pinch, where (u, v) squash to a point: filled in from neighbours below */
+    const d2 = (a, b, c) => [a[0] - 2 * b[0] + c[0], a[1] - 2 * b[1] + c[1], a[2] - 2 * b[2] + c[2]];
+    const L = dot(d2(pu, p, mu), n), N = dot(d2(pv, p, mv), n), M = dot([pp[0] - pm[0] - mp[0] + mm[0], pp[1] - pm[1] - mp[1] + mm[1], pp[2] - pm[2] - mp[2] + mm[2]], n) / 4;
+    /* the steps' sizes cancel: ru, rv are 2h too big, n 4h², and L, M, N are 4h⁴ too big, so K = 16 (LN − M²) ÷ |n|⁴ */
+    K[i] = 16 * (L * N - M * M) / (W2 * W2); ok[i] = 1;
+  }
+  for (let pass = 0; pass < 8 && ok.includes(0); pass++) {   // points with no K of their own take their neighbours' average
+    const sum = new Float32Array(nV), cnt = new Uint16Array(nV);
+    for (let t = 0; t < idx.length; t += 3) for (let k = 0; k < 3; k++) { const a = idx[t + k], b = idx[t + (k + 1) % 3];
+      if (ok[b] && !ok[a]) { sum[a] += K[b]; cnt[a]++; } if (ok[a] && !ok[b]) { sum[b] += K[a]; cnt[b]++; } }
+    for (let i = 0; i < nV; i++) if (!ok[i] && cnt[i]) { K[i] = sum[i] / cnt[i]; ok[i] = 2; }
+  }
+  const A = []; for (let i = 0; i < nV; i++) if (ok[i]) A.push(Math.abs(K[i])); A.sort((a, b) => a - b);
+  const q = Math.max(A[Math.floor(A.length * 0.9)] || 0, 0.02 / (ext * ext)), t = new Float32Array(nV);   /* the floor keeps a flat band flat, not noise */
+  for (let i = 0; i < nV; i++) t[i] = 0.5 + 0.5 * clamp(K[i] / q, -1, 1);
+  return (mesh.userData.K = t);
+}
 function applyLook() {
   for (const m of meshes) { m.material = FIN[st.finish]; m.visible = st.draw !== 'wire'; }
   const planes = st.slice && !walk.on ? [clip] : [];
@@ -237,7 +265,7 @@ segClick('prSize', d => { st.mm = +d.mm; });
 $('prThick').addEventListener('input', e => { st.thick = +e.target.value; $('prThicko').textContent = st.thick.toFixed(1) + ' mm'; });
 $('snap').addEventListener('click', () => { S.render(); saveCanvasPNG(canvas, fileName(sh().name) + '.png', $('dlnote')); });
 document.querySelectorAll('.btn.try').forEach(b => b.addEventListener('click', () => { const [k, tw, act] = b.dataset.try.split('|'); endWalk(); if (tw) st.P[k].tw = +tw; pickShape(k);
-  if (act === 'cut') st.anim = { on: true, t: 0 }; if (act === 'walk') { setCheck('autoRound', true); startWalk(); } }));
+  if (act === 'cut') st.anim = { on: true, t: 0 }; if (act === 'walk') { setCheck('autoRound', true); startWalk(); } if (act === 'curv') clickData('#cmode', 'c', 'curv'); }));
 buildKeys($('keyTable'), [['G', 'Walk on the surface / stop walking'], ['N', 'Play: cut the band, or bend the soap film'], ['← →', 'Turn the shape (walking: turn your heading)'], ['↑ ↓', 'Turn the shape (walking: look up and down)'], ['W A S D', 'Slide the view (walking: W S pace, A D step sideways)'], ['T', 'Walking: keep going the long way round'], ['1 – 3', 'Surfaces, curved surfaces, minimal surfaces'], ['Shift', 'Hold with the keys above to go three times faster']]);
 
 // ---------- actions ----------
