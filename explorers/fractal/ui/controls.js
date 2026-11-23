@@ -131,8 +131,10 @@ function twRange(){ const s=st.d3.shape, [lo,hi]= s==='kifs' ? [-20,70] : s==='k
 export function syncW(){ const D=st.d3; $('w3').value=Math.round(D.w*100); $('w3o').textContent=knifeVal().toFixed(2); }
 
 export function syncR4(){ const D=st.d3; for (const [k,id] of [['axw','rxw'],['ayw','ryw'],['azw','rzw']]){ $(id).value=Math.round(D[k]); $(id+'o').textContent=Math.round(D[k])+'°'; } }
-// the 3D hint says how to do both: turn and move (dragging does one, Shift-drag, right-drag or two fingers the other)
-function hint3(){ return st.d3.dragMode==='move' ? 'Drag to move · Shift-drag or right-drag to turn · scroll / pinch to move closer' : 'Drag to turn · Shift-drag or right-drag to move · scroll / pinch to move closer'; }
+// the 3D hint says how to do both: turn and move (dragging does one, Shift-drag or right-drag the other; on a touch screen one finger looks around and two fingers move, swapped by the Dragging setting)
+function hint3(){ const t=matchMedia('(pointer: coarse)').matches, m=st.d3.dragMode==='move';
+  return t ? (m ? 'Drag to look around · two fingers to move · pinch to move closer' : 'Drag to move · two fingers to look around · pinch to move closer')
+    : (m ? 'Drag to move · Shift-drag or right-drag to turn · scroll / pinch to move closer' : 'Drag to turn · Shift-drag or right-drag to move · scroll / pinch to move closer'); }
 segClick('drag3', d=>{ st.d3.dragMode=d.dm; if (st.mode==='d3') $('hint').textContent=hint3(); });
 for (const gid of ['shapes3','shapes3b','shapes4']) $(gid).addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return;
   document.querySelectorAll('.sh3 button').forEach(x=>x.classList.toggle('on', x===b)); nestReset(); st.d3.shape=b.dataset.s3; st.d3.target=null; setDive3(false); st.d3.dist=d3Bound()*3.4; d3Rows(); touch(); updateLabels(); });
