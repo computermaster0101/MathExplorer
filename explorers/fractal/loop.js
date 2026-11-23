@@ -113,16 +113,17 @@ function overrun(now, gap){
     if (q<st.q){ st.q=q; work.cutAt=frameN; pace.every=2; pace.probeAt=now+4000; dtAvg=2*pace.vsync; } } }
 // The strips wait for the graphics card. Drawing calls return at once and the card works through them later, so timing
 // frames saw every strip as quick, grew them to the whole picture, and the work landed as one long stall after the last.
-// A fence after each strip says when the card has finished it. At most two strips wait at once (one keeps the card busy while
-// the next is sent; more would make a drag or zoom wait behind them), and each finished strip sets the next one's size:
-// larger if it came back quickly, smaller if it took several refreshes.
+// A fence after each strip says when the card has finished it. Two strips may wait at once while they come back quickly (one
+// keeps the card busy while the next is sent), only one once they're slow (two slow ones queued made a 150 ms hitch on a
+// phone-shaped screen), and each finished strip sets the next one's size: larger if it came back quickly, smaller if slow.
 let fences=[];
 function dropFence(){ for (const F of fences) try { gl.deleteSync(F.f); } catch(e){ /* context lost */ } fences=[]; }
 function stripReady(now, P){
   while (fences.length){ let done=true; try { done=gl.getSyncParameter(fences[0].f, gl.SYNC_STATUS)===gl.SIGNALED; } catch(e){ /* context lost */ }
     if (!done) break; const F=fences.shift(), took=now-F.at; try { gl.deleteSync(F.f); } catch(e){ /* context lost */ }
-    if (took<pace.vsync*2.2) P.strip=Math.min(1024,Math.ceil(P.strip*1.4)); else if (took>pace.vsync*5) P.strip=Math.max(8,Math.floor(P.strip/2)); }
-  return fences.length<2; }
+    P.slow = took>pace.vsync*2.5;
+    if (took<pace.vsync*2.2) P.strip=Math.min(1024,Math.ceil(P.strip*1.4)); else if (took>pace.vsync*4) P.strip=Math.max(8,Math.floor(P.strip/2)); }
+  return fences.length < (P.slow ? 1 : 2); }
 // What the sharp 2D picture will cost: the moving cost at full scale, times the smoothing's samples (2×2 smoothing: 4).
 function hqCost(){ const aa=effIter(st.vE)>2500 ? 1 : effIter(st.vE)>1200 ? Math.min(2,st.aa) : st.aa; return work.perQ2*aa*aa; }
 // the shell starts and stops the loop as this explorer comes on and off screen
@@ -183,7 +184,7 @@ export function loop(now){
   if (!ctxLost){
     if (notAvail()){ const b=hexRGB(st.bg); gl.viewport(0,0,glc.width,glc.height); gl.clearColor(b[0],b[1],b[2],1); gl.clear(gl.COLOR_BUFFER_BIT); }
     else if (st.mode==='grow'){ if (shared.dirty){ const b=hexRGB(st.bg); gl.viewport(0,0,glc.width,glc.height); gl.clearColor(b[0],b[1],b[2],1); gl.clear(gl.COLOR_BUFFER_BIT); } }
-    else if (goHQ && progHQ){ dropFence(); drawBlit(); st.prog={y:0, strip: extHQ ? 24 : clamp(Math.round(glc.height*30/est),8,1024)}; }   /* about 30 ms of work per strip to start with */
+    else if (goHQ && progHQ){ dropFence(); drawBlit(); st.prog={y:0, strip: extHQ ? 24 : clamp(Math.round(glc.height*15/est),8,1024), slow:true}; }   /* about 15 ms of work by the estimate (which runs low when moving frames waited for the screen), one at a time until the first comes back */
     else if (goHQ){ if (st.mode==='d3') render3D(true); else render2DAll(true); shared.hqShown=true; work.prev='hq'; }
     else if (st.prog){ const P=st.prog; if (stripReady(now, P)){ const y1=Math.min(glc.height, P.y+P.strip); render2DAll(true,[P.y,y1]); P.y=y1; work.prev='strip';
       if (P.y>=glc.height){ st.prog=null; shared.hqShown=true; } else { fences.push({ f:gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE,0), at:now }); gl.flush(); } } }
