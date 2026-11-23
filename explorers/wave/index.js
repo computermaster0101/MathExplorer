@@ -430,6 +430,10 @@ if (!apply(parseRoute().code)) pickMode('ripple');
 export function start() { running = true; tPrev = performance.now(); if (st.mode === 'tank') tankSetup(true); dirty = true; requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); }
 export const reset = resetView;
+
+/* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
+export const goLabel = () => ({ ripple: ripRun ? 'Stop the waves' : 'Start the waves', tank: 'Start again', plate: 'Fresh sand', string: 'Pluck again' })[st.mode] || null;
+export const speedCtl = () => 'speed';
 export const going = () => st.mode !== 'ripple' || ripRun;   /* G restarts the tank, sand and string, so there a tap just pauses */
 export const layoutChanged = () => { if (st.mode === 'tank') tankSetup(true); dirty = true; };
 export const showView = code => apply(code);

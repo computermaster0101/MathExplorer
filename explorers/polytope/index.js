@@ -21,7 +21,7 @@ import './render/packing.js';
 import './render/foam.js';
 import './input/orbit.js';
 import './input/fly.js';
-import { fly } from './input/fly.js';
+import { fly, flySpeed } from './input/fly.js';
 import './modes/build.js';
 import './modes/unfold.js';
 import './modes/ping.js';
@@ -58,5 +58,8 @@ export const reset = resetAll;
 export const layoutChanged = resize;
 export { onKey, showView };
 export const going = () => fly.on;
+/* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
+export const goLabel = () => fly.on ? 'Stop flying' : 'Fly in';
+export const speedCtl = () => fly.on ? { label: 'flying speed', step: d => flySpeed(d > 0 ? 1.25 : 0.8) } : 'speed';
 /** Shown under the Music & sound switches while this explorer is on screen. */
 export const soundHelp='Here, each beat flashes the lights (or, with Pulse the shape, pushes the whole shape outward). Tempo times the 4D spin and the turntable, the knife sweep in Slice, Ping\'s steps, Build up, Unfold and the morph animation. Vocals sway the shape through a third 4D plane. Colour shimmers and drifts on each bar. Energy sets how fast it all spins.';

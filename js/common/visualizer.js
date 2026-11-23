@@ -81,7 +81,7 @@ export function makeVisualizer(MO, cfg) {
   };
   btn.addEventListener('click', () => (V.on ? V.stop() : V.start()));
   // the same button on the picture, next to Full screen (shared by the explorers: whichever is on screen takes it over)
-  const stageBtn = $('vizStageBtn'), claim = () => { window.__viz = V; V.act = act; if (!stageBtn) return;   /* __viz: the one on screen, for console debugging */ stageBtn.hidden = false; stageBtn.onclick = () => (V.on ? V.stop() : V.start()); stageBtn.textContent = V.on ? '■ Stop visualizer' : '♫ Visualizer'; };
+  const stageBtn = $('vizStageBtn'), claim = () => { window.__viz = V; V.act = act; if (!stageBtn) return;   /* __viz: the one on screen, for console debugging */ stageBtn.hidden = false; stageBtn.onclick = () => (V.on ? V.stop() : V.start()); stageBtn.textContent = V.on ? 'Stop the Visualizer' : 'Start the Visualizer'; };
   let claimed = 0;
   V.step = (dt, go) => {
     if (stageBtn && (stageBtn.hidden || claimed++ % 30 === 0)) claim();

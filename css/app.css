@@ -47,12 +47,19 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 #stageBtns{position:absolute;left:12px;top:62px;display:flex;gap:6px;z-index:5}
 .sbtn{background:rgba(19,22,30,.82);border:1px solid var(--line);color:var(--text);font:500 12px Inter,sans-serif;padding:6px 10px;border-radius:8px;cursor:pointer}
 .sbtn:hover{border-color:#36405a}
+/* the buttons on the picture: icons with their names on hover (or a long press), in groups */
+#stageBtns{align-items:center} .ibtn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:30px;padding:0;position:relative}
+.ibtn svg{display:block} .ibtn[hidden]{display:none} .tbSep{width:1px;height:18px;background:var(--line);margin:0 2px} .tbSep[hidden]{display:none}
+#stageBtns [data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:500 12px Inter,sans-serif;pointer-events:none;opacity:0;transition:opacity .15s .35s;z-index:31}
+#stageBtns [data-tip]:hover::after,#stageBtns [data-tip]:focus-visible::after,#stageBtns [data-tip].tipShow::after{opacity:1} #stageBtns [aria-expanded="true"]::after{display:none}
+#stageBtns > :first-child[data-tip]::after{left:0;transform:none}
+.musicWrap{position:relative;display:inline-flex}
 /* the ? help menu, at the end of the buttons on the picture */
 .helpWrap{position:relative;display:inline-flex} .helpBtn{min-width:30px;font-weight:600}
-#helpMenu{position:absolute;top:calc(100% + 6px);left:0;min-width:210px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.45);z-index:30}
-#helpMenu[hidden]{display:none} #helpMenu button,#helpMenu a{background:none;border:0;color:var(--text);font:13px Inter,sans-serif;text-align:left;padding:8px 10px;border-radius:7px;cursor:pointer;text-decoration:none;white-space:nowrap}
-#helpMenu button:hover,#helpMenu a:hover,#helpMenu button:focus-visible,#helpMenu a:focus-visible{background:rgba(255,255,255,.07);outline:none} #helpMenu hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
-@media (max-width:460px){ #stageBtns{gap:4px;flex-wrap:wrap;max-width:calc(100% - 16px)} #stageBtns .sbtn{padding:6px 8px} }   /* the narrowest phones wrap the ? onto a second row rather than off the screen */
+#helpMenu,#musicMenu{position:absolute;top:calc(100% + 6px);left:0;min-width:210px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.45);z-index:30}
+#helpMenu[hidden],#musicMenu[hidden]{display:none} #helpMenu button,#helpMenu a,#musicMenu button{background:none;border:0;color:var(--text);font:13px Inter,sans-serif;text-align:left;padding:8px 10px;border-radius:7px;cursor:pointer;text-decoration:none;white-space:nowrap}
+#helpMenu button:hover,#helpMenu a:hover,#helpMenu button:focus-visible,#helpMenu a:focus-visible,#musicMenu button:hover,#musicMenu button:focus-visible{background:rgba(255,255,255,.07);outline:none} #helpMenu hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+@media (max-width:460px){ #stageBtns{gap:3px;flex-wrap:wrap;max-width:calc(100% - 16px)} .ibtn{width:32px} }   /* the narrowest phones wrap the ? onto a second row rather than off the screen */
 #zenExit{position:absolute;top:12px;right:12px;display:none;z-index:6;transition:opacity .5s}
 #pausedTag{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:6;padding:5px 12px;border-radius:999px;background:rgba(10,12,18,.72);border:1px solid rgba(255,255,255,.14);color:#e8ecf4;font-size:12px;letter-spacing:.02em;pointer-events:none}
 

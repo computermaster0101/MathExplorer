@@ -14,12 +14,15 @@
 //   layoutChanged()     the panel was hidden or shown, or full screen started or ended
 //   showView(code)      the address changed to a view code (a pasted link, back/forward)
 //   going()             optional: true while diving / flying / riding / walking, so a tap on a phone pauses rather than goes
+//   goLabel()           optional: what the picture's Go button (G) is called right now, e.g. 'Dive in'; null hides it
+//   speedCtl()          optional: what its slower / faster buttons move: a range input's id, { id, invert }, or { label, step(dir) }; null hides them
 //
 // Only one explorer is attached to the page at a time: the others' DOM is kept, detached, so their
 // element ids never clash and their own document queries only ever see their own controls.
 import { parseRoute, DEFAULT_EXPLORER, setActiveExplorer } from './shell/route.js';
 const HOME_TITLE = document.title; let bareHome = !location.hash;   // opened at the plain address: keep the home title until the visitor moves on
 import { onLayoutChange, setGoing } from './shell/layout.js';
+import { setToolbarExplorer } from './shell/toolbar.js';
 import { setKeyHandler, syncKeyPrefs } from './shell/keys.js';
 import { colourFromCode, colourSync } from './common/colours.js';
 import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
@@ -101,7 +104,7 @@ async function show() {
     if (views[current]) detach(views[current]);
   }
   current = name; setActiveExplorer(name); app.dataset.explorer = name; markSwitcher(name);
-  setKeyHandler(null); onLayoutChange(() => {});
+  setKeyHandler(null); onLayoutChange(() => {}); setToolbarExplorer(null);
 
   const first = !loaded[name];
   if (first) loaded[name] = mount(name);   // boots with the view code in the address
@@ -120,7 +123,7 @@ async function show() {
 
   if (!first && code) api.showView?.(code);
   setKeyHandler(api.onKey); setGoing(api.going); onLayoutChange(() => api.layoutChanged?.()); setSoundHelp(api.soundHelp);
-  api.start?.(); colourSync();
+  api.start?.(); colourSync(); setToolbarExplorer(api);
   pageView(name, EXPLORERS[name].title); explorerShown(name, EXPLORERS[name].title, !!code);   // analytics (names only), and first-visit help
 }
 

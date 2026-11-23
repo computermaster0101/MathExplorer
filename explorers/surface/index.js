@@ -358,6 +358,9 @@ export function start() { lightStage(); S.resize(); running = true; tPrev = perf
 export function stop() { running = false; REC.stop(); document.getElementById('app').classList.remove('light'); }
 export const reset = resetView;
 export const going = () => walk.on;
+/* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
+export const goLabel = () => walk.on ? 'Stop walking' : 'Walk on it';
+export const speedCtl = () => walk.on ? 'walkSpeed' : 'speed';
 export const layoutChanged = () => S.resize();
 export const showView = code => apply(code);
 export const soundHelp = 'Here, each beat flashes the light brighter (or, with Pulse, gives the shape a little bounce). Tempo times the turning and everything under Rotation & motion (rocking, tumbling, zooming in and out, Slowly change), and the soap film\'s bending; when you walk on a surface, each beat is a stride. Vocals sway the bend gently, energy sets the pace, and colour drifts the palette.';

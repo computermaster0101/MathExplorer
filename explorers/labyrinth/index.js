@@ -639,6 +639,10 @@ if (!apply(parseRoute().code)) pick('tpms', 'gyroid');
 export function start() { lightStage(); S.resize(); running = true; tPrev = performance.now(); requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); document.getElementById('app').classList.remove('light'); }
 export const reset = resetView;
+
+/* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
+export const goLabel = () => st.kind === 'tpms' ? (fly.on ? 'Stop flying' : 'Fly through it') : st.kind === 'foam' ? (ffly.on ? 'Stop flying' : 'Fly through it') : st.kind === 'maze' ? (mz.mode === 'solve' ? 'Stop the solver' : 'Watch it solve') : (walkL.on ? 'Stop walking' : 'Walk it');
+export const speedCtl = () => (fly.on || ffly.on) ? 'flySpeed' : null;
 export const going = () => st.kind === 'tpms' ? fly.on : st.kind === 'foam' ? ffly.on : st.kind === 'maze' ? mz.mode === 'solve' : walkL.on;
 export const layoutChanged = () => S.resize();
 export const showView = code => apply(code);
