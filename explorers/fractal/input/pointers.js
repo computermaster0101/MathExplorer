@@ -10,6 +10,8 @@ import { touchTapping, recentTouch } from '../../../js/shell/layout.js';
 
 // ---------- pointers ----------
  let lastMid=null, lastPinch=0, dragDesc=null; shared.vel3 = {x:0,y:0}; let downAt=null;
+// turning round the point you're looking at (3D)
+function turn3(dx,dy){ st.d3.aim=null; st.d3.yaw-=dx*0.008; st.d3.pitch=clamp(st.d3.pitch+dy*0.008,-1.45,1.45); shared.vel3={x:dx,y:dy}; touch(); }
 function descAt(x,y){ return viewDescs().find(d=>x>=d.x&&x<=d.x+d.w&&y>=d.y&&y<=d.y+d.h) || viewDescs()[0]; }
 function setCFrom(d,x,y){ const w=toWorld(d,x,y); st.jc=toMath(st.type,w); st.link.auto=false; $('linkAuto').checked=false; touch(); }
 glc.addEventListener('pointerdown', e=>{ glc.setPointerCapture(e.pointerId); st.hover=null; ptrs.set(e.pointerId,{x:e.offsetX,y:e.offsetY}); downAt={x:e.offsetX,y:e.offsetY,t:e.timeStamp};
@@ -19,12 +21,12 @@ glc.addEventListener('pointermove', e=>{
   if (!ptrs.has(e.pointerId)){ if (st.mode==='explore' && e.pointerType==='mouse'){ st.hover=[x,y]; } return; }
   const prev=ptrs.get(e.pointerId); ptrs.set(e.pointerId,{x,y}); const dx=x-prev.x, dy=y-prev.y;
   if (ptrs.size===1){
-    if (st.mode==='d3'){ if ((st.d3.dragMode==='move') !== (e.shiftKey || !!(e.buttons&2))) pan3(dx,dy); else {   /* Shift-drag or right-drag does the other one */ st.d3.aim=null; st.d3.yaw-=dx*0.008; st.d3.pitch=clamp(st.d3.pitch+dy*0.008,-1.45,1.45); shared.vel3={x:dx,y:dy}; touch(); } }
+    if (st.mode==='d3'){ if ((st.d3.dragMode==='move') !== (e.shiftKey || !!(e.buttons&2))) pan3(dx,dy); else turn3(dx,dy); }   /* Shift-drag or right-drag does the other one */
     else if (st.mode==='grow'){ st.grow.gv.ox+=dx; st.grow.gv.oy+=dy; }
     else if (st.mode==='link' && dragDesc && dragDesc.side==='L'){ if (!notAvail()) setCFrom(dragDesc,x,y); }
     else if (dragDesc){ panBy(dragDesc,dx,dy); }
   } else if (ptrs.size===2){ const [a,b]=[...ptrs.values()], d=Math.hypot(a.x-b.x,a.y-b.y), mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
-    if (lastMid){ const ddx=mx-lastMid[0], ddy=my-lastMid[1]; if (st.mode==='d3') pan3(ddx,ddy); else if (st.mode==='grow'){ st.grow.gv.ox+=ddx; st.grow.gv.oy+=ddy; } else if (!(st.mode==='link' && dragDesc && dragDesc.side==='L')) panBy(descAt(mx,my),ddx,ddy); }
+    if (lastMid){ const ddx=mx-lastMid[0], ddy=my-lastMid[1]; if (st.mode==='d3'){ if (st.d3.dragMode==='move') turn3(ddx,ddy); else pan3(ddx,ddy); }   /* on a touch screen two fingers do the other one (and pinch moves closer) */ else if (st.mode==='grow'){ st.grow.gv.ox+=ddx; st.grow.gv.oy+=ddy; } else if (!(st.mode==='link' && dragDesc && dragDesc.side==='L')) panBy(descAt(mx,my),ddx,ddy); }
     lastMid=[mx,my]; if (lastPinch) zoomBy(lastPinch/d, mx, my); lastPinch=d; }
 });
 const endP=e=>{ const p=ptrs.get(e.pointerId), zt=e.pointerType==='touch' && touchTapping();   /* in full screen a touch tap pauses (the shell): no tap actions here */ if (e.pointerType==='mouse' && st.mode==='explore') st.hover=[e.offsetX,e.offsetY]; ptrs.delete(e.pointerId); if (ptrs.size<2){ lastPinch=0; lastMid=null; }
