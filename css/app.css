@@ -65,7 +65,7 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 .row span{width:30px;font:500 12px 'JetBrains Mono',monospace;color:var(--mute)}
 .row output{width:48px;text-align:right;font:500 12px 'JetBrains Mono',monospace}
 input[type=range]{flex:1;accent-color:var(--accent)}
-input.txt,select.txt{width:100%;box-sizing:border-box;background:#0e1118;border:1px solid var(--line);border-radius:8px;color:var(--text);font:12px 'JetBrains Mono',monospace;padding:7px 8px}
+input.txt,select.txt,textarea.txt{width:100%;box-sizing:border-box;background:#0e1118;border:1px solid var(--line);border-radius:8px;color:var(--text);font:12px 'JetBrains Mono',monospace;padding:7px 8px}
 .btns{display:flex;gap:8px}
 .btn{flex:1;background:#1c2130;border:1px solid var(--line);color:var(--text);font:500 13px Inter,sans-serif;padding:9px 10px;border-radius:9px;cursor:pointer}
 .btn:hover{border-color:#36405a}
@@ -143,6 +143,7 @@ details.sub p{margin:0 0 10px;line-height:1.55}
 .cbBtns{display:flex;gap:8px} body.consentAsk #xCard{bottom:110px}
 .modalBack{position:fixed;inset:0;z-index:80;background:rgba(4,6,10,.6);display:flex;align-items:center;justify-content:center;padding:16px}
 .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;max-width:520px;color:var(--text)} .modal h2{margin:0 0 8px;font-size:18px} .modal p{color:#c9cfdc;line-height:1.5}
+#reportForm textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:96px;margin:4px 0 6px;font:13px Inter,sans-serif} #reportForm .modal{width:min(520px,100%)} .rpTrap{position:absolute;left:-10000px;width:1px;height:1px;opacity:0}
 .xextra{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-top:1px solid var(--line);margin-top:4px} .xextra button{background:none;border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:5px 9px;font:12px Inter,sans-serif;cursor:pointer} .xextra button:hover{color:var(--text)}
 .xextra a{border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:5px 9px;font:12px Inter,sans-serif;text-decoration:none} .xextra a:hover{color:var(--text)}
 .app.zen #xCard, .app.zen #tourBar{display:none !important}

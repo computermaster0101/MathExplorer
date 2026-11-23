@@ -19,6 +19,8 @@ Every explorer shares the same keys, reacts to the music player, saves images, r
 
 ## Privacy
 
+Report a problem (in the explorer menu) posts your report publicly as a GitHub issue, with your browser, screen size and, if you choose, the link to your view; nothing personal is asked for.
+
 Everything runs in the browser: music, files and drawings never leave the device. On the live site, Google Analytics counts visits and which features are used, only as far as each visitor allows in the consent bar (anonymous, cookie-free counts otherwise), and never receives the view in the address bar. The explorer menu has the full privacy note.
 
 ## Why it exists

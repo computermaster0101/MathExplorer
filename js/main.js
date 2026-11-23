@@ -24,6 +24,7 @@ import { colourFromCode, colourSync } from './common/colours.js';
 import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
 import { pageView, consentBar, showPrivacy } from './shell/analytics.js';
 import { explorerShown, takeTour, aboutThis } from './shell/tour.js';
+import { openReport } from './shell/report.js';
 
 const EXPLORERS = {
   fractal:   { title: 'Fractals' },
@@ -133,6 +134,7 @@ $('switcher').addEventListener('click', e => { const a = e.target.closest('a'); 
 $('tourAgain').addEventListener('click', () => { setMenu(false); takeTour(); });
 $('aboutThis').addEventListener('click', () => { setMenu(false); aboutThis(); });
 $('privacyBtn').addEventListener('click', () => { setMenu(false); showPrivacy(); });
+$('reportBtn').addEventListener('click', () => { setMenu(false); openReport(); });
 consentBar();
 $('resetBtn').addEventListener('click', async () => { if (current) (await loaded[current].catch(() => null))?.reset?.(); });
 window.addEventListener('hashchange', route);

@@ -40,6 +40,7 @@ export function showPrivacy() {
     d.innerHTML = `<div class="modal" role="dialog" aria-labelledby="pvT"><h2 id="pvT">Privacy</h2>
       <p>Math Explorer runs entirely in your browser. Music you play, files you open and anything you draw stay on your device.</p>
       <p>If you allow it, we use Google Analytics to count visits and which features are used (which explorer, whether the Visualizer or a share link was used, and errors), so we can make the app better. It is never used for advertising and we don't send anything personal: not your drawings, not the view in your address bar.</p>
+      <p>If you send a report with Report a problem, it is posted publicly as an issue on GitHub, with your browser, screen size and (if you tick it) the link to your view.</p>
       <p>If you choose No thanks, Google Analytics gets only anonymous, cookie-free counts. Your choice is remembered on this device; change it here any time.</p>
       <div class="btns"><button class="btn" id="pvDeny">No thanks</button><button class="btn primary" id="pvAllow">Allow</button><button class="btn" id="pvClose">Close</button></div></div>`;
     document.body.appendChild(d);
