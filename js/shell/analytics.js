@@ -26,6 +26,7 @@ export function pageView(explorer, title) { track('page_view', { page_title: tit
 const ACTIONS = { vizBtn: 'visualizer', vizStageBtn: 'visualizer', zenBtn: 'fullscreen', snap: 'snapshot', recBtn: 'record_video', copyLink: 'share_link', prBtn: 'print_3d', sndPlay: 'music_play', sndMic: 'music_mic', sndTab: 'music_tab' };
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button'); if (!b || !ACTIONS[b.id]) return;
   track(ACTIONS[b.id], { explorer: document.getElementById('app').dataset.explorer || '' }); }, true);
+document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('#ghLink,#ghMenu'); if (a) track('github', { from: a.id === 'ghLink' ? 'header' : 'menu' }); }, true);
 document.addEventListener('change', e => { if (e.target && e.target.id === 'sndFile') track('music_file', { explorer: document.getElementById('app').dataset.explorer || '' }); }, true);
 // errors on real devices: the message only, cut short
 let errs = 0;

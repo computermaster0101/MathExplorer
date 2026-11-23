@@ -15,6 +15,7 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 .brand{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 10px}
 .brand b{font:600 13px Inter,sans-serif;letter-spacing:.3px}
 .brand small{color:var(--mute);font-size:11px}
+.brandR{display:flex;align-items:center;gap:8px} .ghLink{color:var(--mute);display:inline-flex;align-self:center;opacity:.8} .ghLink:hover,.ghLink:focus-visible{color:var(--text);opacity:1}
 /* the explorer menu: a button showing the explorer on screen, opening a list of all of them */
 .xmenu{position:relative;margin-bottom:18px}
 .xbtn{width:100%;display:flex;align-items:center;justify-content:space-between;background:#0e1118;border:1px solid var(--line);border-radius:10px;color:var(--text);font:600 14px Inter,sans-serif;padding:10px 12px;cursor:pointer}
@@ -143,6 +144,7 @@ details.sub p{margin:0 0 10px;line-height:1.55}
 .modalBack{position:fixed;inset:0;z-index:80;background:rgba(4,6,10,.6);display:flex;align-items:center;justify-content:center;padding:16px}
 .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;max-width:520px;color:var(--text)} .modal h2{margin:0 0 8px;font-size:18px} .modal p{color:#c9cfdc;line-height:1.5}
 .xextra{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-top:1px solid var(--line);margin-top:4px} .xextra button{background:none;border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:5px 9px;font:12px Inter,sans-serif;cursor:pointer} .xextra button:hover{color:var(--text)}
+.xextra a{border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:5px 9px;font:12px Inter,sans-serif;text-decoration:none} .xextra a:hover{color:var(--text)}
 .app.zen #xCard, .app.zen #tourBar{display:none !important}
 #tourHint{position:fixed;z-index:65;background:var(--panel);border:1px solid var(--accent);border-radius:10px;padding:9px 12px;color:var(--text);font-size:13px;line-height:1.4;box-shadow:0 8px 28px rgba(0,0,0,.45);transition:opacity .6s}
 #tourHint.top{top:12px;left:12px;right:12px;max-width:420px;margin:0 auto} #tourHint.out{opacity:0}

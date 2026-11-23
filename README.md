@@ -75,6 +75,9 @@ index.html#/tiling/t=7_3&md=disc&...
 
 ## License
 
+The source is on GitHub: https://github.com/computermaster0101/MathExplorer (linked from the GitHub mark at the top of the panel and the explorer menu).
+
+
 Copyright (C) 2026 computermaster0101
 
 Math Explorer is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See [LICENSE](LICENSE) for the full text.
