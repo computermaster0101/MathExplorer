@@ -14,6 +14,7 @@ export const ICON = {
   play: svg('<path d="M7 4l13 8-13 8z" fill="currentColor"/>'),
   pause: svg('<rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/>'),
   go: svg('<circle cx="12" cy="12" r="9"/><path d="M10 8l4 4-4 4"/>'),
+  steer: svg('<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>'),
   slower: svg('<path d="M4 17a8 8 0 0 1 16 0"/><line x1="12" y1="17" x2="7.5" y2="12"/><circle cx="12" cy="17" r="1" fill="currentColor"/>'),
   faster: svg('<path d="M4 17a8 8 0 0 1 16 0"/><line x1="12" y1="17" x2="16.5" y2="12"/><circle cx="12" cy="17" r="1" fill="currentColor"/>'),
   zoomOut: svg('<circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/><line x1="7.5" y1="10.5" x2="13.5" y2="10.5"/>'),
@@ -31,6 +32,8 @@ export function setToolbarExplorer(a) { api = a || {}; refresh(); }
 // ---------- play / pause, go, slower / faster ----------
 $('tbPlay').addEventListener('click', () => { key(' ', { code: 'Space' }); setTimeout(refresh, 60); });
 $('tbGo').addEventListener('click', () => { key('g', { code: 'KeyG' }); setTimeout(refresh, 60); });
+// the target: self-steering on or off (T), where something steers itself (the explorer's autoCtl(): { label, on } or null)
+$('tbSteer').addEventListener('click', () => { key('t', { code: 'KeyT' }); setTimeout(refresh, 60); });
 function speed(dir) {
   const c = api.speedCtl && api.speedCtl(); if (!c) return;
   if (typeof c === 'object' && c.step) { c.step(dir); return; }
@@ -88,6 +91,8 @@ function refresh() {
   const play = $('tbPlay'); if (play.dataset.state !== String(paused)) { play.dataset.state = String(paused); play.innerHTML = paused ? ICON.play : ICON.pause; }
   setTip(play, paused ? 'Play (Space)' : 'Pause (Space)');
   const g = api.goLabel ? api.goLabel() : null, go = $('tbGo'); go.hidden = !g; if (g) setTip(go, g + ' (G)');
+  const a = api.autoCtl ? api.autoCtl() : null, sb = $('tbSteer'); sb.hidden = !a;
+  if (a) { setTip(sb, a.label + (a.on ? ': on' : a.on === false ? ': off' : '') + ' (T)'); sb.classList.toggle('on', !!a.on); sb.setAttribute('aria-pressed', a.on ? 'true' : 'false'); }
   const sn = speedName(); $('tbSlower').hidden = $('tbFaster').hidden = !sn;
   if (sn) { setTip($('tbSlower'), `Slower: ${sn}`); setTip($('tbFaster'), `Faster: ${sn}`); }
   const z = !api.canZoom || api.canZoom(); for (const e of document.querySelectorAll('.tbZoom')) e.hidden = !z;
@@ -109,7 +114,7 @@ $('stageBtns').addEventListener('click', e => { if (pressed && performance.now()
 // the three shell buttons that were words
 for (const [id, ic, name] of [['panelBtn', 'panel', 'Hide panel (H)'], ['zenBtn', 'zen', 'Full screen (F)'], ['resetBtn', 'reset', 'Reset view (R)']]) { const b = $(id); b.innerHTML = ICON[ic]; setTip(b, name); }
 musicBtn.innerHTML = ICON.music; setTip(musicBtn, 'Music and the Visualizer');
-$('tbGo').innerHTML = ICON.go; $('tbSlower').innerHTML = ICON.slower; $('tbFaster').innerHTML = ICON.faster;
+$('tbSteer').innerHTML = ICON.steer; $('tbGo').innerHTML = ICON.go; $('tbSlower').innerHTML = ICON.slower; $('tbFaster').innerHTML = ICON.faster;
 $('tbOut').innerHTML = ICON.zoomOut; $('tbIn').innerHTML = ICON.zoomIn; setTip($('tbOut'), 'Zoom out: back (−, or the wheel)'); setTip($('tbIn'), 'Zoom in: forwards (+, or the wheel)');
 setTip($('helpBtn'), 'Help: the tour, keys, Report a problem (?)');
 refresh();

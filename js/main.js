@@ -15,6 +15,7 @@
 //   showView(code)      the address changed to a view code (a pasted link, back/forward)
 //   going()             optional: true while diving / flying / riding / walking, so a tap on a phone pauses rather than goes
 //   goLabel()           optional: what the picture's Go button (G) is called right now, e.g. 'Dive in'; null hides it
+//   autoCtl()           optional: the target button, what steers itself here: { label, on } (T toggles it); null hides it
 //   canZoom()           optional: false hides the zoom buttons (they send the wheel to the middle of the picture)
 //   speedCtl()          optional: what its slower / faster buttons move: a range input's id, { id, invert }, or { label, step(dir) }; null hides them
 //

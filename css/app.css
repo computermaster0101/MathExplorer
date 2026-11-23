@@ -53,7 +53,7 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 #stageBtns [data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:500 12px Inter,sans-serif;pointer-events:none;opacity:0;transition:opacity .15s .35s;z-index:31}
 #stageBtns [data-tip]:hover::after,#stageBtns [data-tip]:focus-visible::after,#stageBtns [data-tip].tipShow::after{opacity:1} #stageBtns [aria-expanded="true"]::after{display:none}
 #stageBtns > :first-child[data-tip]::after{left:0;transform:none}
-.musicWrap{position:relative;display:inline-flex}
+.musicWrap{position:relative;display:inline-flex} .ibtn.on{color:var(--accent);border-color:var(--accent)}
 /* the ? help menu, at the end of the buttons on the picture */
 .helpWrap{position:relative;display:inline-flex} .helpBtn{min-width:30px;font-weight:600}
 #helpMenu,#musicMenu{position:absolute;top:calc(100% + 6px);left:0;min-width:210px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.45);z-index:30}

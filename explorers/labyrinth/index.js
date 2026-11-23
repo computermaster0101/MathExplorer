@@ -642,6 +642,8 @@ export const reset = resetView;
 
 /* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
 export const goLabel = () => st.kind === 'tpms' ? (fly.on ? 'Stop flying' : 'Fly through it') : st.kind === 'foam' ? (ffly.on ? 'Stop flying' : 'Fly through it') : st.kind === 'maze' ? (mz.mode === 'solve' ? 'Stop the solver' : 'Watch it solve') : (walkL.on ? 'Stop walking' : 'Walk it');
+/* the picture's target button: what steers itself here, and whether it's on (null hides it) */
+export const autoCtl = () => st.kind === 'tpms' || st.kind === 'foam' ? { label: 'Steer itself', on: !!st.auto } : st.kind === 'maze' ? { label: 'Show the way', on: null } : null;
 export const speedCtl = () => (fly.on || ffly.on) ? 'flySpeed' : null;
 export const going = () => st.kind === 'tpms' ? fly.on : st.kind === 'foam' ? ffly.on : st.kind === 'maze' ? mz.mode === 'solve' : walkL.on;
 export const layoutChanged = () => S.resize();

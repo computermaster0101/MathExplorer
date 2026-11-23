@@ -360,6 +360,8 @@ export const reset = resetView;
 export const going = () => walk.on;
 /* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
 export const goLabel = () => walk.on ? 'Stop walking' : 'Walk on it';
+/* the picture's target button: what steers itself here, and whether it's on (null hides it) */
+export const autoCtl = () => ({ label: 'Walk on by itself, the long way round', on: !!st.autoRound });
 export const speedCtl = () => walk.on ? 'walkSpeed' : 'speed';
 export const layoutChanged = () => S.resize();
 export const showView = code => apply(code);
