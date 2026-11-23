@@ -14,6 +14,8 @@ export const ICON = {
   play: svg('<path d="M7 4l13 8-13 8z" fill="currentColor"/>'),
   pause: svg('<rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/>'),
   go: svg('<circle cx="12" cy="12" r="9"/><path d="M10 8l4 4-4 4"/>'),
+  julia: svg('<path d="M12 12c1.5-2.5 5-2 5.5 .5s-2 4.5-5 4-4.5-3-3-6 6-4.5 9-2"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/>'),
+  back: svg('<path d="M9 14l-5-5 5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>'),
   steer: svg('<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>'),
   slower: svg('<path d="M4 17a8 8 0 0 1 16 0"/><line x1="12" y1="17" x2="7.5" y2="12"/><circle cx="12" cy="17" r="1" fill="currentColor"/>'),
   faster: svg('<path d="M4 17a8 8 0 0 1 16 0"/><line x1="12" y1="17" x2="16.5" y2="12"/><circle cx="12" cy="17" r="1" fill="currentColor"/>'),
@@ -34,6 +36,8 @@ $('tbPlay').addEventListener('click', () => { key(' ', { code: 'Space' }); setTi
 $('tbGo').addEventListener('click', () => { key('g', { code: 'KeyG' }); setTimeout(refresh, 60); });
 // the target: self-steering on or off (T), where something steers itself (the explorer's autoCtl(): { label, on } or null)
 $('tbSteer').addEventListener('click', () => { key('t', { code: 'KeyT' }); setTimeout(refresh, 60); });
+// one button of the explorer's own (its extraCtl(): { label, icon, on, run } or null), e.g. Fractals' Julia set at a point
+$('tbExtra').addEventListener('click', () => { const x = api.extraCtl && api.extraCtl(); if (x) x.run(); setTimeout(refresh, 60); });
 function speed(dir) {
   const c = api.speedCtl && api.speedCtl(); if (!c) return;
   if (typeof c === 'object' && c.step) { c.step(dir); return; }
@@ -93,6 +97,8 @@ function refresh() {
   const g = api.goLabel ? api.goLabel() : null, go = $('tbGo'); go.hidden = !g; if (g) setTip(go, g + ' (G)');
   const a = api.autoCtl ? api.autoCtl() : null, sb = $('tbSteer'); sb.hidden = !a;
   if (a) { setTip(sb, a.label + (a.on ? ': on' : a.on === false ? ': off' : '') + ' (T)'); sb.classList.toggle('on', !!a.on); sb.setAttribute('aria-pressed', a.on ? 'true' : 'false'); }
+  const x = api.extraCtl ? api.extraCtl() : null, xb = $('tbExtra'); xb.hidden = !x;
+  if (x) { setTip(xb, x.label); xb.classList.toggle('on', !!x.on); xb.setAttribute('aria-pressed', x.on ? 'true' : 'false'); if (xb.dataset.icon !== x.icon) { xb.dataset.icon = x.icon; xb.innerHTML = ICON[x.icon] || ICON.go; } }
   const sn = speedName(); $('tbSlower').hidden = $('tbFaster').hidden = !sn;
   if (sn) { setTip($('tbSlower'), `Slower: ${sn}`); setTip($('tbFaster'), `Faster: ${sn}`); }
   const z = !api.canZoom || api.canZoom(); for (const e of document.querySelectorAll('.tbZoom')) e.hidden = !z;
