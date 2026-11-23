@@ -1,5 +1,5 @@
-// First visits: a five-step tour of what every explorer shares (the menu, moving round the picture, the panel, music, keeping
-// what you make), and, the first time in each explorer, a small card saying what you're looking at and two things to try that
+// First visits: an eight-step tour of what every explorer shares (the menu, moving round the picture, the buttons on it, the
+// panel, music, saving and sharing, 3D printing, keys and help), and, the first time in each explorer, a small card saying what you're looking at and two things to try that
 // only that explorer has. Nothing here repeats the tour. Remembered on this device (localStorage; a session's worth when
 // storage is blocked). Someone arriving on a shared link sees the picture they were sent, with a small bar offering the tour,
 // rather than the tour on top of it; nothing appears in full screen.
@@ -28,16 +28,24 @@ const CARDS = {
   life: ['Patterns that grow by themselves, from simple rules about each cell\'s neighbours.', ['Paint on the picture with the brush to start new life', 'Try <b>Lenia</b>: smooth cells that move like creatures']],
 };
 
-// ---------- the tour: five steps, each pointing at the real thing ----------
+// ---------- the tour: a step for each thing every explorer shares, each pointing at the real thing ----------
+// Steps on a panel group open it while they're shown (and close it again after, if it was closed); a group an explorer
+// hides in its current mode is left out.
 const STEPS = () => [
   { el: '#switcher', title: 'Welcome to Math Explorer', text: 'Twelve ways to see mathematics, all running live in your browser. Pick an explorer here. Play freely: you can\'t break anything.' },
   { el: '#stage', title: 'The picture', text: touch()
-      ? 'Drag to move or turn it, pinch to zoom. Tap to dive in (tap again to pause or play), double-tap for full screen, press and hold to start afresh. In full screen, swipe sideways for colours, up or down for the shape.'
+      ? 'Drag to move or turn it, pinch to zoom. Tap to dive in (tap again to pause or play), press and hold to start afresh.'
       : 'Drag to move or turn it, scroll to zoom. On the keyboard the arrows and W A S D move you, G dives or flies, Space pauses and R starts afresh.' },
-  { el: '#panel', title: 'The panel', text: 'Choose a shape at the top, then open any group to change how it moves, how it looks and its colours.', open: null },
-  { el: '#g-sound', title: 'Music', text: 'Play a song (or listen to another tab), then press ♫ Visualizer: the picture moves with the beat and changes with the song.' },
-  { el: '#stageBtns', title: 'Keep what you make', text: 'Go full screen here. Under Save, share & record you can save a picture, record a video or copy a link that reopens exactly this view. Press ? any time for every key.' },
-];
+  { el: '#stageBtns', title: 'Buttons on the picture', text: touch()
+      ? '<b>Hide panel</b> gives the picture more room. <b>Full screen</b> (or double-tap the picture) shows nothing but the picture, ready for a screenshot: there, swipe sideways for colours and up or down for the shape, and double-tap to come back. <b>Reset view</b> puts it back as it started.'
+      : '<b>Hide panel</b> (H) gives the picture more room. <b>Full screen</b> (F) shows nothing but the picture; Esc comes back. <b>Reset view</b> (R) puts it back as it started. Where there\'s a <b>♫ Visualizer</b> button, it turns the explorer into a light show for your music.' },
+  { el: '#panel', title: 'The panel', text: 'Choose a shape at the top, then open any group to change how it moves, how it looks and its colours. Every explorer\'s panel is laid out in the same order.' },
+  { el: '#g-sound', open: true, title: 'Music', text: 'Play a song from your device, use the microphone, or listen to another tab. Every explorer moves with the beat; ♫ Visualizer changes the picture with the song as well.' },
+  { el: '#g-share', open: true, title: 'Save and share', text: 'Save a picture of exactly what you see, or record a video with the music. <b>Copy link</b> gives a link that reopens this very view (shape, colours and angle) for anyone you send it to; paste one under <b>Load a view</b> to open it here.' },
+  { el: '#g-print', open: true, title: '3D print', text: 'Download what you\'re looking at as an STL file, ready for a 3D printer, at the size you choose.' },
+  { el: '#g-keys', open: true, title: 'Keys and help', text: (touch() ? 'With a keyboard, every key for this explorer is listed here. ' : 'Every key for this explorer is listed here; press <b>?</b> any time to jump to it. ')
+      + '<b>Navigation speed</b> sets how fast you move. To see this tour again, or what the explorer you\'re in is about, open the explorer menu at the top.' },
+].filter(s => { if (!s.open) return true; const el = document.querySelector(s.el); return el && !el.hidden && el.offsetParent !== null; });
 let T = null;   // the open tour: { i, root, spot, tip }
 function startTour(from) {
   if (T) return; hideBar(); hideCard();
@@ -48,6 +56,7 @@ function startTour(from) {
 }
 function step(i) {
   const S = STEPS(); T.i = i; const s = S[i], el = document.querySelector(s.el);
+  shut(); if (s.open && el && !el.open) { el.open = true; T.opened = el; }   // open this step's group (shut() closes the last one again)
   if (el) { const r = el.getBoundingClientRect(); if (r.top < 0 || r.bottom > innerHeight) el.scrollIntoView({ block: r.height > innerHeight * 0.8 ? 'start' : 'center' }); }   // bring it into view (on a phone the panel is below the picture)
   T.tip.innerHTML = `<div class="ttStep">${i + 1} of ${S.length}</div><h3>${s.title}</h3><p>${s.text}</p>
     <div class="ttBtns"><button class="sbtn" id="ttSkip">${i === S.length - 1 ? 'Close' : 'Skip'}</button><span></span>${i ? '<button class="sbtn" id="ttBack">Back</button>' : ''}<button class="sbtn on" id="ttNext">${i === S.length - 1 ? 'Done' : 'Next'}</button></div>`;
@@ -70,8 +79,10 @@ function place() {
 }
 // while the tour is open it has the keyboard (the explorer underneath ignores keys): Esc skips, Enter or → goes on, ← back, Tab moves round its buttons
 function tourKey(e) { if (!T || e.key === 'Tab') return; if (e.key === 'Escape') endTour('tour_skip'); else if (e.key === 'Enter' || e.key === 'ArrowRight') next(); else if (e.key === 'ArrowLeft' && T.i) step(T.i - 1); e.preventDefault(); e.stopPropagation(); }
+const shut = () => { if (T && T.opened) { T.opened.open = false; T.opened = null; } };
 function endTour(how) {
-  if (!T) return; track(how, { step: T.i + 1 }); store.set(TOUR, TOUR_V);
+  if (!T) return; track(how, { step: T.i + 1 }); store.set(TOUR, TOUR_V); shut();
+  const pn = $('panel'); if (pn) pn.scrollTop = 0; scrollTo(0, 0);   // back to the top, where the shapes are
   window.removeEventListener('keydown', tourKey, true); window.removeEventListener('resize', place); T.root.remove(); T = null; document.body.classList.remove('touring');
   if (current && !store.get(CARD + current.name)) showCard(current.name, current.title);   // then this explorer's own card
 }
@@ -91,7 +102,7 @@ const hideCard = () => { const d = $('xCard'); if (d) d.remove(); };
 // ---------- the bar for someone arriving on a shared link ----------
 function showBar(title) {
   if ($('tourBar')) return; const b = document.createElement('div'); b.id = 'tourBar';
-  b.innerHTML = `<span>You're looking at <b>${title}</b>. New here?</span><button class="sbtn on" id="tbGo">Take the 30-second tour</button><button class="sbtn" id="tbX" aria-label="Close">✕</button>`;
+  b.innerHTML = `<span>You're looking at <b>${title}</b>. New here?</span><button class="sbtn on" id="tbGo">Take the tour</button><button class="sbtn" id="tbX" aria-label="Close">✕</button>`;
   $('stage').appendChild(b);
   b.querySelector('#tbGo').onclick = () => { hideBar(); startTour('shared_link'); };
   b.querySelector('#tbX').onclick = () => { hideBar(); try { sessionStorage.setItem('mathexplorer.tourBar', '1'); } catch (e) { /* fine */ } };
@@ -99,7 +110,11 @@ function showBar(title) {
 const hideBar = () => { const b = $('tourBar'); if (b) b.remove(); };
 
 // ---------- called by main.js each time an explorer comes on screen ----------
-let current = null, waiting = null;
+let current = null, waiting = null, asking = null;
+// the consent bar is answered first: the first-visit tour (and a card) wait until the visitor has chosen
+const consentOpen = () => document.body.classList.contains('consentAsk');
+function afterConsent(fn) { clearInterval(asking); if (!consentOpen()) return fn();
+  asking = setInterval(() => { if (!consentOpen()) { clearInterval(asking); setTimeout(fn, 500); } }, 250); }
 /** name, its title, and whether the address held a view (a shared link) */
 // automated browsers (tests, preview tools) skip the first-visit help, unless asked for it
 const AUTO = navigator.webdriver && !/[?&](analyticsTest|tourTest)/.test(location.search);
@@ -111,10 +126,10 @@ export function explorerShown(name, title, fromLink) {
   if (store.get(TOUR) !== TOUR_V) {
     let barDone = false; try { barDone = sessionStorage.getItem('mathexplorer.tourBar') === '1'; } catch (e) { /* fine */ }
     if (fromLink) { if (!barDone) showBar(title); }
-    else setTimeout(() => { if (current && current.name === name && !inZen() && !T) startTour('first_visit'); }, 900);
+    else setTimeout(() => afterConsent(() => { if (current && current.name === name && !inZen() && !T) startTour('first_visit'); }), 900);
     return;
   }
-  if (!store.get(CARD + name)) setTimeout(() => { if (current && current.name === name && !T && !inZen()) showCard(name, title); }, 700);
+  if (!store.get(CARD + name)) setTimeout(() => afterConsent(() => { if (current && current.name === name && !T && !inZen()) showCard(name, title); }), 700);
 }
 /** From the menu: the tour again, or this explorer's card again. */
 export const takeTour = () => startTour('menu');
