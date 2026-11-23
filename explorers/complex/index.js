@@ -109,6 +109,7 @@ function compile() {
 
 // ---------- view ----------
 let dirty = true;
+G.onWake(() => { dirty = true; });   // back from sleep (js/common/gl.js): draw again
 const view = makeView2D(cv, { home: { cx: 0, cy: 0, scale: 2 }, min: 2e-5, max: 1e4, onChange: () => { dirty = true; share.touch(); },
   onDrag: (e, dx, dy) => { if (st.view === 'sphere') { st.yaw += dx * 0.008; st.pitch = clamp(st.pitch + dy * 0.008, -1.5, 1.5); dirty = true; share.touch(); return true; }
     if (grab) { const [x0, y0] = view.toWorld(e.clientX - dx, e.clientY - dy), [x1, y1] = view.toWorld(e.clientX, e.clientY); grab.p[0] += x1 - x0; grab.p[1] += y1 - y0; dirty = true; share.touch(); return true; } return false; } });

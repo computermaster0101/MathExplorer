@@ -5,10 +5,12 @@ import { BASE_R, st } from '../state.js';
 import { bgRGB, colorOf } from './colour.js';
 import { cross, dot3, dotN, nrm } from '../geometry/common.js';
 import { project } from '../math/rotate4d.js';
+import { sleepThree } from '../../../js/common/gl.js';
 
 // ---------- three.js ----------
 export const canvas = $('c');
 export const renderer = new THREE.WebGLRenderer({canvas, antialias:true, preserveDrawingBuffer:true});
+sleepThree(renderer);   // asleep while another explorer is on screen (js/common/gl.js)
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setClearColor(0x0b0d12);
 export const scene = new THREE.Scene();

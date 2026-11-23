@@ -504,10 +504,12 @@ function mkCtx(cv){
   g.enableVertexAttribArray(0); g.vertexAttribPointer(0,2,g.FLOAT,false,0,0);
   const C={g, progs:{}};
   C.prog=(name,fs)=>{ if (C.progs[name]) return C.progs[name];
-    const p=g.createProgram();
-    for (const [t,s] of [[g.VERTEX_SHADER,VS],[g.FRAGMENT_SHADER,fs]]){ const sh=g.createShader(t); g.shaderSource(sh,s); g.compileShader(sh);
-      if (!g.getShaderParameter(sh,g.COMPILE_STATUS)) throw new Error(g.getShaderInfoLog(sh)); g.attachShader(p,sh); }
-    g.bindAttribLocation(p,0,'a'); g.linkProgram(p); if (!g.getProgramParameter(p,g.LINK_STATUS)) throw new Error(g.getProgramInfoLog(p));
+    // shaders are deleted once linked, and everything on a failure (a custom formula that won't compile leaves nothing behind)
+    const p=g.createProgram(), shs=[], fail=msg=>{ for (const sh of shs) g.deleteShader(sh); g.deleteProgram(p); throw new Error(msg); };
+    for (const [t,s] of [[g.VERTEX_SHADER,VS],[g.FRAGMENT_SHADER,fs]]){ const sh=g.createShader(t); shs.push(sh); g.shaderSource(sh,s); g.compileShader(sh);
+      if (!g.getShaderParameter(sh,g.COMPILE_STATUS)) fail(g.getShaderInfoLog(sh)); g.attachShader(p,sh); }
+    g.bindAttribLocation(p,0,'a'); g.linkProgram(p); if (!g.getProgramParameter(p,g.LINK_STATUS)) fail(g.getProgramInfoLog(p));
+    for (const sh of shs){ g.detachShader(p,sh); g.deleteShader(sh); }
     const loc={}; return C.progs[name]={p, u:n=> n in loc ? loc[n] : (loc[n]=g.getUniformLocation(p,n))}; };
   // build a program in the background where the browser can (KHR_parallel_shader_compile): returns null until it's ready
   C.pcs=g.getExtension('KHR_parallel_shader_compile'); C.pend={};
@@ -515,10 +517,13 @@ function mkCtx(cv){
     if (!Q){ const p=g.createProgram(), shs=[]; for (const [t,src] of [[g.VERTEX_SHADER,VS],[g.FRAGMENT_SHADER,fs]]){ const sh=g.createShader(t); g.shaderSource(sh,src); g.compileShader(sh); g.attachShader(p,sh); shs.push(sh); }
       g.bindAttribLocation(p,0,'a'); g.linkProgram(p); Q=C.pend[name]={p, shs, t0:performance.now()}; if (C.pcs) return null; }
     if (C.pcs && !g.getProgramParameter(Q.p, C.pcs.COMPLETION_STATUS_KHR)) return null;
-    delete C.pend[name]; for (const sh of Q.shs){ g.detachShader(Q.p,sh); g.deleteShader(sh); }
-    if (!g.getProgramParameter(Q.p, g.LINK_STATUS)){ const log=Q.shs.map(sh=>g.getShaderInfoLog(sh)).join(' ')+' '+g.getProgramInfoLog(Q.p); throw new Error(log.trim()||'the graphics driver gave up building it'); }
+    delete C.pend[name];
+    /* read the shaders' messages before deleting them: a deleted shader has none, so a failed build used to lose its reason */
+    const ok=g.getProgramParameter(Q.p, g.LINK_STATUS), log=ok ? '' : Q.shs.map(sh=>g.getShaderInfoLog(sh)||'').join(' ')+' '+(g.getProgramInfoLog(Q.p)||'');
+    for (const sh of Q.shs){ g.detachShader(Q.p,sh); g.deleteShader(sh); }
+    if (!ok){ g.deleteProgram(Q.p); throw new Error(log.trim()||'the graphics driver gave up building it'); }
     const loc={}; return C.progs[name]={p:Q.p, u:n=> n in loc ? loc[n] : (loc[n]=g.getUniformLocation(Q.p,n)), ms:Math.round(performance.now()-Q.t0)}; };
-  C.drop=name=>{ const P=C.progs[name]; if (P){ g.deleteProgram(P.p); delete C.progs[name]; } const Q=C.pend[name]; if (Q){ g.deleteProgram(Q.p); delete C.pend[name]; } };
+  C.drop=name=>{ const P=C.progs[name]; if (P){ g.deleteProgram(P.p); delete C.progs[name]; } const Q=C.pend[name]; if (Q){ for (const sh of Q.shs) g.deleteShader(sh); g.deleteProgram(Q.p); delete C.pend[name]; } };
   C.newTex=()=>{ const t=g.createTexture(); g.bindTexture(g.TEXTURE_2D,t);
     for (const [k,v] of [[g.TEXTURE_MIN_FILTER,g.NEAREST],[g.TEXTURE_MAG_FILTER,g.NEAREST],[g.TEXTURE_WRAP_S,g.CLAMP_TO_EDGE],[g.TEXTURE_WRAP_T,g.CLAMP_TO_EDGE]]) g.texParameteri(g.TEXTURE_2D,k,v);
     g.texImage2D(g.TEXTURE_2D,0,g.RG32F,1,1,0,g.RG,g.FLOAT,new Float32Array(2)); return t; };

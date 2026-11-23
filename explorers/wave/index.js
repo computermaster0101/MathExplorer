@@ -338,6 +338,7 @@ function beatDraw(r, turn, stretch, draw) {
   if (stretch) og.scale(1, 1 + 0.35 * pulseNow + 0.12 * vo); else og.scale(k, k); og.translate(-cx, -cy); draw(); og.restore();
   if (flashNow) { og.fillStyle = `rgba(255,255,255,${(0.05 * flashNow).toFixed(3)})`; og.fillRect(0, 0, r.width, r.height); } }
 let running = false, tPrev = 0, frame = 0, dirty = true, ripT = 0, flashNow = 0, pulseNow = 0;
+G.onWake(() => { dirty = true; });   // back from sleep (js/common/gl.js): draw again
 function render() {
   if (st.mode === 'ripple') { G.fit(Math.min(devicePixelRatio, 1.5)); const p = P.rip, U = k => p.u(k), pu = rampUniform(R); g.useProgram(p.p);
     const src = new Float32Array(16); st.rip.src.slice(0, 8).forEach((s, i) => { src[i * 2] = s[0]; src[i * 2 + 1] = s[1]; });

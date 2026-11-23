@@ -340,6 +340,7 @@ makeVisualizer(MO, { preset: 'mvd=0.25&mvw=1&mvb=0.3&mvn=0.1', shape: () => (st.
   drop: () => renew(), kick: () => { if (st.mode !== 'life' && S) paintAt(Math.random() * W, Math.random() * H, false, st.mode === 'lenia' ? 12 : 6); } });
 lc.addEventListener('wheel', e => { e.preventDefault(); lz = clamp(lz * Math.exp(-e.deltaY * 0.0015), 1, 8); dirty = true; share.touch(); }, { passive: false });   // the wheel zooms in on the middle
 let running = false, tPrev = 0, frame = 0, dirty = true, flashNow = 0, pulseNow = 0, voiceNow = 0, acc = 0;
+G.onWake(() => { dirty = true; });   // back from sleep (js/common/gl.js): draw again
 function loop(now) {
   if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frame++;
   setPausedTag(st.paused); const go = !st.paused;

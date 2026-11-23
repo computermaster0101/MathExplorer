@@ -30,6 +30,7 @@ import { setToolbarExplorer } from './shell/toolbar.js';
 import './shell/perf.js';   // slow graphics: a notice, lighter starts, and recovery when the graphics card resets
 import { setKeyHandler, syncKeyPrefs } from './shell/keys.js';
 import { colourFromCode, colourSync } from './common/colours.js';
+import { sleepIn, wakeIn } from './common/gl.js';
 import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
 import { pageView, consentBar, showPrivacy } from './shell/analytics.js';
 import { explorerShown, takeTour, aboutThis } from './shell/tour.js';
@@ -106,7 +107,8 @@ async function show() {
 
   if (current) {
     (await loaded[current].catch(() => null))?.stop?.();
-    if (views[current]) detach(views[current]);
+    // its WebGL contexts sleep until it's back: browsers keep only a few alive per page (js/common/gl.js)
+    if (views[current]) { sleepIn(views[current].stageEl); detach(views[current]); }
   }
   current = name; setActiveExplorer(name); app.dataset.explorer = name; markSwitcher(name);
   setKeyHandler(null); onLayoutChange(() => {}); setToolbarExplorer(null);
@@ -126,6 +128,7 @@ async function show() {
   loading.hidden = true;
   if (current !== name) return;            // the user moved on while it loaded
 
+  if (!first) wakeIn(views[name].stageEl);   // asynchronous: each surface redraws when the browser hands its context back
   if (!first && code) api.showView?.(code);
   setKeyHandler(api.onKey); setGoing(api.going); onLayoutChange(() => api.layoutChanged?.()); setSoundHelp(api.soundHelp);
   api.start?.(); colourSync(); setToolbarExplorer(api);
