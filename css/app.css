@@ -53,7 +53,9 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 #stageBtns [data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:500 12px Inter,sans-serif;pointer-events:none;opacity:0;transition:opacity .15s .35s;z-index:31}
 #stageBtns [data-tip]:hover::after,#stageBtns [data-tip]:focus-visible::after,#stageBtns [data-tip].tipShow::after{opacity:1} #stageBtns [aria-expanded="true"]::after{display:none}
 #stageBtns > :first-child[data-tip]::after{left:0;transform:none}
-.musicWrap{position:relative;display:inline-flex} .ibtn.on{color:var(--accent);border-color:var(--accent)} .app[data-explorer="fractal"] canvas.picking{cursor:crosshair !important}
+.musicWrap{position:relative;display:inline-flex}
+/* slow graphics (js/shell/perf.js): the notice, once a device */
+#slowNotice{position:fixed;left:50%;top:104px;transform:translateX(-50%);z-index:66;display:flex;gap:12px;align-items:center;max-width:min(680px,calc(100% - 24px));background:rgba(19,22,30,.97);border:1px solid #c9a227;border-radius:12px;padding:10px 12px;color:var(--text);font-size:13px;line-height:1.45;box-shadow:0 10px 30px rgba(0,0,0,.45)} #slowNotice .sbtn{flex:none} .ibtn.on{color:var(--accent);border-color:var(--accent)} .app[data-explorer="fractal"] canvas.picking{cursor:crosshair !important}
 /* the ? help menu, at the end of the buttons on the picture */
 .helpWrap{position:relative;display:inline-flex} .helpBtn{min-width:30px;font-weight:600}
 #helpMenu,#musicMenu{position:absolute;top:calc(100% + 6px);left:0;min-width:210px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.45);z-index:30}
