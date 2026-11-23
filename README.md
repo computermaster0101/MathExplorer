@@ -76,7 +76,7 @@ nginx's default `mime.types` already serves `.js` as JavaScript, which is all th
 
 ## How the live site is hosted
 
-The site is static files in a private Amazon S3 bucket, served worldwide by CloudFront over HTTPS. Every push to `main` runs [.github/workflows/deploy.yml](.github/workflows/deploy.yml), which signs in to AWS with GitHub's short-lived OpenID Connect token (no stored keys; the role it gets can only upload to the site's bucket and refresh the cache) and runs [deploy.sh](deploy.sh). `deploy.sh` can also be run by hand with the AWS CLI. Report a problem goes through a small AWS Lambda ([aws/report/](aws/report/)), which holds a GitHub token that can only open issues on this repository.
+The site is static files in a private Amazon S3 bucket, served worldwide by CloudFront over HTTPS. Every push to `main` runs [.github/workflows/deploy.yml](.github/workflows/deploy.yml), which signs in to AWS with GitHub's short-lived OpenID Connect token (no stored keys; the role it gets can only upload to the site's bucket and refresh the cache) and runs [deploy.sh](deploy.sh). `deploy.sh` can also be run by hand with the AWS CLI. Each explorer also has a plain page at `/explore/<name>.html` for search engines and link previews, listed in `sitemap.xml`. Report a problem goes through a small AWS Lambda ([aws/report/](aws/report/)), which holds a GitHub token that can only open issues on this repository.
 
 ## Links
 
