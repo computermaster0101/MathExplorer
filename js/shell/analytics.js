@@ -23,10 +23,12 @@ export function track(name, params = {}) { if (LIVE) gtag('event', name, params)
 export function pageView(explorer, title) { track('page_view', { page_title: title, page_location: location.origin + '/#/' + explorer, page_path: '/' + explorer }); track('explorer_open', { explorer }); }
 
 // ---------- the actions worth counting, from one listener (so no explorer needs to know about analytics) ----------
-const ACTIONS = { vizBtn: 'visualizer', vizStageBtn: 'visualizer', zenBtn: 'fullscreen', snap: 'snapshot', recBtn: 'record_video', copyLink: 'share_link', prBtn: 'print_3d', helpBtn: 'help_menu', sndPlay: 'music_play', sndMic: 'music_mic', sndTab: 'music_tab' };
-document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button'); if (!b || !ACTIONS[b.id]) return;
+// (the buttons on the picture and their menus are counted by toolbar.js as `toolbar` events)
+const ACTIONS = { vizBtn: 'visualizer', snap: 'snapshot', recBtn: 'record_video', copyLink: 'share_link', prBtn: 'print_3d', sndPlay: 'music_play', sndMic: 'music_mic', sndTab: 'music_tab' };
+document.addEventListener('click', e => { if (window.__tbClick) return;   /* pressed from the picture's share menu: counted there */
+  const b = e.target.closest && e.target.closest('button'); if (!b || !ACTIONS[b.id]) return;
   track(ACTIONS[b.id], { explorer: document.getElementById('app').dataset.explorer || '' }); }, true);
-document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('#ghLink,#ghMenu'); if (a) track('github', { from: a.id === 'ghLink' ? 'header' : 'menu' }); }, true);
+document.addEventListener('click', e => { if (e.target.closest && e.target.closest('#ghLink')) track('github', { from: 'header' }); }, true);   /* the ? menu's link is a toolbar event */
 document.addEventListener('change', e => { if (e.target && e.target.id === 'sndFile') track('music_file', { explorer: document.getElementById('app').dataset.explorer || '' }); }, true);
 // which shape is on screen: its name as the Shapes group shows it (Growing Patterns: the rule, from the title), sent once it
 // has stayed for a few seconds, so stepping through shapes quickly only counts where you stop. Names only, never the view.

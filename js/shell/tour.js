@@ -37,8 +37,8 @@ const STEPS = () => [
       ? 'Drag to move or turn it, pinch to zoom. Tap to dive in (tap again to pause or play), press and hold to start afresh.'
       : 'Drag to move or turn it, scroll to zoom. On the keyboard the arrows and W A S D move you, G dives or flies, Space pauses and R starts afresh.' },
   { el: '#stageBtns', title: 'Buttons on the picture', text: touch()
-      ? 'Press and hold any of them to see its name. In order: hide the panel, full screen (or double-tap the picture: nothing but the picture, ready for a screenshot; there, swipe sideways for colours and up or down for the shape), reset the view; play or pause, go (dive, fly, ride…) and, where it can, steer itself (the target); zoom out and in; slower and faster; music and the Visualizer; and <b>?</b> for help, Report a problem and this tour.'
-      : 'Point at any of them to see its name and key. In order: hide the panel (H), full screen (F; Esc comes back), reset the view (R); play or pause (Space), go: dive, fly, ride… (G), and where something can steer itself, the target (T); zoom out (back) and in (forwards); slower and faster; music and the ♫ Visualizer; and <b>?</b> for help, the keys, Report a problem and this tour.' },
+      ? 'Press and hold any of them to see its name. In the middle, like a music player: back (zoom out), slower, play or pause, faster, forward (zoom in). Then go (dive, fly, ride…). The others fold away: the view buttons (full screen: nothing but the picture, ready for a screenshot), and ⋯ for music, sharing and saving, and <b>?</b> for help and this tour.'
+      : 'Point at any of them to see its name and key. In the middle, like a music player: back (zoom out), slower, play or pause (Space), faster, forward (zoom in); then go: dive, fly, ride… (G) and, where something can, steer itself (T). On the left, hide the panel (H), full screen (F) and reset (R); on the right, ♫ music and the Visualizer, ⇪ share, save or record, and <b>?</b> for help and this tour. The small arrows fold groups away.' },
   { el: '#panel', title: 'The panel', text: 'Choose a shape at the top, then open any group to change how it moves, how it looks and its colours. Every explorer\'s panel is laid out in the same order.' },
   { el: '#g-sound', open: true, title: 'Music', text: 'Play a song from your device, use the microphone, or listen to another tab. Every explorer moves with the beat; ♫ Visualizer changes the picture with the song as well.' },
   { el: '#g-share', open: true, title: 'Save and share', text: 'Save a picture of exactly what you see, or record a video with the music. <b>Copy link</b> gives a link that reopens this very view (shape, colours and angle) for anyone you send it to; paste one under <b>Load a view</b> to open it here.' },
@@ -93,10 +93,10 @@ function endTour(how) {
 }
 // after a skip (or closing the shared-link bar): where the tour lives, for a few seconds, under the ? button
 function laterHint() {
-  const sw = $('helpBtn'); if (!sw) return; const old = $('tourHint'); if (old) old.remove();
+  const hb = $('helpBtn'), sw = hb && hb.getBoundingClientRect().width ? hb : document.querySelector('.tbGroup[data-group="more"] .tbHandle'); if (!sw) return; const old = $('tourHint'); if (old) old.remove();
   const r = sw.getBoundingClientRect(), seen = r.width > 0 && r.top >= 0 && r.bottom <= innerHeight;
   const h = document.createElement('div'); h.id = 'tourHint'; h.setAttribute('role', 'status');
-  h.innerHTML = 'You can take the tour any time from the <b>?</b> button.';
+  h.innerHTML = sw === hb ? 'You can take the tour any time from the <b>?</b> button.' : 'You can take the tour any time: open <b>⋯</b>, then <b>?</b>.';
   document.body.appendChild(h);
   if (seen) { const w = Math.min(280, innerWidth - 24), x = Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - 28)); h.style.width = w + 'px'; h.style.left = x + 'px'; h.style.top = (r.bottom + 10) + 'px';
     h.style.setProperty('--arrowX', Math.round(r.left + r.width / 2 - x - 5) + 'px'); h.classList.add('arrow'); sw.classList.add('tourPulse'); }

@@ -47,6 +47,7 @@ const helpItems = () => [...helpMenu.querySelectorAll('[role=menuitem]')];
 /** Open or close the ? menu (no argument: toggle). In full screen it stays shut, like every button on the picture. */
 export function toggleHelp(open = helpMenu.hidden, focusFirst = false) {
   if (open && inZen()) return;
+  const grp = helpBtn.closest('.tbGroup'); if (open && grp && grp.classList.contains('folded')) { grp.classList.remove('folded'); grp.querySelector('.tbHandle')?.setAttribute('aria-expanded', 'true'); }   /* the ? key opens a folded More group for the moment */
   helpMenu.hidden = !open; helpBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
   if (open) { helpMenu.style.left = '0px'; const r = helpMenu.getBoundingClientRect(); if (r.right > innerWidth - 8) helpMenu.style.left = Math.round(innerWidth - 8 - r.right) + 'px'; }   /* keep it on screen */
   if (open && focusFirst) helpItems()[0].focus();
