@@ -14,7 +14,7 @@ import { parseRoute } from '../../js/shell/route.js';
 import { DRAWINGS, GROUPS, defaults, epicycles, resample } from './machines.js';
 
 // ---------- state ----------
-const st = { d: 'e_heart', P: {}, speed: 1, machine: true, loop: true, target: false, build: false, slide: false, lw: 1.4, glow: false,
+const st = { d: 'e_heart', P: {}, speed: 1, machine: true, loop: true, target: false, build: false, keep: true, slide: false, lw: 1.4, glow: false,
   cmode: 'along', palette: 'aurora', palRev: false, cycle: 0, cycleSpeed: 0, bg: '#0b0d12', paused: false, mm: 80, own: null, ownN: 60 };
 for (const k in DRAWINGS) st.P[k] = defaults(DRAWINGS[k]);
 const OWN = { group: 'epi', name: 'Your drawing', alt: 'drawn by spinning circles', key: 'own', info: 'Your own drawing, rebuilt from spinning circles: a Fourier series, worked out from the points you drew.', params: [{ id: 'n', label: 'Circles', min: 1, max: 200, step: 1, def: 60 }] };
@@ -30,6 +30,9 @@ const ink = a => (st.bg === '#f3efe6' ? `rgba(28,30,38,${a})` : `rgba(255,255,25
 
 // ---------- the machine for the current drawing, and its path ----------
 let M = null, path = null, clk = { draw: new Groove() }, prog = 0, hold = 0, lapK = 0, slideM = 0;
+// with the circles added one by one, each stage's finished drawing stays on, fainter, under the next (issue #36: to see every
+// stage at once, how each new circle pulls the curve closer); cleared whenever the drawing starts over
+let ghosts = [];
 const BUILD = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 200];
 function machine() {
   const d = dr(), P = st.P[d.key];
@@ -37,8 +40,8 @@ function machine() {
   if (d.group === 'times') return d.make({ ...P, m: st.slide ? slideM : P.m });
   return d.make(P);
 }
-function rebuild(restart = true) {
-  const d = dr(); M = machine();
+function rebuild(restart = true, keepGhosts = false) {
+  const d = dr(); M = machine(); if (!keepGhosts) ghosts = [];
   if (st.build && d.group === 'epi') M = epicycles(M.target, Math.min(st.P[d.key].n, BUILD[lapK] || st.P[d.key].n));   // the circles joining one by one
   if (M.kind === 'pen') { const n = M.samples || 1200, pts = new Float32Array((n + 1) * 2); for (let i = 0; i <= n; i++) { const p = M.pos(M.T * i / n); pts[i * 2] = p[0]; pts[i * 2 + 1] = p[1]; } path = { pts, n }; }
   else path = null;
@@ -67,6 +70,10 @@ function frame() {
 function drawPen(tone, px) {
   const { pts, n } = path, upto = Math.min(n, Math.floor(clamp(prog, 0, 1) * n)), laps = M.laps || 1;
   if (st.target && M.target) { g.strokeStyle = ink(0.18); g.lineWidth = 1.2 * px * dpr; g.beginPath(); M.target.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.stroke(); }
+  // the earlier stages (circles one by one), each in its own colour from the palette, thinner and fainter
+  if (ghosts.length) { const last = Math.max(1, BUILD.filter(b => b <= st.P[dr().key].n).length - 1); g.lineWidth = Math.max(0.6, st.lw * 0.6) * px * dpr; g.globalAlpha = 0.45;
+    for (const G of ghosts) { g.strokeStyle = tone(G.k / last); g.beginPath(); g.moveTo(G.pts[0], G.pts[1]); for (let i = 1; i <= G.n; i++) g.lineTo(G.pts[i * 2], G.pts[i * 2 + 1]); g.stroke(); }
+    g.globalAlpha = 1; }
   // the line so far, in batches of one colour each (a separate stroke per tiny piece would be slow)
   const B = Math.max(1, Math.ceil(n / 240)), fade = st.loop && !st.build && hold > 1.6 ? Math.max(0, 1 - (hold - 1.6) / 0.8) : 1;   /* fades only on its way to drawing again; otherwise the finished drawing stays */
   g.lineWidth = st.lw * px * dpr * (1 + 0.15 * Math.max(0, voice()));
@@ -126,7 +133,7 @@ function buildParams() {
 function labels() {
   const d = dr(), epi = d.group === 'epi', times = d.group === 'times';
   $('title').textContent = d.name; $('subtitle').textContent = d.alt; $('gv-shapes').textContent = d.name; $('about').innerHTML = `<strong>${d.name}.</strong> ${d.info}`;
-  $('targetRow').hidden = !epi; $('buildRow').hidden = !epi; $('slideRow').hidden = !times; $('loop').closest('label').hidden = false;
+  $('targetRow').hidden = !epi; $('buildRow').hidden = !epi; $('keepRow').hidden = !epi || !st.build; $('slideRow').hidden = !times; $('loop').closest('label').hidden = false;
   $('gv-ctl').textContent = ownMode ? 'drawing' : st.paused ? 'paused' : '';
   $('hint').textContent = ownMode ? 'Draw one closed shape · it will be rebuilt from circles' : 'Drag to move · scroll / pinch to zoom · G draws it again';
   const lg = st.cmode === 'along' ? ['start', 'end'] : st.cmode === 'laps' ? ['first lap', 'last lap'] : ['', ''];
@@ -154,6 +161,7 @@ $('machine').addEventListener('change', e => { st.machine = e.target.checked; sh
 $('loop').addEventListener('change', e => { st.loop = e.target.checked; share.touch(); });
 $('target').addEventListener('change', e => { st.target = e.target.checked; share.touch(); });
 $('build').addEventListener('change', e => { st.build = e.target.checked; lapK = 0; rebuild(); share.touch(); });
+$('keep').addEventListener('change', e => { st.keep = e.target.checked; if (!st.keep) ghosts = []; share.touch(); });
 $('slide').addEventListener('change', e => { st.slide = e.target.checked; slideM = st.P[dr().key].m || 2; rebuild(); share.touch(); });
 $('lw').addEventListener('input', e => { st.lw = +e.target.value; $('lwo').textContent = st.lw.toFixed(2); share.touch(); });
 $('glow').addEventListener('change', e => { st.glow = e.target.checked; share.touch(); });
@@ -192,7 +200,7 @@ function loop(now) {
   if (goOn) {
     const d = clk.draw.delta(dt, 1 / duration(), 0.5 / duration());   // the pen surges on each beat with the music
     if (prog < 1) prog = Math.min(1, prog + d); else { hold += dt;
-      if (st.build && dr().group === 'epi' && hold > 1.2 && (BUILD[lapK + 1] || 0) <= st.P[dr().key].n && BUILD[lapK + 1]) { lapK++; rebuild(); }
+      if (st.build && dr().group === 'epi' && hold > 1.2 && (BUILD[lapK + 1] || 0) <= st.P[dr().key].n && BUILD[lapK + 1]) { if (st.keep) ghosts.push({ ...path, k: lapK }); lapK++; rebuild(true, true); }
       else if (st.loop && hold > 2.4 && M.kind === 'pen') { if (st.build) lapK = 0; rebuild(); } }
     if (st.slide && M.kind === 'lines') { slideM = 2 + (((slideM - 2) + dt * 0.12 * st.speed) % 98); M = machine(); if (frameN % 10 === 0) stats(); }
   }
@@ -226,7 +234,7 @@ export function onKey(e) {
 }
 const encode = () => { const p = new URLSearchParams(), d = dr(), P = st.P[d.key]; p.set('k', d.key); for (const k in P) p.set(k, r4(P[k]));   // k: which drawing (the roses have a setting called d)
   if (d.key === 'own' && st.own) p.set('own', st.own.filter((_, i) => i % 4 === 0).map(q => q.map(v => Math.round(v * 500)).join('_')).join('~'));
-  if (st.speed !== 1) p.set('spd', st.speed); if (!st.machine) p.set('mc', 0); if (!st.loop) p.set('lp', 0); if (st.target) p.set('tg', 1); if (st.build) p.set('bu', 1); if (st.slide) p.set('sl', 1);
+  if (st.speed !== 1) p.set('spd', st.speed); if (!st.machine) p.set('mc', 0); if (!st.loop) p.set('lp', 0); if (st.target) p.set('tg', 1); if (st.build) p.set('bu', 1); if (!st.keep) p.set('ke', 0); if (st.slide) p.set('sl', 1);
   if (st.lw !== 1.4) p.set('lw', st.lw); if (st.glow) p.set('gw', 1); p.set('cm', st.cmode); p.set('pal', st.palette); if (st.palRev) p.set('rev', 1); if (st.cycleSpeed) p.set('cyc', st.cycleSpeed); if (st.bg !== '#0b0d12') p.set('bg', st.bg.slice(1));
   p.set('v', [view.cx, view.cy, view.scale, view.rot].map(r4).join('_')); MO.encode(p); return p.toString(); };
 function apply(code) {
@@ -234,7 +242,7 @@ function apply(code) {
   if (k === 'own') { const own = (p.get('own') || '').split('~').map(q => q.split('_').map(v => +v / 500)).filter(q => q.length === 2 && q.every(isFinite)); if (own.length > 8) st.own = resample(own, 512); else k = 'e_heart'; }
   if (k !== 'own' && !DRAWINGS[k]) return false;
   const d = k === 'own' ? OWN : DRAWINGS[k]; for (const q of d.params) st.P[d.key][q.id] = clamp(num(p, q.id, q.def), q.min, q.max);
-  setRange('speed', num(p, 'spd', 1)); setCheck('machine', p.get('mc') !== '0'); setCheck('loop', p.get('lp') !== '0'); setCheck('target', p.get('tg') === '1'); st.build = p.get('bu') === '1'; $('build').checked = st.build; st.slide = p.get('sl') === '1'; $('slide').checked = st.slide;
+  setRange('speed', num(p, 'spd', 1)); setCheck('machine', p.get('mc') !== '0'); setCheck('loop', p.get('lp') !== '0'); setCheck('target', p.get('tg') === '1'); st.build = p.get('bu') === '1'; $('build').checked = st.build; setCheck('keep', p.get('ke') !== '0'); st.slide = p.get('sl') === '1'; $('slide').checked = st.slide;
   setRange('lw', num(p, 'lw', 1.4)); setCheck('glow', p.get('gw') === '1'); clickData('#cmode', 'c', ['along', 'laps', 'solid'].includes(p.get('cm')) ? p.get('cm') : 'along');
   clickData('#palettes', 'pal', p.get('pal') || 'aurora'); setCheck('palRev', p.get('rev') === '1'); setRange('cyc', num(p, 'cyc', 0)); clickData('#bg', 'b', '#' + (p.get('bg') || '0b0d12'));
   buildLists(); pickDrawing(k, true);
