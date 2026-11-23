@@ -3,7 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Math Explorer</title>
+<title>Math Explorer: fractals, 4D shapes, knots and more, live in your browser</title>
+<meta name="description" content="Explore mathematics live in your browser: fractals with deep zoom, 4D shapes, knots, surfaces, tilings, strange attractors, waves and more. Free, works on phones, reacts to music.">
+<link rel="canonical" href="https://mathexplorer.thedigitalspace.net/">
+<meta name="theme-color" content="#0b0d12">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Math Explorer">
+<meta property="og:title" content="Math Explorer: fractals, 4D shapes, knots and more">
+<meta property="og:description" content="Explore mathematics live in your browser: fractals with deep zoom, 4D shapes, knots, surfaces, tilings, strange attractors, waves and more. Free, works on phones, reacts to music.">
+<meta property="og:url" content="https://mathexplorer.thedigitalspace.net/">
+<meta property="og:image" content="https://mathexplorer.thedigitalspace.net/images/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Math Explorer", "url": "https://mathexplorer.thedigitalspace.net/", "description": "Explore mathematics live in your browser: fractals with deep zoom, 4D shapes, knots, surfaces, tilings, strange attractors, waves and more. Free, works on phones, reacts to music.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any (web browser)", "browserRequirements": "Requires JavaScript and WebGL 2", "isAccessibleForFree": true, "inLanguage": "en", "image": "https://mathexplorer.thedigitalspace.net/images/og.jpg", "license": "https://www.gnu.org/licenses/gpl-3.0.html", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "codeRepository": "https://github.com/computermaster0101/MathExplorer"}</script>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -23,6 +36,7 @@
 <script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js" } }</script>
 </head>
 <body>
+<noscript><div style="max-width:720px;margin:40px auto;padding:0 16px;color:#e8ebf2;font:16px/1.6 sans-serif"><h1>Math Explorer</h1><p>Explore mathematics live in your browser: fractals with deep zoom, 4D shapes, knots, surfaces, tilings, strange attractors, waves and more. Free, works on phones, reacts to music. It needs JavaScript and WebGL to run. Read about each explorer:</p><ul><li><a href="explore/fractals.html">Fractals</a></li><li><a href="explore/4d-polytopes.html">4D Polytopes</a></li><li><a href="explore/surfaces.html">Surfaces</a></li><li><a href="explore/knots.html">Knots &amp; Links</a></li><li><a href="explore/labyrinths.html">Labyrinths</a></li><li><a href="explore/foams.html">Foams</a></li><li><a href="explore/complex-functions.html">Complex Functions</a></li><li><a href="explore/strange-attractors.html">Strange Attractors</a></li><li><a href="explore/tilings.html">Tilings</a></li><li><a href="explore/waves.html">Waves &amp; Cymatics</a></li><li><a href="explore/drawing-machines.html">Drawing Machines</a></li><li><a href="explore/growing-patterns.html">Growing Patterns</a></li></ul></div></noscript>
 <div class="app" id="app">
   <div class="stage" id="stage">
     <!-- each explorer's canvases, title and legend are mounted here (explorers/<name>/stage.html) -->

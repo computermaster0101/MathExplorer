@@ -104,10 +104,12 @@ function laterHint() {
 }
 
 // ---------- the explorer's card ----------
+// each explorer's own page (explore/<slug>.html: a fuller explanation, and what search engines find)
+const PAGE = {"fractal": "fractals", "polytope": "4d-polytopes", "surface": "surfaces", "knot": "knots", "labyrinth": "labyrinths", "foam": "foams", "complex": "complex-functions", "attractor": "strange-attractors", "tiling": "tilings", "wave": "waves", "draw": "drawing-machines", "life": "growing-patterns"};
 function showCard(name, title) {
   const c = CARDS[name]; if (!c) return; hideCard();
   const d = document.createElement('div'); d.id = 'xCard'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'About ' + title);
-  d.innerHTML = `<div class="xcHead"><b>${title}</b><button class="xcX" aria-label="Close">✕</button></div><p>${c[0]}</p><div class="xcTry">Try this:</div><ul>${c[1].map(t => `<li>${t}</li>`).join('')}</ul><div class="xcBtns"><button class="sbtn on" id="xcOk">Got it</button></div>`;
+  d.innerHTML = `<div class="xcHead"><b>${title}</b><button class="xcX" aria-label="Close">✕</button></div><p>${c[0]}</p><div class="xcTry">Try this:</div><ul>${c[1].map(t => `<li>${t}</li>`).join('')}</ul><div class="xcBtns">${PAGE[name] ? `<a class="xcMore" href="explore/${PAGE[name]}.html" target="_blank" rel="noopener">More about it</a>` : ''}<button class="sbtn on" id="xcOk">Got it</button></div>`;
   $('stage').appendChild(d);
   const close = () => { store.set(CARD + name, '1'); track('card_dismiss', { explorer: name }); hideCard(); };
   d.querySelector('#xcOk').onclick = close; d.querySelector('.xcX').onclick = close;
