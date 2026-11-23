@@ -409,6 +409,9 @@ if (!apply(parseRoute().code)) pickMode('life');
 export function start() { running = true; tPrev = performance.now(); if (!S) setup(); dirty = true; requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); }
 export const reset = resetView;
+/* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
+export const goLabel = () => null;   /* G is play / pause here, which has its own button */
+export const speedCtl = () => 'speed';
 export const layoutChanged = () => { setup(); dirty = true; };
 export const showView = code => apply(code);
 export const soundHelp = 'Here, each beat flashes the picture (or, with Pulse, zooms in a touch) and, if ticked under Controls, drops a seed somewhere on the grid. Energy sets how fast it grows, vocals gently turn Life and Lenia and nudge reaction–diffusion\'s feed, tempo times everything under Motion, and colour drifts the palette.';

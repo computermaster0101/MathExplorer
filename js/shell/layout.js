@@ -11,7 +11,7 @@ export const inZen = () => app.classList.contains('zen');
 
 export function togglePanel(hide = !panelHidden()) {
   app.classList.toggle('nopanel', hide);
-  $('panelBtn').textContent = hide ? 'Show panel' : 'Hide panel';
+  const pb = $('panelBtn'); pb.setAttribute('aria-label', hide ? 'Show panel (H)' : 'Hide panel (H)'); pb.dataset.tip = pb.getAttribute('aria-label');
   onChange();
 }
 

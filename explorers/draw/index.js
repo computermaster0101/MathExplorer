@@ -251,7 +251,10 @@ if (!apply(parseRoute().code)) pickDrawing('e_heart');
 export function start() { lightStage(); resize(); running = true; tPrev = performance.now(); requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); document.getElementById('app').classList.remove('light'); }
 export const reset = resetView;
-export const going = () => true;   /* G redraws from the start, so a tap just pauses */
+export const going = () => true;
+/* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
+export const goLabel = () => 'Draw it again';
+export const speedCtl = () => 'speed';   /* G redraws from the start, so a tap just pauses */
 export const layoutChanged = () => { resize(); };
 export const showView = code => apply(code);
 export const soundHelp = 'Here, each beat flashes the drawing brighter (or, with Pulse, swells it a touch), and the pen surges forward on the beat. Vocals thicken the line a little, energy sets the pace, and colour drifts the palette. The Visualizer brings in a new drawing every eight bars and, when the chorus comes in, a different machine: epicycles building up circle by circle, or a times table sliding.';

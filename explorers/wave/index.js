@@ -205,6 +205,8 @@ function drawString(r) {
 
 // ---------- pointer ----------
 let grab = null;
+// the wheel (and the picture's zoom buttons) zooms round the pond in Ripples, as in every other explorer
+wo.addEventListener('wheel', e => { if (st.mode !== 'ripple') return; e.preventDefault(); wz = clamp(wz * Math.exp(e.deltaY * 0.0012), 0.3, 4); dirty = true; share.touch(); }, { passive: false });
 wo.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && inZen()) return;   /* full screen on a phone: a tap pauses (the shell), no splashes */ wo.setPointerCapture(e.pointerId); const [x, y] = toWorld(e.clientX, e.clientY), m = st.mode;
   if (m === 'ripple') { let best = 0.08, bi = -1; st.rip.src.forEach((s, i) => { const d = Math.hypot(s[0] - x, s[1] - y); if (d < best) { best = d; bi = i; } });
     if (bi < 0 && st.rip.src.length) { let bd = 1e9; st.rip.src.forEach((s, i) => { const d = Math.hypot(s[0] - x, s[1] - y); if (d < bd) { bd = d; bi = i; } }); st.rip.src[bi] = [x, y]; } grab = { i: bi }; dirty = true; share.touch(); }
@@ -430,6 +432,11 @@ if (!apply(parseRoute().code)) pickMode('ripple');
 export function start() { running = true; tPrev = performance.now(); if (st.mode === 'tank') tankSetup(true); dirty = true; requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); }
 export const reset = resetView;
+
+/* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
+export const goLabel = () => ({ ripple: ripRun ? 'Stop the waves' : 'Start the waves', tank: 'Start again', plate: 'Fresh sand', string: 'Pluck again' })[st.mode] || null;
+export const speedCtl = () => 'speed';
+export const canZoom = () => st.mode === 'ripple';   /* the tank, plate and string are drawn to fit: nothing to zoom */
 export const going = () => st.mode !== 'ripple' || ripRun;   /* G restarts the tank, sand and string, so there a tap just pauses */
 export const layoutChanged = () => { if (st.mode === 'tank') tankSetup(true); dirty = true; };
 export const showView = code => apply(code);

@@ -303,6 +303,9 @@ export function start() { running = true; tPrev = performance.now(); dirty = tru
 export function stop() { running = false; REC.stop(); }
 export const reset = resetView;
 export const going = () => !!stepsAnim;
+/* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
+export const goLabel = () => 'Grow the steps';
+export const speedCtl = () => null;
 export const layoutChanged = () => { dirty = true; };
 export const showView = code => apply(code);
 export const soundHelp = 'Here, each beat flashes the picture brighter (or, with Pulse, zooms it in a touch). Tempo times c\'s slow wander (when it\'s on) and the drifting, zooming and turning under Motion; vocals nudge c very slightly, and colour drifts the palette and turns the angle colours.';
