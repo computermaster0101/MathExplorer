@@ -55,5 +55,6 @@ export function stop(){ stopLoop(); drop3(); }   // leaving the explorer lets th
 export const reset = resetView;
 export const layoutChanged = touch;
 export { onKey, showView };
+export const going = () => st.mode === 'explore' ? !!(st.dive || st.endlessRun || st.fly) : st.mode === 'd3' ? !!(st.d3.dive || st.d3.warp || st.d3.aim) : false;
 /** Shown under the Music & sound switches while this explorer is on screen. */
 export const soundHelp='Here, each beat flashes the picture brighter (or, with Pulse the shape, nudges the 3D shape and the Julia constant). Tempo times only the animations you switch on: turning, Breathe, Keep twisting, the 4D sweep and turn, Julia link\'s path, Orbit\'s steps and Grow. Vocals slowly sway the twist of 3D shapes, or the slice of 4D ones. Energy sets how fast dives, turns and growth go. In 3D the shape dances: it nods toward you on each beat, leans from side to side across two beats, twists back and forth across four, and the bass flexes the twist further. Intensity (Lively, Wild) makes all of this bigger.';

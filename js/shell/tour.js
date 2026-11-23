@@ -32,7 +32,7 @@ const CARDS = {
 const STEPS = () => [
   { el: '#switcher', title: 'Welcome to Math Explorer', text: 'Twelve ways to see mathematics, all running live in your browser. Pick an explorer here. Play freely: you can\'t break anything.' },
   { el: '#stage', title: 'The picture', text: touch()
-      ? 'Drag to move or turn it, pinch to zoom. Tap to pause or play, double-tap for full screen, press and hold to start afresh. In full screen a swipe changes the colours.'
+      ? 'Drag to move or turn it, pinch to zoom. Tap to dive in (tap again to pause or play), double-tap for full screen, press and hold to start afresh. In full screen, swipe sideways for colours, up or down for the shape.'
       : 'Drag to move or turn it, scroll to zoom. On the keyboard the arrows and W A S D move you, G dives or flies, Space pauses and R starts afresh.' },
   { el: '#panel', title: 'The panel', text: 'Choose a shape at the top, then open any group to change how it moves, how it looks and its colours.', open: null },
   { el: '#g-sound', title: 'Music', text: 'Play a song (or listen to another tab), then press ♫ Visualizer: the picture moves with the beat and changes with the song.' },

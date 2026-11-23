@@ -49,12 +49,22 @@ export function showKeys() {
 }
 
 // ---------- touch gestures on the picture (phones and tablets) ----------
-// A tap pauses or resumes everything moving (as Space does) and a double tap turns full screen on or off. Where tapping is the
+// A tap goes (as G does: dive, fly, ride, walk); during that, taps pause and resume it (as Space does), and where there is
+// nothing to go on, a tap is Space. A double tap turns full screen on or off. Where tapping is the
 // explorer's own way to play (a canvas marked data-own-taps: Growing Patterns' brush, Waves' splashes, a maze's step forward,
-// drawing your own epicycles), its taps stay its own outside full screen; in full screen a tap always pauses. Pressing and holding still for a moment resets the view (as R does), anywhere. In full screen a
-// quick swipe changes the colours: left / right the next / previous palette (V / C), up / down the colour style (Shift + V / C). Only quick, still, one-finger taps on the picture itself count: drags, pinches, buttons and
+// drawing your own epicycles), its taps stay its own outside full screen; in full screen a tap is always the shell's. Pressing and holding still for a moment resets the view (as R does), anywhere. In full screen a
+// quick swipe changes things: left / right the next / previous palette (V / C), up / down the next / previous shape (X / Z). Only quick, still, one-finger taps on the picture itself count: drags, pinches, buttons and
 // the mouse are untouched. While a touch screen is in use, full screen shows nothing but the picture (no exit button, no
 // Paused tag), so screenshots come out clean; a tip says how to get out, for a moment, on the way in.
+let going = () => false;
+/** The active explorer's "is it diving / flying / riding / walking now?" (main.js sets it), so a tap knows whether to go or to pause. */
+export const setGoing = fn => { going = fn || (() => false); };
+const key = (k, extra) => document.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true, ...extra }));   // true when nothing used it
+function tapGo() {
+  const paused = !$('pausedTag').hidden;
+  if (!paused && !going() && !key('g', { code: 'KeyG' })) return;   // G started something
+  key(' ', { code: 'Space' });   // already going, paused, or no G here: pause / resume
+}
 const stage = $('stage'), T = { down: null, n: 0, multi: false, last: 0, lastXY: null, timer: null, touch: 0 };
 /** True just after a touch on the picture: explorers' own tap actions (fly to a spot, next room…) stand aside in full screen. */
 export const touchTapping = () => performance.now() - (T.claim || 0) < 400;   // a tap the shell has taken (pause, full screen): explorers ignore it
@@ -77,7 +87,7 @@ const lift = e => {
   const g = T.start; if (T.n === 0) T.start = null;
   if (g && T.n === 0 && !T.multi && inZen() && e.type !== 'pointercancel') { const dx = e.clientX - g.x, dy = e.clientY - g.y, ax = Math.abs(dx), ay = Math.abs(dy);
     if (performance.now() - g.t < 400 && Math.max(ax, ay) > 60 && Math.max(ax, ay) > 2 * Math.min(ax, ay)) { T.down = null; T.last = 0; clearTimeout(T.timer);
-      if (ax > ay) press(dx < 0 ? 'v' : 'c'); else press(dy < 0 ? 'V' : 'C', true); return; } }
+      if (ax > ay) press(dx < 0 ? 'v' : 'c'); else press(dy < 0 ? 'x' : 'z'); return; } }
   const d = T.down; if (T.n > 0 || !d) return; T.down = null;
   if (T.multi || e.type === 'pointercancel' || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 12 || performance.now() - d.t > 300) return;
   const now = performance.now(), near = T.lastXY && Math.hypot(e.clientX - T.lastXY[0], e.clientY - T.lastXY[1]) < 40;
@@ -85,11 +95,11 @@ const lift = e => {
   if (!own) T.claim = now;
   if (now - T.last < 320 && near) { clearTimeout(T.timer); T.last = 0; toggleZen(); return; }   // double tap: full screen on or off
   T.last = now; T.lastXY = [e.clientX, e.clientY]; clearTimeout(T.timer);
-  if (!own) T.timer = setTimeout(() => { T.last = 0; document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true })); }, 320);   // one tap: pause / resume
+  if (!own) T.timer = setTimeout(() => { T.last = 0; tapGo(); }, 320);   // one tap: go, or pause / resume
 };
 stage.addEventListener('pointerup', lift, true); stage.addEventListener('pointercancel', lift, true);
 // the tip, shown for a moment on going full screen by touch
-const tip = document.createElement('div'); tip.id = 'zenTip'; tip.textContent = 'Tap: pause · double-tap: leave full screen · hold: start afresh · swipe: colours'; stage.appendChild(tip);
+const tip = document.createElement('div'); tip.id = 'zenTip'; tip.textContent = 'Tap: go / pause · double-tap: leave full screen · hold: start afresh · swipe ↔ colours, ↕ shape'; stage.appendChild(tip);
 let tipT = null;
 const showTip = () => { if (!app.classList.contains('touch')) return; tip.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => tip.classList.remove('on'), 2200); };
 $('panelBtn').addEventListener('click', () => togglePanel());

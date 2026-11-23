@@ -13,11 +13,12 @@
 //   onKey(event)        a keydown the shell didn't use; return true when the explorer used it
 //   layoutChanged()     the panel was hidden or shown, or full screen started or ended
 //   showView(code)      the address changed to a view code (a pasted link, back/forward)
+//   going()             optional: true while diving / flying / riding / walking, so a tap on a phone pauses rather than goes
 //
 // Only one explorer is attached to the page at a time: the others' DOM is kept, detached, so their
 // element ids never clash and their own document queries only ever see their own controls.
 import { parseRoute, DEFAULT_EXPLORER, setActiveExplorer } from './shell/route.js';
-import { onLayoutChange } from './shell/layout.js';
+import { onLayoutChange, setGoing } from './shell/layout.js';
 import { setKeyHandler, syncKeyPrefs } from './shell/keys.js';
 import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
 import { pageView, consentBar, showPrivacy } from './shell/analytics.js';
@@ -113,7 +114,7 @@ async function show() {
   if (current !== name) return;            // the user moved on while it loaded
 
   if (!first && code) api.showView?.(code);
-  setKeyHandler(api.onKey); onLayoutChange(() => api.layoutChanged?.()); setSoundHelp(api.soundHelp);
+  setKeyHandler(api.onKey); setGoing(api.going); onLayoutChange(() => api.layoutChanged?.()); setSoundHelp(api.soundHelp);
   api.start?.();
   pageView(name, EXPLORERS[name].title); explorerShown(name, EXPLORERS[name].title, !!code);   // analytics (names only), and first-visit help
 }

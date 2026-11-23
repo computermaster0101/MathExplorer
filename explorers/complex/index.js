@@ -302,6 +302,7 @@ showPointer();
 export function start() { running = true; tPrev = performance.now(); dirty = true; requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); }
 export const reset = resetView;
+export const going = () => !!stepsAnim;
 export const layoutChanged = () => { dirty = true; };
 export const showView = code => apply(code);
 export const soundHelp = 'Here, each beat flashes the picture brighter (or, with Pulse, zooms it in a touch). Tempo times c\'s slow wander (when it\'s on) and the drifting, zooming and turning under Motion; vocals nudge c very slightly, and colour drifts the palette and turns the angle colours.';

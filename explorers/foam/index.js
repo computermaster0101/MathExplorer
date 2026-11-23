@@ -338,6 +338,7 @@ if (!apply(parseRoute().code)) pickFoam('kelvin');
 export function start() { lightStage(); S.setBackground(st.bg); S.resize(); running = true; tPrev = performance.now(); requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); document.getElementById('app').classList.remove('light'); }
 export const reset = resetView;
+export const going = () => fly.on;
 export const layoutChanged = () => { S.resize(); };
 export const showView = code => apply(code);
 export const soundHelp = 'Here, each beat flashes the films brighter (or, with Pulse, gives the foam a little bounce). Tempo times the turning and everything under Rotation & motion; the flight surges on each beat. Vocals sway the foam gently from side to side, energy sets the pace, and colour drifts the palette. The Visualizer brings in a new foam every eight bars, sometimes pulls the bubbles apart, and flies through the foam when the chorus comes in.';

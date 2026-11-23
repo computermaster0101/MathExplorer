@@ -320,6 +320,7 @@ if (!apply(parseRoute().code)) pickSystem('lorenz');
 export function start() { lightStage(); S.resize(); if (isMap()) { mapHome(); if (viewFromCode) resetMap(); else view.reset(); } running = true; tPrev = performance.now(); requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); document.getElementById('app').classList.remove('light'); }
 export const reset = resetView;
+export const going = () => true;   /* G restarts the path, so a tap just pauses */
 export const layoutChanged = () => { S.resize(); if (isMap()) { mapHome(); resetMap(); } };   // a new window size: build the picture up again
 export const showView = code => apply(code);
 export const soundHelp = 'Here, each beat flashes the picture brighter (or, with Pulse, gives the shape a bounce; a map\'s points glow brighter instead). Energy sets how fast the points move, tempo times the turning and everything under Rotation & motion (Slowly change morphs the rule in time with the bars), vocals nudge the rule\'s first number very slightly, and colour drifts the palette.';

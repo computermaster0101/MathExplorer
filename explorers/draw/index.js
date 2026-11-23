@@ -97,7 +97,7 @@ function drawTimes(R, tone, px) {
 // ---------- drawing your own (for the epicycles) ----------
 let drawing = null, ownMode = false;
 const worldAt = e => view.toWorld(e.clientX, e.clientY);
-function setOwnMode(on) { ownMode = on; view.enabled = !on; cv.classList.toggle('drawing', on); cv.toggleAttribute('data-own-taps', on); $('ownBtn').textContent = on ? 'Cancel' : 'Draw your own'; $('ownNote').hidden = !on; }
+function setOwnMode(on) { ownMode = on; view.enabled = !on; cv.classList.toggle('drawing', on); cv.toggleAttribute('data-own-taps', on); const b = $('ownBtn'); if (b) { b.textContent = on ? 'Cancel drawing' : '✎ Draw your own'; b.classList.toggle('on', on); } $('ownNote').hidden = !on; if (on) $('g-shapes').open = true; }
 cv.addEventListener('pointerdown', e => { if (!ownMode) return; cv.setPointerCapture(e.pointerId); drawing = [worldAt(e)]; });
 cv.addEventListener('pointermove', e => { if (ownMode && drawing) drawing.push(worldAt(e)); });
 cv.addEventListener('pointerup', () => { if (!ownMode || !drawing) return; const d = drawing; drawing = null;
@@ -105,11 +105,11 @@ cv.addEventListener('pointerup', () => { if (!ownMode || !drawing) return; const
 
 // ---------- panel ----------
 function buildLists() {
-  $('shapeLists').innerHTML = GROUPS.map(([gk, label]) => `<div class="shapeGroup"><div class="lbl">${label}</div><div class="seg g2 shapes">${Object.values(DRAWINGS).filter(d => d.group === gk).map(d => `<button data-s="${d.key}">${d.name}</button>`).join('')}${gk === 'epi' && st.own ? '<button data-s="own">Your drawing</button>' : ''}</div></div>`).join('');
-  markList();
+  $('shapeLists').innerHTML = GROUPS.map(([gk, label]) => `<div class="shapeGroup"><div class="lbl">${label}</div><div class="seg g2 shapes">${Object.values(DRAWINGS).filter(d => d.group === gk).map(d => `<button data-s="${d.key}">${d.name}</button>`).join('')}${gk === 'epi' && st.own ? '<button data-s="own">Your drawing</button>' : ''}${gk === 'epi' ? '<button id="ownBtn">✎ Draw your own</button>' : ''}</div></div>`).join('');
+  markList(); if (ownMode) setOwnMode(true);
 }
-const markList = () => document.querySelectorAll('#shapeLists button').forEach(b => b.classList.toggle('on', b.dataset.s === st.d));
-$('shapeLists').addEventListener('click', e => { const b = e.target.closest('button[data-s]'); if (b) pickDrawing(b.dataset.s); });
+const markList = () => document.querySelectorAll('#shapeLists button[data-s]').forEach(b => b.classList.toggle('on', b.dataset.s === st.d));
+$('shapeLists').addEventListener('click', e => { if (e.target.closest('#ownBtn')) { setOwnMode(!ownMode); return; } const b = e.target.closest('button[data-s]'); if (b) pickDrawing(b.dataset.s); });
 function pickDrawing(k, keep) {
   if (k !== 'own' && !DRAWINGS[k]) return; if (k === 'own' && !st.own) return; st.d = k; lapK = 0; if (ownMode) setOwnMode(false);   /* picking a drawing leaves drawing-your-own */
   const d = dr(); if (d.group === 'times') slideM = st.P[d.key].m;
@@ -126,7 +126,7 @@ function buildParams() {
 function labels() {
   const d = dr(), epi = d.group === 'epi', times = d.group === 'times';
   $('title').textContent = d.name; $('subtitle').textContent = d.alt; $('gv-shapes').textContent = d.name; $('about').innerHTML = `<strong>${d.name}.</strong> ${d.info}`;
-  $('ownBtn').hidden = !epi; $('targetRow').hidden = !epi; $('buildRow').hidden = !epi; $('slideRow').hidden = !times; $('loop').closest('label').hidden = false;
+  $('targetRow').hidden = !epi; $('buildRow').hidden = !epi; $('slideRow').hidden = !times; $('loop').closest('label').hidden = false;
   $('gv-ctl').textContent = ownMode ? 'drawing' : st.paused ? 'paused' : '';
   $('hint').textContent = ownMode ? 'Draw one closed shape · it will be rebuilt from circles' : 'Drag to move · scroll / pinch to zoom · G draws it again';
   const lg = st.cmode === 'along' ? ['start', 'end'] : st.cmode === 'laps' ? ['first lap', 'last lap'] : ['', ''];
@@ -149,7 +149,6 @@ const intervalName = (a, b) => { const gg = gcdJS(a, b), x = Math.max(a, b) / gg
   const NAMES = { '1:1': 'unison', '2:1': 'an octave', '3:2': 'a perfect fifth', '4:3': 'a perfect fourth', '5:4': 'a major third', '6:5': 'a minor third', '5:3': 'a major sixth', '8:5': 'a minor sixth', '3:1': 'an octave and a fifth', '4:1': 'two octaves', '9:8': 'a whole tone', '7:4': 'a "harmonic" seventh' };
   return NAMES[k] ? `${x} : ${y} is ${NAMES[k]} in music: two notes whose pitches are in this ratio sound together like this picture's two swings.` : `${x} : ${y}: as notes, a rough interval; the picture is as busy as the sound.`; };
 $('goBtn').addEventListener('click', () => go());
-$('ownBtn').addEventListener('click', () => setOwnMode(!ownMode));
 $('speed').addEventListener('input', e => { st.speed = +e.target.value; $('speedo').textContent = st.speed.toFixed(1) + '×'; share.touch(); });
 $('machine').addEventListener('change', e => { st.machine = e.target.checked; share.touch(); });
 $('loop').addEventListener('change', e => { st.loop = e.target.checked; share.touch(); });
@@ -180,8 +179,8 @@ const MO = makeMotion2D({ pan: (dx, dy) => view.glide(dx, dy), zoom: f => view.z
 const REC = addRecorder({ stage: cv.parentElement, name: () => 'drawing ' + dr().name, bg: () => st.bg });
 // the Visualizer: a new drawing, palette or slow change every eight bars; when the chorus comes in, a drawing from another machine,
 // with the epicycles building up or the times table sliding
-makeVisualizer(MO, { preset: 'mvd=0.15&mvw=1&mvb=0.25&mvn=0.08', shape: () => (ownMode ? false : pickButton('#shapeLists button')),
-  drop: () => { const gk = GROUPS[Math.floor(Math.random() * GROUPS.length)][0]; pickButton(`#shapeLists .shapeGroup:nth-child(${GROUPS.findIndex(x => x[0] === gk) + 1}) button`);
+makeVisualizer(MO, { preset: 'mvd=0.15&mvw=1&mvb=0.25&mvn=0.08', shape: () => (ownMode ? false : pickButton('#shapeLists button[data-s]')),
+  drop: () => { const gk = GROUPS[Math.floor(Math.random() * GROUPS.length)][0]; pickButton(`#shapeLists .shapeGroup:nth-child(${GROUPS.findIndex(x => x[0] === gk) + 1}) button[data-s]`);
     if (gk === 'epi') setCheck('build', true); if (gk === 'times') setCheck('slide', true); return () => { setCheck('build', false); setCheck('slide', false); }; },
   extra: [['a new colour scheme', () => { clickNext('#cmode button', 1); return true; }]] });
 let running = false, tPrev = 0, frameN = 0;
@@ -219,7 +218,7 @@ export function onKey(e) {
   return standardKeys(e, {
     pause: () => { st.paused = !st.paused; labels(); }, go, reset: resetView,
     renew: () => { const gk = dr().group; if (gk === 'epi') setCheck('build', !st.build); else if (gk === 'times') setCheck('slide', !st.slide); else go(); },
-    shape: dir => clickNext('#shapeLists button', dir), palette: dir => clickNext('#palettes button', dir), colourMode: dir => clickNext('#cmode button', dir),
+    shape: dir => clickNext('#shapeLists button[data-s]', dir), palette: dir => clickNext('#palettes button', dir), colourMode: dir => clickNext('#cmode button', dir),
     reverse: () => $('palRev').click(), cycle: () => setRange('cyc', st.cycleSpeed > 0 ? 0 : 1),
     zoom: f => { if (e.shiftKey && dr().group === 'epi') { const el = $('pp_n'); if (el) setRange('pp_n', clamp(Math.round(+el.value / f), 1, 200)); } else view.zoomBy(f); },
     mode: i => { const gk = GROUPS[i]; if (gk) pickDrawing(Object.values(DRAWINGS).find(d => d.group === gk[0]).key); },
@@ -252,6 +251,7 @@ if (!apply(parseRoute().code)) pickDrawing('e_heart');
 export function start() { lightStage(); resize(); running = true; tPrev = performance.now(); requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); document.getElementById('app').classList.remove('light'); }
 export const reset = resetView;
+export const going = () => true;   /* G redraws from the start, so a tap just pauses */
 export const layoutChanged = () => { resize(); };
 export const showView = code => apply(code);
 export const soundHelp = 'Here, each beat flashes the drawing brighter (or, with Pulse, swells it a touch), and the pen surges forward on the beat. Vocals thicken the line a little, energy sets the pace, and colour drifts the palette. The Visualizer brings in a new drawing every eight bars and, when the chorus comes in, a different machine: epicycles building up circle by circle, or a times table sliding.';

@@ -425,6 +425,7 @@ if (!applyCode(parseRoute().code)) setPQ(7, 3, true);
 export function start() { running = true; tPrev = performance.now(); dirty = true; requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); }
 export const reset = resetView;
+export const going = () => st.kind !== 'pq' || st.gliding;   /* a tap glides {p,q}; elsewhere G makes a new pattern, so a tap just pauses */
 export const layoutChanged = () => { dirty = true; };
 export const showView = code => applyCode(code);
 export const soundHelp = 'Here, each beat flashes the tiles brighter (or, with Pulse, zooms in a touch). Gliding and turning surge on each beat and follow the music\'s energy, as does everything under Motion; vocals swell the lines a little, and colour drifts the palette.';

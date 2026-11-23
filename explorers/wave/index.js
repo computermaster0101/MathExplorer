@@ -430,6 +430,7 @@ if (!apply(parseRoute().code)) pickMode('ripple');
 export function start() { running = true; tPrev = performance.now(); if (st.mode === 'tank') tankSetup(true); dirty = true; requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); }
 export const reset = resetView;
+export const going = () => st.mode !== 'ripple' || ripRun;   /* G restarts the tank, sand and string, so there a tap just pauses */
 export const layoutChanged = () => { if (st.mode === 'tank') tankSetup(true); dirty = true; };
 export const showView = code => apply(code);
 export const soundHelp = 'Here, each beat flashes the picture (or, with Pulse, swells it: the waves rise, the sand jumps, and the string swings wider). Energy sets the pace and how hard the plate shakes, vocals stretch the ripples and gently turn or stretch the drawn modes, and colour drifts the palette. Beats also drop rain into the tank (Splashes), re-pluck the string every bar, and can change the plate\'s pattern; under Motion, drifting round the pond keeps time.';

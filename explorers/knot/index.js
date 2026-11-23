@@ -278,6 +278,7 @@ if (!apply(parseRoute().code)) pickShape('trefoil');
 export function start() { lightStage(); S.resize(); running = true; tPrev = performance.now(); requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); document.getElementById('app').classList.remove('light'); }
 export const reset = resetView;
+export const going = () => ride.on;
 export const layoutChanged = () => { S.resize(); if (ride.on) S.camera.fov = 0; };
 export const showView = code => apply(code);
 export const soundHelp = 'Here, each beat flashes the light brighter (or, with Pulse, gives the knot a little bounce). Tempo times the turning and everything under Rotation & motion, and when the music has a steady beat each lap of a ride takes a whole number of bars, so you come round to the start on the downbeat. Vocals sway the knot gently from side to side, energy sets the pace, and colour drifts the palette.';

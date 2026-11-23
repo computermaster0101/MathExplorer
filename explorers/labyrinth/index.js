@@ -639,6 +639,7 @@ if (!apply(parseRoute().code)) pick('tpms', 'gyroid');
 export function start() { lightStage(); S.resize(); running = true; tPrev = performance.now(); requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); document.getElementById('app').classList.remove('light'); }
 export const reset = resetView;
+export const going = () => st.kind === 'tpms' ? fly.on : st.kind === 'foam' ? ffly.on : st.kind === 'maze' ? mz.mode === 'solve' : walkL.on;
 export const layoutChanged = () => S.resize();
 export const showView = code => apply(code);
 window.__lab = { st, fly, ffly, mz, walkL, S, get maze() { return maze; } };
