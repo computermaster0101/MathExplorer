@@ -58,6 +58,8 @@ export { onKey, showView };
 
 /* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
 export const goLabel = () => st.mode === 'explore' ? (st.dive || st.endlessRun ? 'Stop the dive' : 'Dive in') : st.mode === 'd3' ? (st.d3.dive ? 'Stop the dive' : 'Dive in') : null;
+/* the picture's target button: what steers itself here, and whether it's on (null hides it) */
+export const autoCtl = () => (st.mode === 'explore' || st.mode === 'd3') ? { label: 'Steer toward detail', on: st.steer } : null;
 export const speedCtl = () => ({ explore: 'diveSpd', d3: 'dive3Spd', orbit: { id: 'orbSpd', invert: true } })[st.mode] || null;   /* orbit: seconds per step, so bigger is slower */
 export const going = () => st.mode === 'explore' ? !!(st.dive || st.endlessRun || st.fly) : st.mode === 'd3' ? !!(st.d3.dive || st.d3.warp || st.d3.aim) : false;
 /** Shown under the Music & sound switches while this explorer is on screen. */
