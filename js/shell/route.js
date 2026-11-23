@@ -5,9 +5,14 @@
 
 export const DEFAULT_EXPLORER = 'fractal';
 
+// While an explorer boots, parseRoute() with no argument answers with the address it was opened for, not the live one: the
+// visitor may already have moved on to another explorer, whose code it must not read (js/main.js sets and clears it).
+let boot = null;
+export const setBootRoute = r => { boot = r; };
 /** Split a hash (or any text that contains one, such as a pasted link) into explorer name and view code. */
-export function parseRoute(text = location.hash) {
-  let h = String(text || '');
+export function parseRoute(text) {
+  if (text === undefined && boot) return { ...boot };
+  let h = String(text === undefined ? location.hash : text || '');
   const i = h.indexOf('#'); if (i >= 0) h = h.slice(i + 1);
   const m = h.match(/^\/([a-z0-9-]+)\/?(.*)$/i);
   return m ? { explorer: m[1], code: m[2] } : { explorer: null, code: h };

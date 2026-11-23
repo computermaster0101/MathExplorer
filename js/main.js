@@ -23,7 +23,7 @@
 //
 // Only one explorer is attached to the page at a time: the others' DOM is kept, detached, so their
 // element ids never clash and their own document queries only ever see their own controls.
-import { parseRoute, DEFAULT_EXPLORER, setActiveExplorer } from './shell/route.js';
+import { parseRoute, DEFAULT_EXPLORER, setActiveExplorer, setBootRoute } from './shell/route.js';
 const HOME_TITLE = document.title; let bareHome = !location.hash;   // opened at the plain address: keep the home title until the visitor moves on
 import { onLayoutChange, setGoing } from './shell/layout.js';
 import { setToolbarExplorer } from './shell/toolbar.js';
@@ -57,17 +57,21 @@ const app = $('app'), stage = $('stage'), panel = $('panel'), loading = $('loadi
 const loaded = {};   // name -> Promise of the explorer's index.js module
 const views = {};    // name -> {stageEl, panelEl}, its DOM, attached or not
 let current = null;  // name of the explorer on screen
+let started = null;  // the one whose start() has run (a load overtaken by a newer navigation is on screen but not started)
 
 const fileUrl = (name, file) => new URL(`../explorers/${name}/${file}`, import.meta.url);
 const fetchText = async url => { const r = await fetch(url); if (!r.ok) throw new Error(`${url.pathname}: ${r.status}`); return r.text(); };
 
-async function mount(name) {
+const tries = {};   // name -> failed loads so far: a retry asks for index.js afresh, past any failure the browser kept
+async function mount(name, code) {
   const [stageHtml, panelHtml] = await Promise.all([fetchText(fileUrl(name, 'stage.html')), fetchText(fileUrl(name, 'panel.html'))]);
   const stageEl = Object.assign(document.createElement('div'), { className: 'explorer-stage', innerHTML: stageHtml });
   const panelEl = Object.assign(document.createElement('div'), { className: 'explorer-panel', innerHTML: panelHtml });
   views[name] = { stageEl, panelEl };
   if (current === name) attach(views[name]);   // the explorer's modules look up their elements as they load
-  return import(fileUrl(name, 'index.js').href);
+  const url = fileUrl(name, 'index.js'); if (tries[name]) url.search = '?retry=' + tries[name];
+  setBootRoute({ explorer: name, code });   // what its parseRoute() reads at boot, whatever the address says by now
+  try { return await import(url.href); } finally { setBootRoute(null); }
 }
 
 // shared panel groups (Music & sound) sit inside the active explorer's panel, right after its Colour & style group
@@ -90,7 +94,11 @@ let queue = Promise.resolve();
 // how the visitor got to the explorer, for analytics: 'home' (the plain address, or one naming no explorer, opened the
 // default), 'link' (an address naming an explorer: a shared link, a bookmark, a search result), 'menu' (moved there inside
 // the app: the explorer menu, a link between explorers, back / forward). Lets the default explorer's opens be told apart.
-const route = via => { queue = queue.then(() => show(via)).catch(e => console.error(e)); };
+// Each navigation carries the address it was made for and a number: the address may be rewritten before its turn comes
+// (an explorer still loading wrote its own view over it, and the visitor's choice was lost), and a load that a newer
+// navigation has overtaken is not started.
+let navGen = 0;
+const route = (via, hash = location.hash) => { const gen = ++navGen; queue = queue.then(() => show(via, hash, gen)).catch(e => console.error(e)); };
 
 // shapes that moved to their own explorer: old links to them still open them, in their new home
 const MOVED = { surface: { knot: ['unknot', 'trefoil', 'figure8', 'cinquefoil', 'torusknot', 'lissajous', 'k61', 'k62', 'k63', 'k72', 'k73', 'k74', 'granny', 'square', 'hopf', 'solomon', 'whitehead', 'chain', 'olympic', 'borromean'],
@@ -101,16 +109,16 @@ function epicyclesMoved(name, code) { const p = new URLSearchParams(code); if (n
   for (const k of ['own', 'pal', 'rev', 'cyc', 'bg', 'spd']) if (p.has(k)) q.set(k, p.get(k)); return ['draw', q.toString()]; }
 function movedTo(name, code) { const m = MOVED[name], k = new URLSearchParams(code).get('s'); if (!m || !k) return null; for (const to in m) if (EXPLORERS[to] && m[to].includes(k)) return to; return null; }
 
-async function show(via) {
-  let { explorer: name, code } = parseRoute();
+async function show(via, hash, gen) {
+  let { explorer: name, code } = parseRoute(hash);
   const to = movedTo(name, code); if (to) { name = to; try { history.replaceState(null, '', '#/' + name + '/' + code); } catch (e) { /* sandboxed */ } }
   const ep = epicyclesMoved(name, code); if (ep) { [name, code] = ep; try { history.replaceState(null, '', '#/' + name + '/' + code); } catch (e) { /* sandboxed */ } }
   if (!EXPLORERS[name]) { if (via === 'link') via = 'home'; name = DEFAULT_EXPLORER; code = ''; try { history.replaceState(null, '', '#/' + name); } catch (e) { /* sandboxed */ } }
   colourFromCode(code);   // a link's colour adjustments (shared by every explorer), before the explorer reads the rest
-  if (name === current) { if (code) { (await loaded[name]).showView?.(code); colourSync(); } return; }
+  if (name === current && started === name) { setActiveExplorer(name); if (code) { (await loaded[name]).showView?.(code); colourSync(); } return; }
 
-  if (current) {
-    (await loaded[current].catch(() => null))?.stop?.();
+  if (current && current !== name) {
+    started = null; (await loaded[current]?.catch(() => null))?.stop?.();
     // its WebGL contexts sleep until it's back: browsers keep only a few alive per page (js/common/gl.js)
     if (views[current]) { sleepIn(views[current].stageEl); detach(views[current]); }
   }
@@ -118,24 +126,28 @@ async function show(via) {
   setKeyHandler(null); onLayoutChange(() => {}); setToolbarExplorer(null);
 
   const first = !loaded[name];
-  if (first) loaded[name] = mount(name);   // boots with the view code in the address
+  if (first) loaded[name] = mount(name, code);   // boots with this view code
   else if (views[name]) attach(views[name]);
   loading.textContent = 'Loading…'; loading.hidden = false;
   let api;
   try { api = await loaded[name]; }
   catch (e) {
     console.error(e);
-    // a failure the explorer already explained on the stage (no WebGL 2, say) needs no second message
-    if (e.shown) loading.hidden = true; else loading.textContent = `This explorer couldn't start: ${e.message}`;
+    // a failure the explorer already explained on the stage (no WebGL 2, say) needs no second message, and won't mend
+    if (e.shown) { loading.hidden = true; return; }
+    loading.textContent = `This explorer couldn't start: ${e.message}`;
+    // anything else (a file that failed to arrive) is tried again next time: the failed load isn't kept
+    tries[name] = (tries[name] || 0) + 1; delete loaded[name];
+    if (views[name]) { if (current === name) detach(views[name]); delete views[name]; }
     return;
   }
   loading.hidden = true;
-  if (current !== name) return;            // the user moved on while it loaded
+  if (current !== name || gen !== navGen) return;   // the user moved on while it loaded (the next show stops and detaches it)
 
   if (!first) wakeIn(views[name].stageEl);   // asynchronous: each surface redraws when the browser hands its context back
   if (!first && code) api.showView?.(code);
   setKeyHandler(api.onKey); setGoing(api.going); onLayoutChange(() => api.layoutChanged?.()); setSoundHelp(api.soundHelp);
-  api.start?.(); colourSync(); setToolbarExplorer(api);
+  api.start?.(); started = name; colourSync(); setToolbarExplorer(api);
   pageView(name, EXPLORERS[name].title, via); explorerShown(name, EXPLORERS[name].title, !!code);   // analytics (names only), and first-visit help
 }
 
@@ -155,5 +167,6 @@ $('privacyBtn').addEventListener('click', () => showPrivacy());
 $('reportBtn').addEventListener('click', () => openReport());
 consentBar();
 $('resetBtn').addEventListener('click', async () => { if (current) (await loaded[current].catch(() => null))?.reset?.(); });
-window.addEventListener('hashchange', () => { bareHome = false; route('menu'); });
+// until the new address is shown, no explorer may rewrite it (one still loading would put its own view over the choice)
+window.addEventListener('hashchange', () => { bareHome = false; setActiveExplorer(null); route('menu'); });
 route(bareHome ? 'home' : 'link');
