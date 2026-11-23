@@ -5,7 +5,7 @@ import { isExt, ptrs, qLimits, st } from './state.js';
 import { drive, setPausedTag } from '../../js/shell/keys.js';
 import { hexRGB, minus } from './color/palettes.js';
 import { ctxLost, gl, glc, octx, refSlots } from './render/webgl.js';
-import { cssH, cssW, deepT, extT, minScale, moveCentre, ovScale, panBy, runGrid, sizeBuffers, startGrid, touch, viewDescs } from './view.js';
+import { cssH, cssW, deepT, effIter, extT, minScale, moveCentre, ovScale, panBy, runGrid, sizeBuffers, startGrid, touch, viewDescs } from './view.js';
 import { drawBlit, grabFrame, render2DAll } from './render/bla.js';
 import { notAvail } from './ui/notice.js';
 import { budDraw, budStep } from './modes/buddhabrot.js';
@@ -98,6 +98,34 @@ function adjustPace(now, qMax, dtMs){
     else if (now>pace.probeAt){ pace.probeN=20; pace.probeT=0; pace.every=1; }      // time to check for headroom
   }
 }
+// 2D: react at once to a frame that clearly overran. The steady controller above looks every 10 frames and steps 8%, which
+// at 600 ms a frame (a deep view on a sharp screen with a modest graphics card) took most of a famous place's 2 s flight to
+// notice and never got far (it held 0.92 while frames took up to 1.2 s). So after any moving draw (a drag, the keys, a
+// flight, a dive or the wheel), a gap past five refreshes cuts the render scale at once by what it measured (cost goes with
+// the square of the scale), down to the chosen floor, and the next motion starts from there. It skips the frame right after
+// a cut, which can still be paying for the old size, and ignores a gap mostly spent in the frame's own code: a one-off pause
+// (building a shader, a new reference orbit) isn't the picture's cost, which the graphics card pays after the frame.
+const work={ prev:'', cpu:0, cutAt:0, perQ2:0 };   // prev: what the last drawn frame did ('move', 'hq', 'strip'); cpu: ms spent in that frame's code; perQ2: moving cost (ms) ÷ scale²
+function overrun(now, gap){
+  if (work.prev!=='move' || st.mode==='d3' || st.mode==='grow' || work.cpu>gap*0.5) return;
+  work.perQ2 = work.perQ2 ? work.perQ2*0.6 + 0.4*gap/(st.q*st.q) : gap/(st.q*st.q);
+  if (gap>pace.vsync*5 && frameN>work.cutAt+1){ const L=qLimits(), q=Math.max(L.floor, st.q*clamp(Math.sqrt(pace.vsync*1.8/gap),0.5,0.9));
+    if (q<st.q){ st.q=q; work.cutAt=frameN; pace.every=2; pace.probeAt=now+4000; dtAvg=2*pace.vsync; } } }
+// The strips wait for the graphics card. Drawing calls return at once and the card works through them later, so timing
+// frames saw every strip as quick, grew them to the whole picture, and the work landed as one long stall after the last.
+// A fence after each strip says when the card has finished it. Two strips may wait at once while they come back quickly (one
+// keeps the card busy while the next is sent), only one once they're slow (two slow ones queued made a 150 ms hitch on a
+// phone-shaped screen), and each finished strip sets the next one's size: larger if it came back quickly, smaller if slow.
+let fences=[];
+function dropFence(){ for (const F of fences) try { gl.deleteSync(F.f); } catch(e){ /* context lost */ } fences=[]; }
+function stripReady(now, P){
+  while (fences.length){ let done=true; try { done=gl.getSyncParameter(fences[0].f, gl.SYNC_STATUS)===gl.SIGNALED; } catch(e){ /* context lost */ }
+    if (!done) break; const F=fences.shift(), took=now-F.at; try { gl.deleteSync(F.f); } catch(e){ /* context lost */ }
+    P.slow = took>pace.vsync*2.5;
+    if (took<pace.vsync*2.2) P.strip=Math.min(1024,Math.ceil(P.strip*1.4)); else if (took>pace.vsync*4) P.strip=Math.max(8,Math.floor(P.strip/2)); }
+  return fences.length < (P.slow ? 1 : 2); }
+// What the sharp 2D picture will cost: the moving cost at full scale, times the smoothing's samples (2×2 smoothing: 4).
+function hqCost(){ const aa=effIter(st.vE)>2500 ? 1 : effIter(st.vE)>1200 ? Math.min(2,st.aa) : st.aa; return work.perQ2*aa*aa; }
 // the shell starts and stops the loop as this explorer comes on and off screen
 let running=false;
 export function startLoop(){ if (running) return; running=true; tPrev=performance.now(); requestAnimationFrame(loop); }
@@ -107,6 +135,7 @@ export function loop(now){
   if (!running) return;
   { const gap=now-pace.lastRaf; pace.lastRaf=now; if (gap>4 && gap<25) pace.vsync+=(gap-pace.vsync)*0.05; }
   if (pace.every===2 && now-pace.lastDraw < pace.vsync*1.5){ requestAnimationFrame(loop); return; }   // skip this refresh
+  overrun(now, now-pace.lastDraw); work.prev='';
   pace.lastDraw=now; if (pace.simulate) pace.simulate();
   const dt=clamp((now-tPrev)/1000,0,0.12); tPrev=now;   // the first frame's timestamp can be slightly earlier than start-up
   let anim=false; setPausedTag(st.paused);
@@ -141,27 +170,31 @@ export function loop(now){
     const L=qLimits(), qMax=L.max; if (st.q<L.floor) st.q=L.floor;   // see "While moving" in View & detail
     const recol=shared.recol && !anim && !ptrs.size; shared.recol=false;
     if (recol && !st.prog){ if (!shared.hqShown) st.qMove=st.q; st.q=1; goHQ=true; }   // colours only: straight to the sharp picture
-    else if (anim || shared.dirty){ if (shared.hqShown || st.prog){ st.q=Math.min(qMax, st.qMove||qMax); shared.hqShown=false; } st.prog=null;
+    else if (anim || shared.dirty){ dropFence(); if (shared.hqShown || st.prog){ st.q=Math.min(qMax, st.qMove||qMax); shared.hqShown=false; } st.prog=null;
       if (anim){ dtAvg=dtAvg*0.9+dt*1000*0.1; adjustPace(now, qMax, dt*1000); }
       lastStill=now; }
     else if (!shared.hqShown && !st.prog && now-lastStill>240){ st.qMove=st.q; st.q=1; goHQ=true; pace.every=1; pace.probeN=0; } }
-  const progHQ = goHQ && st.mode==='explore' && extT() && isExt() && st.vE.scale<1e-20;
+  // The sharp picture is drawn in strips over several frames, with the last picture kept on screen stretched beneath, when
+  // it's slow: past 1e-20 on Extreme, or whenever it would take more than about 80 ms (a single sharp draw at Seahorse
+  // Valley on a sharp screen took 600 ms, during which nothing could move). Any drag, key or zoom stops it (st.prog=null).
+  const extHQ = goHQ && st.mode==='explore' && extT() && isExt() && st.vE.scale<1e-20, est = goHQ && st.mode!=='d3' && !TYPES[st.type].cpu ? hqCost() : 0;
+  const progHQ = extHQ || est>80;
   if (progHQ && !ctxLost) grabFrame();
   sizeBuffers();
   if (!ctxLost){
     if (notAvail()){ const b=hexRGB(st.bg); gl.viewport(0,0,glc.width,glc.height); gl.clearColor(b[0],b[1],b[2],1); gl.clear(gl.COLOR_BUFFER_BIT); }
     else if (st.mode==='grow'){ if (shared.dirty){ const b=hexRGB(st.bg); gl.viewport(0,0,glc.width,glc.height); gl.clearColor(b[0],b[1],b[2],1); gl.clear(gl.COLOR_BUFFER_BIT); } }
-    else if (goHQ && progHQ){ drawBlit(); st.prog={y:0, strip:24}; }
-    else if (goHQ){ if (st.mode==='d3') render3D(true); else render2DAll(true); shared.hqShown=true; }
-    else if (st.prog){ const P=st.prog, y1=Math.min(glc.height, P.y+P.strip); render2DAll(true,[P.y,y1]); P.y=y1;
-      if (dt<0.03) P.strip=Math.min(1024,Math.ceil(P.strip*1.5)); else if (dt>0.06) P.strip=Math.max(8,Math.floor(P.strip/2));
-      if (P.y>=glc.height){ st.prog=null; shared.hqShown=true; } }
-    else if (anim || shared.dirty){ if (st.mode==='d3') render3D(false); else render2DAll(false); }
+    else if (goHQ && progHQ){ dropFence(); drawBlit(); st.prog={y:0, strip: extHQ ? 24 : clamp(Math.round(glc.height*15/est),8,1024), slow:true}; }   /* about 15 ms of work by the estimate (which runs low when moving frames waited for the screen), one at a time until the first comes back */
+    else if (goHQ){ if (st.mode==='d3') render3D(true); else render2DAll(true); shared.hqShown=true; work.prev='hq'; }
+    else if (st.prog){ const P=st.prog; if (stripReady(now, P)){ const y1=Math.min(glc.height, P.y+P.strip); render2DAll(true,[P.y,y1]); P.y=y1; work.prev='strip';
+      if (P.y>=glc.height){ st.prog=null; shared.hqShown=true; } else { fences.push({ f:gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE,0), at:now }); gl.flush(); } } }
+    else if (anim || shared.dirty){ if (st.mode==='d3') render3D(false); else render2DAll(false); work.prev='move'; }
   }
   octx.setTransform(ovScale,0,0,ovScale,0,0);
   if (st.mode==='grow') drawGrow();
   else { octx.clearRect(0,0,cssW,cssH); if (!notAvail()){ if (st.mode==='orbit') drawOrbit(); else if (st.mode==='link') drawLink(); else if (st.mode==='explore' && TYPES[st.type].cpu) budDraw(); else if (st.mode==='explore'){ drawCentreMark(); drawTapMark(); } else if (st.mode==='d3') drawTapMark(); } }
   drawInsets(); recFrame(); shared.dirty = st.mode==='d3' && !f3Ready && !shared.f3Err;   // while a 3D program is still being built, keep asking for the picture so it shows the moment it's ready
+  work.cpu=performance.now()-now;
   frameN++; if (frameN%6===0) updateDynamic();
   if (now-shared.hashT>1000){ shared.hashT=now; writeHash(false); }
   requestAnimationFrame(loop);

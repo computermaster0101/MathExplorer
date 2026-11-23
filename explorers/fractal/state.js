@@ -37,4 +37,7 @@ export const MOTION_Q={
 try { const v=localStorage.getItem('mathexplorer.motionQ'); if (MOTION_Q[v]) st.motionQ=v; else if (lowGraphics()) st.motionQ='smooth'; } catch(e){ if (lowGraphics()) st.motionQ='smooth'; }
 export function qLimits(){ const M=MOTION_Q[st.motionQ]||MOTION_Q.balanced, [start, max, floor]=st.mode==='d3' ? M.d3 : M.d2;
   const diving = st.mode==='d3' ? !!(st.d3.dive||st.d3.warp) : !!(st.dive||st.endlessRun);
-  return { start, max, floor: Math.min(max, floor+(diving?M.dive:0)) }; }
+  // the floor is a share of the screen's pixels; on a sharper screen (devicePixelRatio 2) Smooth and Balanced may soften as far,
+  // counted in CSS pixels, as on an ordinary one, since four times the pixels cost four times as much (Sharp never softens)
+  const k = st.mode==='d3' || floor>=1 ? 1 : Math.min(window.devicePixelRatio||1, 2);
+  return { start, max, floor: Math.min(max, (floor+(diving?M.dive:0))/k) }; }
