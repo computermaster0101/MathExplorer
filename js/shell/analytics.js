@@ -28,6 +28,16 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
   track(ACTIONS[b.id], { explorer: document.getElementById('app').dataset.explorer || '' }); }, true);
 document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('#ghLink,#ghMenu'); if (a) track('github', { from: a.id === 'ghLink' ? 'header' : 'menu' }); }, true);
 document.addEventListener('change', e => { if (e.target && e.target.id === 'sndFile') track('music_file', { explorer: document.getElementById('app').dataset.explorer || '' }); }, true);
+// which shape is on screen: its name as the Shapes group shows it (Growing Patterns: the rule, from the title), sent once it
+// has stayed for a few seconds, so stepping through shapes quickly only counts where you stop. Names only, never the view.
+let shownKey = '', seenKey = '', seenFor = 0, shapes = 0;
+setInterval(() => {
+  const app = document.getElementById('app'), ex = app && app.dataset.explorer; if (!ex || document.hidden) return;
+  const el = document.getElementById(ex === 'life' ? 'title' : 'gv-shapes') || document.getElementById('title');
+  const shape = el ? el.textContent.trim().slice(0, 80) : ''; if (!shape) return;
+  const key = ex + '|' + shape; if (key !== seenKey) { seenKey = key; seenFor = 0; return; }
+  if (++seenFor === 2 && key !== shownKey && shapes++ < 200) { shownKey = key; track('shape_view', { explorer: ex, shape }); }
+}, 1500);
 // errors on real devices: the message only, cut short
 let errs = 0;
 const err = msg => { if (errs++ < 5) track('js_error', { message: String(msg || '').slice(0, 120), explorer: document.getElementById('app').dataset.explorer || '' }); };
