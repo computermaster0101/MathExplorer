@@ -1,7 +1,7 @@
 // Keyboard shortcuts. The shell handles the keys every explorer shares; anything else goes to the explorer on screen.
 // The driving keys (arrows and W A S D, with Shift for faster) aren't one-off shortcuts: they're held, and each explorer reads
 // drive() every frame, so movement is smooth for as long as a key is down instead of stepping at the keyboard's repeat rate.
-import { togglePanel, toggleZen, exitZen, showKeys } from './layout.js';
+import { togglePanel, toggleZen, exitZen, toggleHelp } from './layout.js';
 import { toggle as toggleMusic } from './audio/engine.js';
 
 let handler = () => false;
@@ -15,8 +15,8 @@ const SHARED = {
   Escape: () => exitZen(),
   e: () => document.querySelectorAll('details.grp:not([hidden])').forEach(g => { g.open = true; }),
   q: () => document.querySelectorAll('details.grp').forEach(g => { g.open = false; }),
-  '?': () => showKeys(),
-  '/': () => showKeys(),
+  '?': () => toggleHelp(undefined, true),   // the help menu (shut in full screen)
+  '/': () => toggleHelp(undefined, true),
 };
 
 // ---------- held keys for driving ----------

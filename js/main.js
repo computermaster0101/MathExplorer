@@ -133,10 +133,11 @@ document.addEventListener('keydown', e => { if (!xList.hidden && e.key === 'Esca
 // clicking the explorer already on screen would drop its view code from the address
 $('switcher').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; setMenu(false); if (a.dataset.explorer === current) e.preventDefault(); });
 // the menu's extras: the tour again, this explorer's card again, and the privacy note
-$('tourAgain').addEventListener('click', () => { setMenu(false); takeTour(); });
-$('aboutThis').addEventListener('click', () => { setMenu(false); aboutThis(); });
-$('privacyBtn').addEventListener('click', () => { setMenu(false); showPrivacy(); });
-$('reportBtn').addEventListener('click', () => { setMenu(false); openReport(); });
+// the ? menu's items (js/shell/layout.js opens and closes it)
+$('tourAgain').addEventListener('click', () => takeTour());
+$('aboutThis').addEventListener('click', () => aboutThis());
+$('privacyBtn').addEventListener('click', () => showPrivacy());
+$('reportBtn').addEventListener('click', () => openReport());
 consentBar();
 $('resetBtn').addEventListener('click', async () => { if (current) (await loaded[current].catch(() => null))?.reset?.(); });
 window.addEventListener('hashchange', () => { bareHome = false; route(); });

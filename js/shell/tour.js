@@ -37,14 +37,14 @@ const STEPS = () => [
       ? 'Drag to move or turn it, pinch to zoom. Tap to dive in (tap again to pause or play), press and hold to start afresh.'
       : 'Drag to move or turn it, scroll to zoom. On the keyboard the arrows and W A S D move you, G dives or flies, Space pauses and R starts afresh.' },
   { el: '#stageBtns', title: 'Buttons on the picture', text: touch()
-      ? '<b>Hide panel</b> gives the picture more room. <b>Full screen</b> (or double-tap the picture) shows nothing but the picture, ready for a screenshot: there, swipe sideways for colours and up or down for the shape, and double-tap to come back. <b>Reset view</b> puts it back as it started.'
-      : '<b>Hide panel</b> (H) gives the picture more room. <b>Full screen</b> (F) shows nothing but the picture; Esc comes back. <b>Reset view</b> (R) puts it back as it started. Where there\'s a <b>♫ Visualizer</b> button, it turns the explorer into a light show for your music.' },
+      ? '<b>Hide panel</b> gives the picture more room. <b>Full screen</b> (or double-tap the picture) shows nothing but the picture, ready for a screenshot: there, swipe sideways for colours and up or down for the shape, and double-tap to come back. <b>Reset view</b> puts it back as it started. <b>?</b> has help: this tour, About this explorer, Report a problem and Privacy.'
+      : '<b>Hide panel</b> (H) gives the picture more room. <b>Full screen</b> (F) shows nothing but the picture; Esc comes back. <b>Reset view</b> (R) puts it back as it started. Where there\'s a <b>♫ Visualizer</b> button, it turns the explorer into a light show for your music. <b>?</b> (or the ? key) has help: this tour, the keys, Report a problem and Privacy.' },
   { el: '#panel', title: 'The panel', text: 'Choose a shape at the top, then open any group to change how it moves, how it looks and its colours. Every explorer\'s panel is laid out in the same order.' },
   { el: '#g-sound', open: true, title: 'Music', text: 'Play a song from your device, use the microphone, or listen to another tab. Every explorer moves with the beat; ♫ Visualizer changes the picture with the song as well.' },
   { el: '#g-share', open: true, title: 'Save and share', text: 'Save a picture of exactly what you see, or record a video with the music. <b>Copy link</b> gives a link that reopens this very view (shape, colours and angle) for anyone you send it to; paste one under <b>Load a view</b> to open it here.' },
   { el: '#g-print', open: true, title: '3D print', text: 'Download what you\'re looking at as an STL file, ready for a 3D printer, at the size you choose.' },
-  { el: '#g-keys', open: true, title: 'Keys and help', text: (touch() ? 'With a keyboard, every key for this explorer is listed here. ' : 'Every key for this explorer is listed here; press <b>?</b> any time to jump to it. ')
-      + '<b>Navigation speed</b> sets how fast you move. To see this tour again, or what the explorer you\'re in is about, open the explorer menu at the top.' },
+  { el: '#g-keys', open: true, title: 'Keys and help', text: (touch() ? 'With a keyboard, every key for this explorer is listed here. ' : 'Every key for this explorer is listed here; Keyboard shortcuts in the <b>?</b> menu opens it any time. ')
+      + '<b>Navigation speed</b> sets how fast you move. To see this tour again, read about the explorer you\'re in, or report a problem, press <b>?</b> on the picture.' },
 ].filter(s => { if (!s.open) return true; const el = document.querySelector(s.el); return el && !el.hidden && el.offsetParent !== null; });
 let T = null;   // the open tour: { i, root, spot, tip }
 function startTour(from) {
@@ -91,14 +91,15 @@ function endTour(how) {
   if (current && !store.get(CARD + current.name)) showCard(current.name, current.title);   // then this explorer's own card
   if (how === 'tour_skip') laterHint();
 }
-// after a skip (or closing the shared-link bar): where the tour lives, for a few seconds, beside the explorer menu
+// after a skip (or closing the shared-link bar): where the tour lives, for a few seconds, under the ? button
 function laterHint() {
-  const sw = $('switcher'); if (!sw) return; const old = $('tourHint'); if (old) old.remove();
-  const r = sw.getBoundingClientRect(), seen = r.top >= 0 && r.bottom <= innerHeight;   /* on a phone the menu is below the picture */
+  const sw = $('helpBtn'); if (!sw) return; const old = $('tourHint'); if (old) old.remove();
+  const r = sw.getBoundingClientRect(), seen = r.width > 0 && r.top >= 0 && r.bottom <= innerHeight;
   const h = document.createElement('div'); h.id = 'tourHint'; h.setAttribute('role', 'status');
-  h.innerHTML = `You can take the tour any time from the <b>explorer menu</b>${seen ? '' : ' below the picture'}.`;
+  h.innerHTML = 'You can take the tour any time from the <b>?</b> button.';
   document.body.appendChild(h);
-  if (seen) { const w = Math.min(300, innerWidth - 24); h.style.width = w + 'px'; h.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left)) + 'px'; h.style.top = (r.bottom + 10) + 'px'; h.classList.add('arrow'); sw.classList.add('tourPulse'); }
+  if (seen) { const w = Math.min(280, innerWidth - 24), x = Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - 28)); h.style.width = w + 'px'; h.style.left = x + 'px'; h.style.top = (r.bottom + 10) + 'px';
+    h.style.setProperty('--arrowX', Math.round(r.left + r.width / 2 - x - 5) + 'px'); h.classList.add('arrow'); sw.classList.add('tourPulse'); }
   else h.classList.add('top');
   setTimeout(() => { h.classList.add('out'); sw.classList.remove('tourPulse'); }, 5500); setTimeout(() => h.remove(), 6200);
 }

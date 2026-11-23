@@ -19,11 +19,11 @@ Interactive maths in the browser: one page with twelve explorers, picked from th
 
 Every explorer shares the same keys, reacts to the music player, saves images, records videos (with the music), makes share links and exports 3D-printable STL files. Colours come from 40 palettes (including full-spectrum and opposite-colour ones) or one you make yourself, and Hue, Saturation and Light adjust any of them, in every explorer and in share links. Each newer explorer has a one-click **Visualizer** (the ♫ button next to Full screen): it goes full screen, sets everything moving and changes the scene with the song, a new look every eight bars and a bigger change when the chorus or a drop comes in. The music panel's Intensity (Calm, Lively, Wild) sets how big the reactions are, in Fractals too. Each also has a motion group for making moving pictures: the 3D ones turn, rock, tumble, zoom in and out and drift; the flat ones drift, keep zooming and turn; and in all of them "Slowly change the shape" sweeps one of the shape's own sliders back and forth, so the shape morphs as you watch.
 
-On a phone or tablet: drag to move or turn, pinch to zoom, tap to dive in (tap again to pause or play), double-tap for full screen (nothing but the picture, ready for a screenshot), press and hold to start afresh, and in full screen swipe sideways for colours and up or down for the next shape. First-time visitors get a short tour and a card in each explorer; both are in the explorer menu any time, with About this explorer, Report a problem, Privacy and the link to this repository.
+On a phone or tablet: drag to move or turn, pinch to zoom, tap to dive in (tap again to pause or play), double-tap for full screen (nothing but the picture, ready for a screenshot), press and hold to start afresh, and in full screen swipe sideways for colours and up or down for the next shape. First-time visitors get a short tour and a card in each explorer; the **?** button on the picture (or the ? key) brings them back any time, with the keyboard shortcuts, Report a problem, Privacy and the link to this repository.
 
 ## Privacy
 
-Everything runs in the browser: music, files and drawings never leave the device. On the live site, Google Analytics counts visits and which features are used, only as far as each visitor allows in the consent bar (anonymous, cookie-free counts otherwise), and never receives the view in the address bar. Report a problem posts your report publicly as a GitHub issue, with your browser, screen size and, if you choose, the link to your view; nothing personal is asked for. The explorer menu has the full privacy note.
+Everything runs in the browser: music, files and drawings never leave the device. On the live site, Google Analytics counts visits and which features are used, only as far as each visitor allows in the consent bar (anonymous, cookie-free counts otherwise), and never receives the view in the address bar. Report a problem posts your report publicly as a GitHub issue, with your browser, screen size and, if you choose, the link to your view; nothing personal is asked for. The **?** menu has the full privacy note.
 
 ## Why it exists
 
@@ -69,7 +69,7 @@ nginx's default `mime.types` already serves `.js` as JavaScript, which is all th
 
 ## Reporting problems and contributing
 
-- **From the site:** Report a problem in the explorer menu opens an issue here, labelled `from-site`.
+- **From the site:** Report a problem in the **?** menu opens an issue here, labelled `from-site`.
 - **On GitHub:** open an issue, or a pull request against `main`. Pull requests are reviewed automatically by Claude, and the maintainer can ask Claude to work on an issue by mentioning `@claude` (only the owner and collaborators can).
 - Contributions and fixes arrive as pull requests on their own branches, and the maintainer merges them. `main` is protected, and every push to it deploys the live site.
 - Keep to the house rules in [CLAUDE.md](CLAUDE.md): plain HTML, CSS and ES modules, no build step and no npm dependencies, mathematics checked rather than eyeballed, and explanations in plain English.
