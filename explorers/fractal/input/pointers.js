@@ -7,6 +7,7 @@ import { notAvail } from '../ui/notice.js';
 import { d3Bound, d3MinDist, pan3, tap3 } from '../modes/fractal3d.js';
 import { newOrbit } from '../modes/orbit.js';
 import { touchTapping, recentTouch } from '../../../js/shell/layout.js';
+import { juliaAt, juliaAvail, juliaPick } from '../ui/controls.js';
 
 // ---------- pointers ----------
  let lastMid=null, lastPinch=0, dragDesc=null; shared.vel3 = {x:0,y:0}; let downAt=null;
@@ -14,10 +15,12 @@ import { touchTapping, recentTouch } from '../../../js/shell/layout.js';
 function turn3(dx,dy){ st.d3.aim=null; st.d3.yaw-=dx*0.008; st.d3.pitch=clamp(st.d3.pitch+dy*0.008,-1.45,1.45); shared.vel3={x:dx,y:dy}; touch(); }
 function descAt(x,y){ return viewDescs().find(d=>x>=d.x&&x<=d.x+d.w&&y>=d.y&&y<=d.y+d.h) || viewDescs()[0]; }
 function setCFrom(d,x,y){ const w=toWorld(d,x,y); st.jc=toMath(st.type,w); st.link.auto=false; $('linkAuto').checked=false; touch(); }
-glc.addEventListener('pointerdown', e=>{ glc.setPointerCapture(e.pointerId); st.hover=null; ptrs.set(e.pointerId,{x:e.offsetX,y:e.offsetY}); downAt={x:e.offsetX,y:e.offsetY,t:e.timeStamp};
+glc.addEventListener('pointerdown', e=>{ if (shared.juliaPick){ if (juliaAvail() && !st.julia){ juliaAt(e.offsetX, e.offsetY); return; } juliaPick(false); }   /* the Julia button is waiting for a point */
+  glc.setPointerCapture(e.pointerId); st.hover=null; ptrs.set(e.pointerId,{x:e.offsetX,y:e.offsetY}); downAt={x:e.offsetX,y:e.offsetY,t:e.timeStamp};
   if (ptrs.size===1){ dragDesc=descAt(e.offsetX,e.offsetY); if (st.mode==='link' && dragDesc.side==='L' && !notAvail()) setCFrom(dragDesc,e.offsetX,e.offsetY); if (st.fly && st.endlessRun){ st.fly=null; st.dive=true; } else st.fly=null; } touch(); });
 glc.addEventListener('pointermove', e=>{
   const x=e.offsetX, y=e.offsetY;
+  if (e.pointerType==='mouse') shared.lastPt={x,y};   /* where J opens a Julia set */
   if (!ptrs.has(e.pointerId)){ if (st.mode==='explore' && e.pointerType==='mouse'){ st.hover=[x,y]; } return; }
   const prev=ptrs.get(e.pointerId); ptrs.set(e.pointerId,{x,y}); const dx=x-prev.x, dy=y-prev.y;
   if (ptrs.size===1){
@@ -39,7 +42,7 @@ const endP=e=>{ const p=ptrs.get(e.pointerId), zt=e.pointerType==='touch' && tou
 shared.tapMark = null;
 glc.addEventListener('contextmenu', e=>e.preventDefault());
 glc.addEventListener('pointerup', endP); glc.addEventListener('pointercancel', endP);
-glc.addEventListener('pointerleave', ()=>{ if (!ptrs.size) st.hover=null; });
+glc.addEventListener('pointerleave', ()=>{ if (!ptrs.size) st.hover=null; shared.lastPt=null; });
 export function zoomBy(f, x, y){
   if (st.mode==='d3'){ const b=d3Bound(); st.d3.dist=clamp(st.d3.dist*f, st.d3.target?d3MinDist():b*1.02, b*8); touch(); return; }
   if (st.mode==='grow'){ const G=st.grow.gv, nz=clamp(G.z/f,0.2,60), k=nz/G.z, cx=cssW/2, cy=70+(cssH-170)/2; G.ox=x-cx-(x-cx-G.ox)*k; G.oy=y-cy-(y-cy-G.oy)*k; G.z=nz; return; }
