@@ -4,6 +4,7 @@
 import { $, clamp, segClick, clickNext, setRange, setCheck, clickData, setStats, buildSwatches, rampCss, r4, r8, num, standardKeys, buildKeys, makeShare } from '../../js/common/kit.js';
 import { rampOf, rampUniform, sampleRamp, css, hexRGB, PAL_GLSL, palTitle } from '../../js/common/palettes.js';
 import { makeGL, noWebGL } from '../../js/common/gl.js';
+import { buzz } from '../../js/shell/haptics.js';
 import { makeView2D } from '../../js/common/view2d.js';
 import { saveCanvasPNG, saveFile, fileName } from '../../js/common/save.js';
 import { stlFromTriangles, heightfieldTriangles } from '../../js/common/stl.js';
@@ -56,7 +57,9 @@ const moveBetween = (z0, z1) => apply(mul(T(z0), T([-z1[0], -z1[1]])));   // the
 
 // keep the middle of the screen inside the first tile, using the tiling's own turns, so the numbers never grow
 function outside(w) { const g = geo; return g.K < 0 ? Math.hypot(w[0] - g.c, w[1]) < g.r : g.K > 0 ? Math.hypot(w[0] - g.c, w[1]) > g.r : w[0] > g.x0; }
-function recentre() {
+// a finger (or the mouse) on the picture: each edge that then passes the middle of the screen is felt (js/shell/haptics.js)
+let held = false;
+function recentre() { const was = par;   /* par flips each time the middle crosses an edge */
   const zc = toModelXY(0, 0); if (!zc) return; let w = mob(MV, zc);
   for (let i = 0; i < 60; i++) {
     const k = Math.round(Math.atan2(w[1], w[0]) / (2 * geo.a)); if (k) { const g = ROT(-k * 2 * geo.a); MV = norm(mul(g, MV)); w = mob(g, w); }
@@ -64,6 +67,7 @@ function recentre() {
     const m = [geo.x0, 0], H = mul(T(m), mul([[-1, 0], [0, 0], [0, 0], [1, 0]], T([-m[0], 0])));   // half turn about the middle of the edge
     MV = norm(mul(H, MV)); w = mob(H, w); par ^= 1;
   }
+  if (held && par !== was) buzz(12);   // crossed an edge of the tiling
 }
 
 // ---------- screen to model point (the same as the shader) ----------
@@ -202,10 +206,10 @@ function drawPen() { const r = pc.getBoundingClientRect(), d = Math.min(devicePi
 
 // ---------- dragging and zooming the {p, q} view ----------
 let drag = null;
-tc.addEventListener('pointerdown', e => { tc.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY }; });
+tc.addEventListener('pointerdown', e => { tc.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY }; held = true; });
 tc.addEventListener('pointermove', e => { if (!drag) return; const z0 = toModel(drag.x, drag.y), z1 = toModel(e.clientX, e.clientY); drag = { x: e.clientX, y: e.clientY };
   if (z0 && z1) { moveBetween(z0, z1); recentre(); dirty = true; share.touch(); } });
-tc.addEventListener('pointerup', () => { drag = null; }); tc.addEventListener('pointercancel', () => { drag = null; });
+tc.addEventListener('pointerup', () => { drag = null; held = false; }); tc.addEventListener('pointercancel', () => { drag = null; held = false; });
 tc.addEventListener('wheel', e => { e.preventDefault(); zoomBy(Math.exp(e.deltaY * 0.0012), e.clientX, e.clientY); }, { passive: false });
 function zoomBy(f, px, py) {
   if (geo.K === 0 && st.model === 'plane') { const r = tc.getBoundingClientRect(), zc = px == null ? toModelXY(0, 0) : toModel(px, py);   // flat: zoom about the pointer, through the view map
