@@ -411,6 +411,7 @@ function pick(kind, key, keepView) {
   if (kind === 'classic') { if (key === 'random') st.seq = randomLabyrinth(st.rings, Math.random) || st.seq, st.classic = 'random'; else if (key && CLASSIC[key]) { st.classic = key; st.seq = CLASSIC[key].seq.slice(); setRange('cRings', st.seq.length); } }
   for (const k of ['tpms', 'foam', 'maze', 'classic']) $('c-' + k).hidden = k !== kind;
   document.querySelectorAll('[data-for]').forEach(el => { el.hidden = el.dataset.for !== kind; });
+  canvas.toggleAttribute('data-own-taps', kind === 'maze');   /* in a maze a tap steps forward (outside full screen) */
   motionFor(kind);
   if (!keepView) S.reset(); orbit.rotation.set(0, 0, 0);
   if (kind === 'tpms') buildTpmsOrbit(); else if (kind === 'foam') buildFoamOrbit(); else if (kind === 'classic') buildClassicOrbit(); else { clear(orbit); mz.over = false; newMaze(); }

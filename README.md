@@ -17,6 +17,10 @@ Interactive maths in the browser: one page with twelve explorers, picked from th
 
 Every explorer shares the same keys, reacts to the music player, saves images, records videos (with the music), makes share links and exports 3D-printable STL files. Each newer explorer has a one-click **Visualizer** (the ♫ button next to Full screen): it goes full screen, sets everything moving and changes the scene with the song, a new look every eight bars and a bigger change when the chorus or a drop comes in. The music panel's Intensity (Calm, Lively, Wild) sets how big the reactions are, in Fractals too. Each also has a motion group for making moving pictures: the 3D ones turn, rock, tumble, zoom in and out and drift; the flat ones drift, keep zooming and turn; and in all of them "Slowly change the shape" sweeps one of the shape's own sliders back and forth, so the shape morphs as you watch.
 
+## Privacy
+
+Everything runs in the browser: music, files and drawings never leave the device. On the live site, Google Analytics counts visits and which features are used, only as far as each visitor allows in the consent bar (anonymous, cookie-free counts otherwise), and never receives the view in the address bar. The explorer menu has the full privacy note.
+
 ## Why it exists
 
 Math Explorer is a toy that makes people curious about mathematics by letting them see it, play with it and move through it. It has two equal purposes, both standing on true mathematics.

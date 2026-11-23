@@ -49,14 +49,15 @@ export function showKeys() {
 }
 
 // ---------- touch gestures on the picture (phones and tablets) ----------
-// In full screen a tap pauses or resumes everything moving (as Space does) and a double tap leaves full screen; outside full
-// screen a double tap enters it. Pressing and holding still for a moment resets the view (as R does), anywhere. In full screen a
+// A tap pauses or resumes everything moving (as Space does) and a double tap turns full screen on or off. Where tapping is the
+// explorer's own way to play (a canvas marked data-own-taps: Growing Patterns' brush, Waves' splashes, a maze's step forward,
+// drawing your own epicycles), its taps stay its own outside full screen; in full screen a tap always pauses. Pressing and holding still for a moment resets the view (as R does), anywhere. In full screen a
 // quick swipe changes the colours: left / right the next / previous palette (V / C), up / down the colour style (Shift + V / C). Only quick, still, one-finger taps on the picture itself count: drags, pinches, buttons and
 // the mouse are untouched. While a touch screen is in use, full screen shows nothing but the picture (no exit button, no
 // Paused tag), so screenshots come out clean; a tip says how to get out, for a moment, on the way in.
 const stage = $('stage'), T = { down: null, n: 0, multi: false, last: 0, lastXY: null, timer: null, touch: 0 };
 /** True just after a touch on the picture: explorers' own tap actions (fly to a spot, next room…) stand aside in full screen. */
-export const touchTapping = () => inZen() && performance.now() - T.touch < 600;
+export const touchTapping = () => performance.now() - (T.claim || 0) < 400;   // a tap the shell has taken (pause, full screen): explorers ignore it
 /** True just after any touch: a double tap that the browser also reports as a double click shouldn't zoom as well. */
 export const recentTouch = () => performance.now() - T.touch < 800;
 const onPicture = e => e.target && e.target.tagName === 'CANVAS';
@@ -80,13 +81,15 @@ const lift = e => {
   const d = T.down; if (T.n > 0 || !d) return; T.down = null;
   if (T.multi || e.type === 'pointercancel' || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 12 || performance.now() - d.t > 300) return;
   const now = performance.now(), near = T.lastXY && Math.hypot(e.clientX - T.lastXY[0], e.clientY - T.lastXY[1]) < 40;
+  const own = !inZen() && e.target && e.target.closest && e.target.closest('[data-own-taps]');
+  if (!own) T.claim = now;
   if (now - T.last < 320 && near) { clearTimeout(T.timer); T.last = 0; toggleZen(); return; }   // double tap: full screen on or off
   T.last = now; T.lastXY = [e.clientX, e.clientY]; clearTimeout(T.timer);
-  if (inZen()) T.timer = setTimeout(() => { T.last = 0; document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true })); }, 320);   // one tap: pause / resume
+  if (!own) T.timer = setTimeout(() => { T.last = 0; document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true })); }, 320);   // one tap: pause / resume
 };
 stage.addEventListener('pointerup', lift, true); stage.addEventListener('pointercancel', lift, true);
 // the tip, shown for a moment on going full screen by touch
-const tip = document.createElement('div'); tip.id = 'zenTip'; tip.textContent = 'Tap: pause · double-tap: leave full screen · hold: reset · swipe: colours'; stage.appendChild(tip);
+const tip = document.createElement('div'); tip.id = 'zenTip'; tip.textContent = 'Tap: pause · double-tap: leave full screen · hold: start afresh · swipe: colours'; stage.appendChild(tip);
 let tipT = null;
 const showTip = () => { if (!app.classList.contains('touch')) return; tip.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => tip.classList.remove('on'), 2200); };
 $('panelBtn').addEventListener('click', () => togglePanel());

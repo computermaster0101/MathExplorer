@@ -20,6 +20,8 @@ import { parseRoute, DEFAULT_EXPLORER, setActiveExplorer } from './shell/route.j
 import { onLayoutChange } from './shell/layout.js';
 import { setKeyHandler, syncKeyPrefs } from './shell/keys.js';
 import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
+import { pageView, consentBar, showPrivacy } from './shell/analytics.js';
+import { explorerShown, takeTour, aboutThis } from './shell/tour.js';
 
 const EXPLORERS = {
   fractal:   { title: 'Fractals' },
@@ -113,6 +115,7 @@ async function show() {
   if (!first && code) api.showView?.(code);
   setKeyHandler(api.onKey); onLayoutChange(() => api.layoutChanged?.()); setSoundHelp(api.soundHelp);
   api.start?.();
+  pageView(name, EXPLORERS[name].title); explorerShown(name, EXPLORERS[name].title, !!code);   // analytics (names only), and first-visit help
 }
 
 // the explorer menu: the button opens the list; choosing one (or clicking elsewhere, or Esc) closes it
@@ -123,6 +126,11 @@ document.addEventListener('pointerdown', e => { if (!xList.hidden && !e.target.c
 document.addEventListener('keydown', e => { if (!xList.hidden && e.key === 'Escape') { setMenu(false); xBtn.focus(); e.stopPropagation(); } }, true);
 // clicking the explorer already on screen would drop its view code from the address
 $('switcher').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; setMenu(false); if (a.dataset.explorer === current) e.preventDefault(); });
+// the menu's extras: the tour again, this explorer's card again, and the privacy note
+$('tourAgain').addEventListener('click', () => { setMenu(false); takeTour(); });
+$('aboutThis').addEventListener('click', () => { setMenu(false); aboutThis(); });
+$('privacyBtn').addEventListener('click', () => { setMenu(false); showPrivacy(); });
+consentBar();
 $('resetBtn').addEventListener('click', async () => { if (current) (await loaded[current].catch(() => null))?.reset?.(); });
 window.addEventListener('hashchange', route);
 route();

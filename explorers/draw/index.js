@@ -97,7 +97,7 @@ function drawTimes(R, tone, px) {
 // ---------- drawing your own (for the epicycles) ----------
 let drawing = null, ownMode = false;
 const worldAt = e => view.toWorld(e.clientX, e.clientY);
-function setOwnMode(on) { ownMode = on; view.enabled = !on; cv.classList.toggle('drawing', on); $('ownBtn').textContent = on ? 'Cancel' : 'Draw your own'; $('ownNote').hidden = !on; }
+function setOwnMode(on) { ownMode = on; view.enabled = !on; cv.classList.toggle('drawing', on); cv.toggleAttribute('data-own-taps', on); $('ownBtn').textContent = on ? 'Cancel' : 'Draw your own'; $('ownNote').hidden = !on; }
 cv.addEventListener('pointerdown', e => { if (!ownMode) return; cv.setPointerCapture(e.pointerId); drawing = [worldAt(e)]; });
 cv.addEventListener('pointermove', e => { if (ownMode && drawing) drawing.push(worldAt(e)); });
 cv.addEventListener('pointerup', () => { if (!ownMode || !drawing) return; const d = drawing; drawing = null;
