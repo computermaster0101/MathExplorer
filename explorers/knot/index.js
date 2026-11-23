@@ -207,7 +207,7 @@ buildKeys($('keyTable'), [['G', 'Ride the knot / stop riding'], ['← → ↑ �
 // ---------- actions ----------
 function go() { st.paused = false; if (ride.on) endRide(); else startRide(); }
 function resetView() { endRide(); S.reset(); st.paused = false; share.touch(); }
-function moving() { return ride.on || st.spin || st.cycleSpeed > 0 || MO.moving(); }
+export function moving() { return ride.on || st.spin || st.cycleSpeed > 0 || MO.moving(); }
 
 // ---------- loop ----------
 // Rotation & motion (its own group): turning, rocking, tumbling, the camera's zoom and drift, and Slowly change

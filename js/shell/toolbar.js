@@ -153,7 +153,8 @@ $('stageBtns').addEventListener('click', e => { const b = e.target.closest('butt
 
 // ---------- keeping the buttons true to what's on screen ----------
 function refresh() {
-  const paused = !$('pausedTag').hidden;
+  /* the play icon while paused, and while nothing is moving (the explorer's moving(), where it has one): Space would then start the main motion */
+  const paused = !$('pausedTag').hidden || !!(api.moving && !api.moving());
   const play = $('tbPlay'); if (play.dataset.state !== String(paused)) { play.dataset.state = String(paused); play.innerHTML = paused ? ICON.play : ICON.pause; }
   setTip(play, paused ? 'Play (Space)' : 'Pause (Space)');
   const sn = speedName(); $('tbSlower').hidden = $('tbFaster').hidden = !sn;

@@ -42,6 +42,7 @@ import { TYPES } from './fractals/types.js';
 import { applyState, applyView, decodeState, encodeState, getState, parseView, readView, showView, viewCode, writeHash } from './io/share.js';
 import { pace, startLoop, stopLoop } from './loop.js';
 import { onKey } from './input/keyboard.js';
+export { moving } from './input/keyboard.js';   /* the picture's play icon shows while nothing moves */
 import { parseRoute } from '../../js/shell/route.js';
 
 new ResizeObserver(()=>touch()).observe(glc.parentElement);

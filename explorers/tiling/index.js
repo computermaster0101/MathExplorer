@@ -388,7 +388,7 @@ $('prBtn').addEventListener('click', () => {
 // ---------- keys, sharing, lifecycle ----------
 export function onKey(e) {
   return standardKeys(e, {
-    pause: () => { st.paused = !st.paused; if (st.paused === false && !st.gliding && !st.spin && st.kind === 'pq') go(); }, go, renew, reset: resetView,
+    pause: () => { if (st.paused) st.paused = false; else if (moving()) st.paused = true; else if (st.kind === 'pq') go(); else setRange('mvDrift', 0.3); },   /* nothing moving: {p,q} glides, a flat pattern drifts */ go, renew, reset: resetView,
     shape: dir => clickNext('#sphList button, #flatList button, #hypList button, #uniList button, #penList button, #archList button, #qcList button, #wallList button, #truList button', dir), palette: dir => clickNext('#palettes button', dir), colourMode: dir => clickNext('#cmode button', dir),
     reverse: () => $('palRev').click(), cycle: () => setRange('cyc', st.cycleSpeed > 0 ? 0 : 1),
     zoom: f => (flat2d() ? pview.zoomAt(f) : zoomBy(f)), mode: i => { const b = document.querySelectorAll('#cmode button')[i]; if (b) b.click(); },
@@ -429,6 +429,8 @@ export const reset = resetView;
 /* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
 export const goLabel = () => st.kind === 'pq' ? (st.gliding ? 'Stop gliding' : 'Glide') : st.kind === 'pat' ? 'New pattern' : 'Next step';
 export const speedCtl = () => st.kind === 'pq' ? 'speed' : null;
+/** Anything moving that Space would pause (else the picture's play icon shows). */
+export function moving() { return (!flat2d() && (st.gliding || st.spin)) || st.cycleSpeed > 0 || MO.moving(); }
 export const going = () => st.kind !== 'pq' || st.gliding;   /* a tap glides {p,q}; elsewhere G makes a new pattern, so a tap just pauses */
 export const layoutChanged = () => { dirty = true; };
 export const showView = code => applyCode(code);

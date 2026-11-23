@@ -13,6 +13,7 @@
 //   onKey(event)        a keydown the shell didn't use; return true when the explorer used it
 //   layoutChanged()     the panel was hidden or shown, or full screen started or ended
 //   showView(code)      the address changed to a view code (a pasted link, back/forward)
+//   moving()            optional: true while anything moves that Space would pause; false shows the picture's play icon
 //   going()             optional: true while diving / flying / riding / walking, so a tap on a phone pauses rather than goes
 //   goLabel()           optional: what the picture's Go button (G) is called right now, e.g. 'Dive in'; null hides it
 //   extraCtl()          optional: one button of the explorer's own on the picture: { label, icon, on, run }; null hides it

@@ -40,6 +40,7 @@ import { applyMorph, resetAll } from './ui/learn.js';
 import { resize, startLoop, stopLoop } from './loop.js';
 import { applyView, showView } from './io/share.js';
 import { onKey } from './input/keyboard.js';
+export { moving } from './input/keyboard.js';   /* the picture's play icon shows while nothing moves */
 import { parseRoute } from '../../js/shell/route.js';
 import { addRecorder } from '../../js/common/motion.js';
 import { st } from './state.js';

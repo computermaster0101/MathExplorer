@@ -247,7 +247,7 @@ function play() { const s = sh(); st.paused = false;
   if (s.params && s.params.some(p => p.id === 'mo')) { st.anim.on = !st.anim.on; return; }
   st.spin = !st.spin; $('spin').checked = st.spin; }
 function resetView() { endWalk(); S.reset(); st.paused = false; st.anim = { on: false, t: 0 }; if (st.gap) { st.gap = 0; build(); labels(); } share.touch(); }
-function moving() { return walk.on || st.spin || st.anim.on || st.cycleSpeed > 0 || MO.moving(); }
+export function moving() { return walk.on || st.spin || st.anim.on || st.cycleSpeed > 0 || MO.moving(); }
 
 // ---------- loop ----------
 const clk = { morph: new Phase() };
