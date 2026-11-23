@@ -37,7 +37,7 @@ import { moveCentre, resetViews, sizeBuffers, touch } from './view.js';
 import { auxRender, render2DAll } from './render/bla.js';
 import { drop3, nestIn, nestOut, nestReset, render3D } from './modes/fractal3d.js';
 import { newOrbit } from './modes/orbit.js';
-import { buildPlaces, d3Rows, flyTo, juliaAvail, juliaBack, juliaPick, resetView, setMode, typeChanged } from './ui/controls.js';
+import { buildPlaces, d3Rows, flyTo, juliaAvail, juliaSwap, resetView, setMode, typeChanged } from './ui/controls.js';
 import { TYPES } from './fractals/types.js';
 import { applyState, applyView, decodeState, encodeState, getState, parseView, readView, showView, viewCode, writeHash } from './io/share.js';
 import { pace, startLoop, stopLoop } from './loop.js';
@@ -60,9 +60,8 @@ export { onKey, showView };
 /* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
 export const goLabel = () => st.mode === 'explore' ? (st.dive || st.endlessRun ? 'Stop the dive' : 'Dive in') : st.mode === 'd3' ? (st.d3.dive ? 'Stop the dive' : 'Dive in') : null;
 /* the picture's target button: what steers itself here, and whether it's on (null hides it) */
-export const extraCtl = () => !juliaAvail() ? null : st.julia ? { label: 'Back to the ' + TYPES[st.type].name + ' (J)', icon: 'back', run: juliaBack }
-  : shared.juliaPick ? { label: 'Click a point on the picture (press again to cancel)', icon: 'julia', on: true, run: () => juliaPick(false) }
-  : { label: 'Julia set at a point: press, then click the picture (J: at the pointer)', icon: 'julia', run: () => juliaPick(true) };
+export const extraCtl = () => !juliaAvail() ? null : st.julia ? { label: 'Back to the ' + TYPES[st.type].name + ' (J)', icon: 'back', run: juliaSwap }
+  : { label: 'Swap with the Julia set in the panel (J)', icon: 'julia', run: juliaSwap };
 export const autoCtl = () => (st.mode === 'explore' || st.mode === 'd3') ? { label: 'Steer toward detail', on: st.steer } : null;
 export const speedCtl = () => ({ explore: 'diveSpd', d3: 'dive3Spd', orbit: { id: 'orbSpd', invert: true } })[st.mode] || null;   /* orbit: seconds per step, so bigger is slower */
 export const going = () => st.mode === 'explore' ? !!(st.dive || st.endlessRun || st.fly) : st.mode === 'd3' ? !!(st.d3.dive || st.d3.warp || st.d3.aim) : false;
