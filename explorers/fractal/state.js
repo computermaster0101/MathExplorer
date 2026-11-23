@@ -1,5 +1,6 @@
 import { dblToFix } from './math/big-fixed.js';
 import { TYPES } from './fractals/types.js';
+import { lowGraphics } from '../../js/shell/perf.js';
 
 // ---------- state ----------
 export const st = { motionQ:'balanced', paused:false, keyDriveT:0, bla:true, custom:{src:'z^3 + sin(z) + c', z0:'0', bail:100, js:(z,c)=>{ const r=Math.hypot(z[0],z[1]), t=Math.atan2(z[1],z[0])*3, r3=r*r*r; return [r3*Math.cos(t)+Math.sin(z[0])*Math.cosh(z[1])+c[0], r3*Math.sin(t)+Math.cos(z[0])*Math.sinh(z[1])+c[1]]; }, z0js:c=>[0,0]}, precision:'standard', prog:null, vel:[0,0], endless:true, endlessRun:false, trip:0, manualT:0, insideT:0, iterNeed:0, probeT:0, steer:false, steerT:0, steerTo:null, q:1, qMove:1, lyaSeq:'AB', budMode:'buddha', mode:'explore', type:0, julia:false, jc:[-0.123,0.745], power:3,
@@ -32,7 +33,8 @@ export const MOTION_Q={
   balanced:{ d3:[0.85, 1, 0.5],  d2:[1, 1, 0.6], dive:0.1 },
   sharp:   { d3:[1, 1, 1],       d2:[1, 1, 1],   dive:0 },
 };
-try { const v=localStorage.getItem('mathexplorer.motionQ'); if (MOTION_Q[v]) st.motionQ=v; } catch(e){ /* storage blocked: keep the default */ }
+// the viewer's own choice wins; without one, slow graphics (no graphics card, little memory) start smooth rather than sharp
+try { const v=localStorage.getItem('mathexplorer.motionQ'); if (MOTION_Q[v]) st.motionQ=v; else if (lowGraphics()) st.motionQ='smooth'; } catch(e){ if (lowGraphics()) st.motionQ='smooth'; }
 export function qLimits(){ const M=MOTION_Q[st.motionQ]||MOTION_Q.balanced, [start, max, floor]=st.mode==='d3' ? M.d3 : M.d2;
   const diving = st.mode==='d3' ? !!(st.d3.dive||st.d3.warp) : !!(st.dive||st.endlessRun);
   return { start, max, floor: Math.min(max, floor+(diving?M.dive:0)) }; }
