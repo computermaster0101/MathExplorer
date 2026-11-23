@@ -4,6 +4,7 @@
 // Hidden with the rest of the row in full screen, so never in the Visualizer. Explorers say what Go is called right now
 // (`goLabel()`, null to hide it) and what slower / faster move (`speedCtl()`: a range input's id, { id, invert } when a
 // bigger number is slower, or { label, step(dir) }; null to hide them). The buttons press the same keys the keyboard does.
+import { track } from './analytics.js';
 const $ = id => document.getElementById(id);
 const app = $('app');
 const svg = d => `<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -21,6 +22,7 @@ export const ICON = {
   faster: svg('<path d="M4 17a8 8 0 0 1 16 0"/><line x1="12" y1="17" x2="16.5" y2="12"/><circle cx="12" cy="17" r="1" fill="currentColor"/>'),
   zoomOut: svg('<circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/><line x1="7.5" y1="10.5" x2="13.5" y2="10.5"/>'),
   zoomIn: svg('<circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/><line x1="7.5" y1="10.5" x2="13.5" y2="10.5"/><line x1="10.5" y1="7.5" x2="10.5" y2="13.5"/>'),
+  share: svg('<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><line x1="8.2" y1="10.8" x2="15.8" y2="6.2"/><line x1="8.2" y1="13.2" x2="15.8" y2="17.8"/>'),
   music: svg('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'),
 };
 /** Give a picture button its icon and name (shown on hover, read by screen readers). */
@@ -73,6 +75,26 @@ function speedName() {
   return s ? s.textContent.trim() : 'speed';
 }
 
+// ---------- share: the system share sheet where there is one (phones), else copy the link ----------
+// The address always holds this view (explorers keep it up to date), colours included.
+$('tbShare').addEventListener('click', async () => {
+  const b = $('tbShare'), url = location.href, title = document.title;
+  const say = t => { const was = b.dataset.tip; b.dataset.tip = t; b.classList.add('tipShow'); setTimeout(() => { b.classList.remove('tipShow'); b.dataset.tip = was; }, 1800); };
+  if (navigator.share && matchMedia('(pointer: coarse)').matches) { try { await navigator.share({ title, text: 'Look at this in Math Explorer', url }); track('share_link', { via: 'share_sheet' }); } catch (e) { /* closed without sharing */ } return; }
+  let ok = false;
+  try { await navigator.clipboard.writeText(url); ok = true; } catch (e) {
+    try { const t = document.createElement('textarea'); t.value = url; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select(); ok = document.execCommand('copy'); t.remove(); } catch (e2) { /* nothing to copy with */ } }
+  say(ok ? 'Link copied: it opens exactly this view' : 'Copy the address from the address bar to share this view'); if (ok) track('share_link', { via: 'copy' });
+});
+
+// ---------- which buttons get used: one event per press, the button's name and the explorer, nothing else ----------
+const NAMES = { panelBtn: 'panel', zenBtn: 'fullscreen', resetBtn: 'reset', tbPlay: 'play_pause', tbGo: 'go', tbSteer: 'steer', tbExtra: 'explorer_button', tbOut: 'zoom_out', tbIn: 'zoom_in',
+  tbSlower: 'slower', tbFaster: 'faster', musicBtn: 'music_menu', tbMusicSet: 'music_settings', vizStageBtn: 'visualizer', tbShare: 'share', helpBtn: 'help_menu',
+  tourAgain: 'tour', aboutThis: 'about', keysBtn: 'keys', reportBtn: 'report', privacyBtn: 'privacy', ghMenu: 'github' };
+$('stageBtns').addEventListener('click', e => { const b = e.target.closest('button, a'); if (!b || !NAMES[b.id]) return;
+  const p = { button: NAMES[b.id], explorer: app.dataset.explorer || '' }; if (b.id === 'tbExtra' && b.dataset.icon) p.detail = b.dataset.icon;
+  track('toolbar', p); });
+
 // ---------- the music menu (the Visualizer item is the explorer's own #vizStageBtn, which it shows and names) ----------
 const musicBtn = $('musicBtn'), musicMenu = $('musicMenu');
 export function toggleMusic(open = musicMenu.hidden) {
@@ -120,6 +142,7 @@ $('stageBtns').addEventListener('click', e => { if (pressed && performance.now()
 // the three shell buttons that were words
 for (const [id, ic, name] of [['panelBtn', 'panel', 'Hide panel (H)'], ['zenBtn', 'zen', 'Full screen (F)'], ['resetBtn', 'reset', 'Reset view (R)']]) { const b = $(id); b.innerHTML = ICON[ic]; setTip(b, name); }
 musicBtn.innerHTML = ICON.music; setTip(musicBtn, 'Music and the Visualizer');
+$('tbShare').innerHTML = ICON.share; setTip($('tbShare'), 'Share this view');
 $('tbSteer').innerHTML = ICON.steer; $('tbGo').innerHTML = ICON.go; $('tbSlower').innerHTML = ICON.slower; $('tbFaster').innerHTML = ICON.faster;
 $('tbOut').innerHTML = ICON.zoomOut; $('tbIn').innerHTML = ICON.zoomIn; setTip($('tbOut'), 'Zoom out: back (−, or the wheel)'); setTip($('tbIn'), 'Zoom in: forwards (+, or the wheel)');
 setTip($('helpBtn'), 'Help: the tour, keys, Report a problem (?)');
