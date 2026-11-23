@@ -26,7 +26,7 @@ export function drawLink(){
     g.fillStyle=txt; g.font='600 12px Inter, sans-serif'; g.fillText(t1,x+9,yb-23); g.font='11.5px Inter, sans-serif'; g.fillStyle=light?'#5b6170':'#aab3c5'; g.fillText(t2,x+9,yb-8); };
   const wide=R.x>0;
   lab(L.x+12, wide ? cssH-capH : L.y+L.h-10, 'The map: every point is a c', 'drag to move the marker');
-  lab(R.x+12, wide ? cssH-capH : R.y+50, 'Julia set for c = '+fmtC(st.jc), 'drag to move · scroll to zoom');
+  lab(R.x+12, wide ? cssH-capH : R.y+50, 'Julia set for c = '+fmtC(st.jc), 'drag to move · scroll to zoom · '+(matchMedia('(pointer: coarse)').matches?'double-tap':'double-click')+' to open');
 }
 
 export function drawTapMark(){ if (!shared.tapMark) return; const a=(performance.now()-shared.tapMark.t)/900; if (a>1){ shared.tapMark=null; return; }

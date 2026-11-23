@@ -20,7 +20,8 @@ import { CMODE_NOTE, refreshLegend, updateDynamic, updateLabels } from './learn.
 export function setSeg(group, el){ group.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b===el)); }
 export function segClick(id, fn){ $(id).addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return; setSeg($(id), b); fn(b.dataset); touch(); }); }
 export function setMode(m){ st.paused=false;
-  st.mode=m; setSeg($('modes'), document.querySelector(`#modes [data-m="${m}"]`));
+  st.mode=m; glc.toggleAttribute('data-own-taps', m==='link');   /* the link screen keeps its taps: a double tap on the Julia side opens it (input/pointers.js) */
+  setSeg($('modes'), document.querySelector(`#modes [data-m="${m}"]`));
   document.querySelectorAll('[data-show]').forEach(el=>el.hidden=!el.dataset.show.split(' ').includes(m));
   document.querySelectorAll('details.grp').forEach(g=>{ const secs=g.querySelectorAll(':scope > .gb > .sec, :scope > .gb > .explain'); g.hidden=![...secs].some(s=>!s.hidden); });
   st.dive=false; st.endlessRun=false; st.fly=null; diveUI(); if (st.d3.dive||st.d3.warp) setDive3(false);
@@ -29,7 +30,7 @@ export function setMode(m){ st.paused=false;
   st.q = qLimits().start; st.qMove=st.q; shared.hqShown=false;
   if (m==='d3') prog3(); else drop3();   // start building the 3D program now, or let it go when leaving 3D
   octx.setTransform(1,0,0,1,0,0); octx.clearRect(0,0,ovc.width,ovc.height);
-  $('hint').textContent = m==='d3' ? hint3() : m==='orbit' ? 'Tap a point · drag to move · scroll to zoom' : m==='link' ? 'Drag on the map to move c' : 'Drag to move · scroll / pinch to zoom';
+  $('hint').textContent = m==='d3' ? hint3() : m==='orbit' ? 'Tap a point · drag to move · scroll to zoom' : m==='link' ? 'Drag on the map to move c · double-tap the Julia set to open it' : 'Drag to move · scroll / pinch to zoom · twist two fingers to turn';
   shared.lastCap=''; touch(); updateLabels();
 }
 segClick('modes', d=>setMode(d.m));

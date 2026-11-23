@@ -38,7 +38,7 @@ export function onKey(e){
     case 'g': case 'G': if (st.mode==='explore') $('diveBtn').click(); else if (st.mode==='d3') $('dive3Btn').click(); else used=false; break;
     case 'p': case 'P': if (st.mode==='explore'){ flyTo((st.placeIdx+1)%TYPES[st.type].places.length); } else used=false; break;
     /* J: swap with the Julia panel (the Julia set at the middle, or at the pointer while it's over the picture), and back */
-    case 'j': case 'J': if (juliaAvail()) juliaSwap(); else used=false; break;
+    case 'j': case 'J': if (juliaAvail()) juliaSwap(); else if (st.mode==='link') $('linkOpen').click(); else used=false; break;
     case ']': st.iterAuto=false; $('iterAuto').checked=false; st.iter=Math.min(isExt()?100000:30000,Math.round(effIter(st.vE)*1.25)); $('iter').value=st.iter; touch(); updateDynamic(); break;
     case '[': st.iterAuto=false; $('iterAuto').checked=false; st.iter=Math.max(50,Math.round(effIter(st.vE)/1.25)); $('iter').value=st.iter; touch(); updateDynamic(); break;
     case 'c': clickNext('#palettes button',-1); break;   // C / V: previous / next palette; with Shift: previous / next colour mode
