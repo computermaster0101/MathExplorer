@@ -18,6 +18,7 @@
 // Only one explorer is attached to the page at a time: the others' DOM is kept, detached, so their
 // element ids never clash and their own document queries only ever see their own controls.
 import { parseRoute, DEFAULT_EXPLORER, setActiveExplorer } from './shell/route.js';
+const HOME_TITLE = document.title; let bareHome = !location.hash;   // opened at the plain address: keep the home title until the visitor moves on
 import { onLayoutChange, setGoing } from './shell/layout.js';
 import { setKeyHandler, syncKeyPrefs } from './shell/keys.js';
 import { colourFromCode, colourSync } from './common/colours.js';
@@ -71,7 +72,8 @@ function detach({ stageEl, panelEl }) { $('shellParts').append(soundGroup); stag
 function markSwitcher(name) {
   for (const a of document.querySelectorAll('#switcher a')) a.classList.toggle('on', a.dataset.explorer === name);
   $('xName').textContent = EXPLORERS[name].title;
-  document.title = `${EXPLORERS[name].title} · Math Explorer`;
+  // the bare home page keeps its full, descriptive title (what search results show); an explorer's own address names it
+  document.title = bareHome && name === DEFAULT_EXPLORER ? HOME_TITLE : `${EXPLORERS[name].title} · Math Explorer`;
 }
 
 let queue = Promise.resolve();
@@ -137,5 +139,5 @@ $('privacyBtn').addEventListener('click', () => { setMenu(false); showPrivacy();
 $('reportBtn').addEventListener('click', () => { setMenu(false); openReport(); });
 consentBar();
 $('resetBtn').addEventListener('click', async () => { if (current) (await loaded[current].catch(() => null))?.reset?.(); });
-window.addEventListener('hashchange', route);
+window.addEventListener('hashchange', () => { bareHome = false; route(); });
 route();
