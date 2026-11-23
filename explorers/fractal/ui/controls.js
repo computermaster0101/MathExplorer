@@ -7,6 +7,7 @@ import { fitV, isExt, qLimits, st, toMath, view } from '../state.js';
 import { escR2, startZ, stepFn } from '../fractals/iterate.js';
 import { PALETTES, css, fmtBig, fmtC, minus, setRamp } from '../color/palettes.js';
 import { colourControls } from '../../../js/common/colours.js';
+import { inZen, toggleZen } from '../../../js/shell/layout.js';
 import { octx, ovc, refSlots } from '../render/webgl.js';
 import { cssH, cssW, effIter, minScale, recolour, resetViews, toWorld, touch } from '../view.js';
 import { notAvail } from './notice.js';
@@ -69,6 +70,9 @@ function buildPresets(id){ $(id).innerHTML=JPRESETS.map((p,i)=>`<button data-i="
 buildPresets('jPresets'); buildPresets('jPresets2');
 for (const id of ['jPresets','jPresets2']) $(id).addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return; st.jc=JPRESETS[+b.dataset.i][1].slice();
   if (id==='jPresets2'){ st.link.auto=false; $('linkAuto').checked=false; } $('jco').textContent=fmtC(st.jc); setSeg($(id),b); refSlots[1].key=''; touch(); updateLabels(); });
+// Julia link → the Julia set for the c chosen, on its own in Explore (where it can dive and drive), full screen
+$('linkOpen').addEventListener('click', ()=>{ st.link.auto=false; $('linkAuto').checked=false; setMode('explore');
+  if (!st.julia) setCheck('juliaChk', 1); else { resetViews(); touch(); updateLabels(); } if (!inZen()) toggleZen(); });
 $('juliaChk').addEventListener('change', e=>{ st.julia=e.target.checked; if (st.julia && TYPES[st.type].noBounded) st.jc=toMath(st.type,[st.vE.cx,st.vE.cy]); $('jcBox').hidden=!st.julia; $('jco').textContent=fmtC(st.jc); resetViews(); touch(); updateLabels(); });
 // "Steer toward detail" is one setting for 2D and 3D dives, with a box in each mode's controls (and T)
 export function setSteer(on){ st.steer=!!on; st.steerTo=null; $('steerChk').checked=st.steer; $('steer3Chk').checked=st.steer; }
