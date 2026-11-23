@@ -2,11 +2,11 @@ import { clamp } from '../util.js';
 import { st } from '../state.js';
 
 // ---------- palettes ----------
-import { PALETTES } from '../../../js/common/palettes.js';   // the table is shared by every explorer
+import { PALETTES, rampOf } from '../../../js/common/palettes.js';   // the table (and the colour adjustments) are shared by every explorer
 export { PALETTES };
 export let RAMP = PALETTES.aurora;
 // the palette, optionally run backwards; everything that colours reads RAMP
-export function setRamp(){ RAMP = st.palRev ? PALETTES[st.palette].slice().reverse() : PALETTES[st.palette]; }
+export function setRamp(){ RAMP = rampOf(st.palette, st.palRev); }
 export function palRamp(t){ t=clamp(t,0,0.99999)*(RAMP.length-1); const i=Math.floor(t), f=t-i; return [0,1,2].map(c=>RAMP[i][c]+(RAMP[i+1][c]-RAMP[i][c])*f); }
 export function palM(t){ t=((t%1)+1)%1; return palRamp(1-Math.abs(2*t-1)); }     // mirrored, so it cycles seamlessly (same as the shader)
 export const css=(c,a)=>{ const s=c.map(x=>Math.round(clamp(x,0,1)*255)).join(','); return a==null?`rgb(${s})`:`rgba(${s},${a})`; };

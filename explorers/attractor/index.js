@@ -2,7 +2,7 @@
 // Importing this module boots the explorer; the exports are the lifecycle the shell (js/main.js) drives.
 import * as THREE from 'three';
 import { $, clamp, segClick, clickNext, setRange, setCheck, clickData, setStats, buildSwatches, rampCss, r4, r8, num, standardKeys, buildKeys, makeShare } from '../../js/common/kit.js';
-import { rampOf, sampleRamp, sampleMirror, hexRGB } from '../../js/common/palettes.js';
+import { rampOf, sampleRamp, sampleMirror, hexRGB, palTitle } from '../../js/common/palettes.js';
 import { makeStage3D } from '../../js/common/three-stage.js';
 import { makeView2D } from '../../js/common/view2d.js';
 import { saveCanvasPNG, saveFile, fileName } from '../../js/common/save.js';
@@ -212,7 +212,7 @@ $('trail').addEventListener('input', e => { st.trail = +e.target.value; $('trail
 $('expo').addEventListener('input', e => { st.expo = +e.target.value; $('expoo').textContent = st.expo.toFixed(1) + '×'; share.touch(); });
 segClick('cmode', d => { st.cmode = d.c; if (F && F.kind === 'path') startFlow(); labels(); share.touch(); });
 buildSwatches($('palettes'), st.palette, name => { st.palette = name; recolour(); palLabel(); share.touch(); });
-const palLabel = () => { $('palName').textContent = 'Palette: ' + st.palette.replace('_', ' & ').replace(/^./, c => c.toUpperCase()) + (st.palRev ? ' (reversed)' : ''); };
+const palLabel = () => { $('palName').textContent = 'Palette: ' + palTitle(st.palette) + (st.palRev ? ' (reversed)' : ''); };
 function recolour() { R = rampOf(st.palette, st.palRev); $('lgBar').style.background = rampCss(R); if (F && F.kind === 'path' && !isMap()) { const s = sy(), P = st.P[st.sys]; for (let i = 0; i < F.n; i++) { const p = [F.pos[i * 3], F.pos[i * 3 + 1], F.pos[i * 3 + 2]], v = s.f(p[0], p[1], p[2], P); F.col.set(colourFor(p, Math.hypot(...v), i / F.L), i * 3); } obj.geometry.attributes.color.needsUpdate = true; } }
 $('palRev').addEventListener('change', e => { st.palRev = e.target.checked; recolour(); palLabel(); share.touch(); });
 $('cyc').addEventListener('input', e => { st.cycleSpeed = +e.target.value; $('cyco').textContent = st.cycleSpeed ? st.cycleSpeed.toFixed(1) + '×' : 'off'; share.touch(); });

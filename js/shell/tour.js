@@ -51,22 +51,26 @@ function startTour(from) {
   if (T) return; hideBar(); hideCard();
   if (panelHidden()) togglePanel(false);
   const root = document.createElement('div'); root.id = 'tour'; root.innerHTML = '<div id="tourSpot"></div><div id="tourTip" role="dialog" aria-live="polite"></div>'; document.body.appendChild(root);
-  T = { i: 0, root, spot: root.querySelector('#tourSpot'), tip: root.querySelector('#tourTip') }; document.body.classList.add('touring');   /* the consent bar waits until the tour is over */
+  T = { i: 0, root, spot: root.querySelector('#tourSpot'), tip: root.querySelector('#tourTip') }; document.body.classList.add('touring');   /* the consent bar stays on top; the tour keeps clear of it (see room()) */
   track('tour_start', { from }); window.addEventListener('keydown', tourKey, true); window.addEventListener('resize', place); step(0);
 }
 function step(i) {
   const S = STEPS(); T.i = i; const s = S[i], el = document.querySelector(s.el);
   shut(); if (s.open && el && !el.open) { el.open = true; T.opened = el; }   // open this step's group (shut() closes the last one again)
-  if (el) { const r = el.getBoundingClientRect(); if (r.top < 0 || r.bottom > innerHeight) el.scrollIntoView({ block: r.height > innerHeight * 0.8 ? 'start' : 'center' }); }   // bring it into view (on a phone the panel is below the picture)
+  if (el) { const r = el.getBoundingClientRect(); if (r.top < 0 || r.bottom > room()) el.scrollIntoView({ block: r.height > innerHeight * 0.8 ? 'start' : 'center' }); }   // bring it into view (on a phone the panel is below the picture)
   T.tip.innerHTML = `<div class="ttStep">${i + 1} of ${S.length}</div><h3>${s.title}</h3><p>${s.text}</p>
     <div class="ttBtns"><button class="sbtn" id="ttSkip">${i === S.length - 1 ? 'Close' : 'Skip'}</button><span></span>${i ? '<button class="sbtn" id="ttBack">Back</button>' : ''}<button class="sbtn on" id="ttNext">${i === S.length - 1 ? 'Done' : 'Next'}</button></div>`;
   T.tip.querySelector('#ttNext').onclick = next; T.tip.querySelector('#ttSkip').onclick = () => endTour(i === S.length - 1 ? 'tour_complete' : 'tour_skip');
   const b = T.tip.querySelector('#ttBack'); if (b) b.onclick = () => step(i - 1);
   track('tour_step', { step: i + 1 }); setTimeout(place, 60); setTimeout(place, 400); T.tip.querySelector('#ttNext').focus();
 }
+// the height the tour may use: above the consent bar while it's waiting for an answer
+const room = () => { const b = $('consentBar'), r = b && !b.hidden ? b.getBoundingClientRect() : null; return r && r.height ? Math.max(200, r.top - 6) : innerHeight; };   /* (a fixed bar has no offsetParent) */
+// when the bar is answered the tour gets the whole height back
+new MutationObserver(() => { if (T) place(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
 const next = () => { if (T.i < STEPS().length - 1) step(T.i + 1); else endTour('tour_complete'); };
 function place() {
-  if (!T) return; const s = STEPS()[T.i], el = document.querySelector(s.el), vw = innerWidth, vh = innerHeight, pad = 6;
+  if (!T) return; const s = STEPS()[T.i], el = document.querySelector(s.el), vw = innerWidth, vh = room(), pad = 6;
   const r = el ? el.getBoundingClientRect() : { left: vw / 2, top: vh / 2, width: 0, height: 0, right: vw / 2, bottom: vh / 2 };
   const x0 = Math.max(4, r.left - pad), y0 = Math.max(4, r.top - pad), x1 = Math.min(vw - 4, r.right + pad), y1 = Math.min(vh - 4, r.bottom + pad);
   Object.assign(T.spot.style, { left: x0 + 'px', top: y0 + 'px', width: (x1 - x0) + 'px', height: (y1 - y0) + 'px' });
@@ -78,7 +82,7 @@ function place() {
   T.tip.style.left = Math.max(12, Math.min(vw - tw - 12, x)) + 'px'; T.tip.style.top = Math.max(12, Math.min(vh - th - 12, y)) + 'px';
 }
 // while the tour is open it has the keyboard (the explorer underneath ignores keys): Esc skips, Enter or → goes on, ← back, Tab moves round its buttons
-function tourKey(e) { if (!T || e.key === 'Tab') return; if (e.key === 'Escape') endTour('tour_skip'); else if (e.key === 'Enter' || e.key === 'ArrowRight') next(); else if (e.key === 'ArrowLeft' && T.i) step(T.i - 1); e.preventDefault(); e.stopPropagation(); }
+function tourKey(e) { if (!T || e.key === 'Tab' || (e.target.closest && e.target.closest('#consentBar,.modalBack'))) return;   /* the consent bar and privacy note keep their own keys */ if (e.key === 'Escape') endTour('tour_skip'); else if (e.key === 'Enter' || e.key === 'ArrowRight') next(); else if (e.key === 'ArrowLeft' && T.i) step(T.i - 1); e.preventDefault(); e.stopPropagation(); }
 const shut = () => { if (T && T.opened) { T.opened.open = false; T.opened = null; } };
 function endTour(how) {
   if (!T) return; track(how, { step: T.i + 1 }); store.set(TOUR, TOUR_V); shut();
@@ -110,11 +114,7 @@ function showBar(title) {
 const hideBar = () => { const b = $('tourBar'); if (b) b.remove(); };
 
 // ---------- called by main.js each time an explorer comes on screen ----------
-let current = null, waiting = null, asking = null;
-// the consent bar is answered first: the first-visit tour (and a card) wait until the visitor has chosen
-const consentOpen = () => document.body.classList.contains('consentAsk');
-function afterConsent(fn) { clearInterval(asking); if (!consentOpen()) return fn();
-  asking = setInterval(() => { if (!consentOpen()) { clearInterval(asking); setTimeout(fn, 500); } }, 250); }
+let current = null, waiting = null;
 /** name, its title, and whether the address held a view (a shared link) */
 // automated browsers (tests, preview tools) skip the first-visit help, unless asked for it
 const AUTO = navigator.webdriver && !/[?&](analyticsTest|tourTest)/.test(location.search);
@@ -126,10 +126,10 @@ export function explorerShown(name, title, fromLink) {
   if (store.get(TOUR) !== TOUR_V) {
     let barDone = false; try { barDone = sessionStorage.getItem('mathexplorer.tourBar') === '1'; } catch (e) { /* fine */ }
     if (fromLink) { if (!barDone) showBar(title); }
-    else setTimeout(() => afterConsent(() => { if (current && current.name === name && !inZen() && !T) startTour('first_visit'); }), 900);
+    else setTimeout(() => { if (current && current.name === name && !inZen() && !T) startTour('first_visit'); }, 900);
     return;
   }
-  if (!store.get(CARD + name)) setTimeout(() => afterConsent(() => { if (current && current.name === name && !T && !inZen()) showCard(name, title); }), 700);
+  if (!store.get(CARD + name)) setTimeout(() => { if (current && current.name === name && !T && !inZen()) showCard(name, title); }, 700);
 }
 /** From the menu: the tour again, or this explorer's card again. */
 export const takeTour = () => startTour('menu');

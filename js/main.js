@@ -20,6 +20,7 @@
 import { parseRoute, DEFAULT_EXPLORER, setActiveExplorer } from './shell/route.js';
 import { onLayoutChange, setGoing } from './shell/layout.js';
 import { setKeyHandler, syncKeyPrefs } from './shell/keys.js';
+import { colourFromCode, colourSync } from './common/colours.js';
 import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
 import { pageView, consentBar, showPrivacy } from './shell/analytics.js';
 import { explorerShown, takeTour, aboutThis } from './shell/tour.js';
@@ -89,7 +90,8 @@ async function show() {
   const to = movedTo(name, code); if (to) { name = to; try { history.replaceState(null, '', '#/' + name + '/' + code); } catch (e) { /* sandboxed */ } }
   const ep = epicyclesMoved(name, code); if (ep) { [name, code] = ep; try { history.replaceState(null, '', '#/' + name + '/' + code); } catch (e) { /* sandboxed */ } }
   if (!EXPLORERS[name]) { name = DEFAULT_EXPLORER; code = ''; try { history.replaceState(null, '', '#/' + name); } catch (e) { /* sandboxed */ } }
-  if (name === current) { if (code) (await loaded[name]).showView?.(code); return; }
+  colourFromCode(code);   // a link's colour adjustments (shared by every explorer), before the explorer reads the rest
+  if (name === current) { if (code) { (await loaded[name]).showView?.(code); colourSync(); } return; }
 
   if (current) {
     (await loaded[current].catch(() => null))?.stop?.();
@@ -115,7 +117,7 @@ async function show() {
 
   if (!first && code) api.showView?.(code);
   setKeyHandler(api.onKey); setGoing(api.going); onLayoutChange(() => api.layoutChanged?.()); setSoundHelp(api.soundHelp);
-  api.start?.();
+  api.start?.(); colourSync();
   pageView(name, EXPLORERS[name].title); explorerShown(name, EXPLORERS[name].title, !!code);   // analytics (names only), and first-visit help
 }
 

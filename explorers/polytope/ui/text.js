@@ -1,7 +1,7 @@
 import { shared } from '../shared.js';
 import { $, an, low } from '../util.js';
 import { st } from '../state.js';
-import { AXISCOL, PALETTES, css, wColor } from '../render/colour.js';
+import { AXISCOL, PALETTES, rampOf, css, wColor } from '../render/colour.js';
 import { binom, cellName, topo } from '../geometry/common.js';
 import { SHAPES } from '../geometry/polytopes.js';
 import { axisHue } from '../geometry/higher-dim.js';
@@ -104,7 +104,7 @@ export function updateCellLabel(){
   $('cellLbl').textContent=`Cell ${st.cell+1} of ${n}: ${cellName(st.shape, sh._cells[st.cell].length, sh._cellEdges[st.cell].length, sh, st.cell)}`;
 }
 export function refreshColours(){
-  shared.RAMP = st.palRev ? PALETTES[st.palette].slice().reverse() : PALETTES[st.palette]; if (st.ping.cache) st.ping.cache.RC=new Map();
+  shared.RAMP = rampOf(st.palette, st.palRev); if (st.ping.cache) st.ping.cache.RC=new Map();
   shared.DIRCOL=[0,1,2,3].map(i=>wColor(-0.92+i*0.613)); shared.SOLID=wColor(0.35); shared.CELLCOL=[0,1,2,3,4,5,6,7].map(i=>wColor(-1+2*i/7));
   const bar=$('lgBar'), L=$('lgL'), Rr=$('lgR'), lg=$('legend');
   if (notAvail()){ lg.style.display='none'; return; }

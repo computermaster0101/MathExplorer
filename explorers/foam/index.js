@@ -3,7 +3,7 @@
 // Importing this module boots the explorer; the exports are the lifecycle the shell (js/main.js) drives.
 import * as THREE from 'three';
 import { $, clamp, segClick, clickNext, setRange, setCheck, clickData, setStats, buildSwatches, rampCss, r4, num, standardKeys, buildKeys, makeShare } from '../../js/common/kit.js';
-import { rampOf, sampleRamp, sampleMirror } from '../../js/common/palettes.js';
+import { rampOf, sampleRamp, sampleMirror, palTitle } from '../../js/common/palettes.js';
 import { makeStage3D, makeFinishes } from '../../js/common/three-stage.js';
 import { saveCanvasPNG, saveFile, fileName } from '../../js/common/save.js';
 import { stlFromTriangles, tubeTriangles } from '../../js/common/stl.js';
@@ -247,7 +247,7 @@ $('edgeW').addEventListener('input', e => { st.edgeW = +e.target.value; $('edgeW
 $('only').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.only = +b.dataset.o; $('only').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); rebuild(); stats(); share.touch(); });
 segClick('cmode', d => { st.cmode = d.c; rebuild(); share.touch(); });
 buildSwatches($('palettes'), st.palette, name => { st.palette = name; palLabel(); recolour(); share.touch(); });
-const palLabel = () => { $('palName').textContent = 'Palette: ' + st.palette.replace('_', ' & ').replace(/^./, c => c.toUpperCase()) + (st.palRev ? ' (reversed)' : ''); };
+const palLabel = () => { $('palName').textContent = 'Palette: ' + palTitle(st.palette) + (st.palRev ? ' (reversed)' : ''); };
 $('palRev').addEventListener('change', e => { st.palRev = e.target.checked; palLabel(); recolour(); share.touch(); });
 $('cyc').addEventListener('input', e => { st.cycleSpeed = +e.target.value; $('cyco').textContent = st.cycleSpeed ? st.cycleSpeed.toFixed(1) + '×' : 'off'; share.touch(); });
 segClick('finish', d => { st.finish = d.f; applyLook(); share.touch(); });

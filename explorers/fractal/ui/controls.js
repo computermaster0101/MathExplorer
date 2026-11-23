@@ -6,6 +6,7 @@ import { JPRESETS, TYPES } from '../fractals/types.js';
 import { fitV, isExt, qLimits, st, toMath, view } from '../state.js';
 import { escR2, startZ, stepFn } from '../fractals/iterate.js';
 import { PALETTES, css, fmtBig, fmtC, minus, setRamp } from '../color/palettes.js';
+import { colourControls } from '../../../js/common/colours.js';
 import { octx, ovc, refSlots } from '../render/webgl.js';
 import { cssH, cssW, effIter, minScale, recolour, resetViews, toWorld, touch } from '../view.js';
 import { notAvail } from './notice.js';
@@ -190,6 +191,7 @@ for (const [name, stops] of Object.entries(PALETTES)){ const b=document.createEl
   b.style.background=`linear-gradient(90deg,${stops.map(c=>css(c)).join(',')})`; if (name===st.palette) b.classList.add('on');
   b.addEventListener('click', ()=>{ st.palette=name; setRamp(); palBox.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); palLabel(); refreshLegend(); updateLabels(); recolour(); });
   palBox.appendChild(b); }
+colourControls(palBox);
 $('palName').textContent='Palette: Aurora';
 function palLabel(){ const b=palBox.querySelector('button.on'); $('palName').textContent='Palette: '+(b?b.title:'')+(st.palRev?' (reversed)':''); }
 $('palRev').addEventListener('change', e=>{ st.palRev=e.target.checked; setRamp(); palLabel(); refreshLegend(); updateLabels(); recolour(); });

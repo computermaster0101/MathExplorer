@@ -2,7 +2,7 @@
 // that reflects every point back into a single triangle; and Penrose tilings, built by cutting tiles into smaller tiles.
 // Importing this module boots the explorer; the exports are the lifecycle the shell (js/main.js) drives.
 import { $, clamp, segClick, clickNext, setRange, setCheck, clickData, setStats, buildSwatches, rampCss, r4, r8, num, standardKeys, buildKeys, makeShare } from '../../js/common/kit.js';
-import { rampOf, rampUniform, sampleRamp, css, hexRGB, PAL_GLSL } from '../../js/common/palettes.js';
+import { rampOf, rampUniform, sampleRamp, css, hexRGB, PAL_GLSL, palTitle } from '../../js/common/palettes.js';
 import { makeGL, noWebGL } from '../../js/common/gl.js';
 import { makeView2D } from '../../js/common/view2d.js';
 import { saveCanvasPNG, saveFile, fileName } from '../../js/common/save.js';
@@ -232,7 +232,7 @@ function markList() {
   document.querySelectorAll('#sphList button, #flatList button, #hypList button, #uniList button, #penList button, #archList button, #qcList button, #wallList button, #truList button').forEach(b => b.classList.toggle('on', st.kind === 'pq'
     ? (b.dataset.pq === st.p + '_' + st.q && st.wk === 'regular') || b.dataset.uni === `${st.p}_${st.q}_${st.wk}` : st.kind === 'pat' ? b.dataset.pat === st.pat : b.dataset.pen === st.pen));
   document.querySelectorAll('#wyKind button').forEach(b => b.classList.toggle('on', b.dataset.k === st.wk)); }
-const MODELS = { [-1]: [['disc', 'Poincaré disc'], ['half', 'Half-plane']], 0: [['plane', 'The plane']], 1: [['ball', 'A ball'], ['flat', 'Flat map']] };
+const MODELS = { [-1]: [['disc', 'Poincaré disc'], ['half', 'Half-plane']], 0: [['plane', 'The plane']], 1: [['flat', 'Flat map'], ['ball', 'A ball']] };   /* the first is where a tiling opens: flat, like every other explorer's pictures; the ball is a click away */
 function setPQ(p, q, fresh) {
   const wasK = geo ? geo.K : null; st.kind = 'pq'; st.p = clamp(Math.round(p), 3, 12); st.q = clamp(Math.round(q), 3, 12); geo = geometry(st.p, st.q);
   $('pIn').value = st.p; $('pIno').textContent = st.p; $('qIn').value = st.q; $('qIno').textContent = st.q;
@@ -312,7 +312,7 @@ $('lw').addEventListener('input', e => { st.lw = +e.target.value; $('lwo').textC
 segClick('cmode', d => { if (flat2d()) st.pcm = d.c; else st.cm = d.c; labels(); dirty = true; share.touch(); });
 let R = rampOf('aurora', false);
 buildSwatches($('palettes'), st.palette, name => { st.palette = name; R = rampOf(st.palette, st.palRev); palLabel(); labels(); dirty = true; share.touch(); });
-const palLabel = () => { $('palName').textContent = 'Palette: ' + st.palette.replace('_', ' & ').replace(/^./, c => c.toUpperCase()) + (st.palRev ? ' (reversed)' : ''); };
+const palLabel = () => { $('palName').textContent = 'Palette: ' + palTitle(st.palette) + (st.palRev ? ' (reversed)' : ''); };
 $('palRev').addEventListener('change', e => { st.palRev = e.target.checked; R = rampOf(st.palette, st.palRev); palLabel(); labels(); dirty = true; share.touch(); });
 $('cyc').addEventListener('input', e => { st.cycleSpeed = +e.target.value; $('cyco').textContent = st.cycleSpeed ? st.cycleSpeed.toFixed(1) + '×' : 'off'; share.touch(); });
 segClick('bg', d => { st.bg = d.b; dirty = true; share.touch(); });

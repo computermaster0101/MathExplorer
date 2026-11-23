@@ -2,7 +2,7 @@
 // ancient one-path labyrinths. Importing this module boots the explorer; the exports are the lifecycle js/main.js drives.
 import * as THREE from 'three';
 import { $, clamp, segClick, clickNext, setRange, setCheck, clickData, setStats, buildSwatches, rampCss, r4, num, standardKeys, buildKeys, makeShare } from '../../js/common/kit.js';
-import { rampOf, sampleRamp, sampleMirror } from '../../js/common/palettes.js';
+import { rampOf, sampleRamp, sampleMirror, palTitle } from '../../js/common/palettes.js';
 import { makeStage3D, makeFinishes } from '../../js/common/three-stage.js';
 import { saveCanvasPNG, saveFile, fileName } from '../../js/common/save.js';
 import { stlFromTriangles, heightfieldTriangles } from '../../js/common/stl.js';
@@ -491,7 +491,7 @@ function recolourTpms(mesh) { const g = mesh.geometry; g.setAttribute('color', n
 function recolourAll(cheap) { if (cheap && st.kind === 'maze' && walls) { wallColours(); return; } if (cheap && st.kind === 'tpms') { if (fly.on && fly.inst) recolourTpms(fly.inst); else if (orbit.children[0]) recolourTpms(orbit.children[0]); return; } if (st.kind === 'tpms') { if (fly.on) buildFlyWorld(); else buildTpmsOrbit(); } else if (st.kind === 'foam') { if (ffly.on) { clear(world); foamMeshes(world, 4, 1.5); } else buildFoamOrbit(); } else if (st.kind === 'classic') { if (walkL.on) { clear(world); buildClassic(world, LK); } else buildClassicOrbit(); } else if (maze) buildMazeScene(mz.over); labels(); }
 segClick('cmode', d => { st.cmode = d.c; recolourAll(); share.touch(); });
 buildSwatches($('palettes'), st.palette, name => { st.palette = name; R = rampOf(st.palette, st.palRev); palLabel(); recolourAll(); share.touch(); });
-const palLabel = () => { $('palName').textContent = 'Palette: ' + st.palette.replace('_', ' & ').replace(/^./, c => c.toUpperCase()) + (st.palRev ? ' (reversed)' : ''); };
+const palLabel = () => { $('palName').textContent = 'Palette: ' + palTitle(st.palette) + (st.palRev ? ' (reversed)' : ''); };
 $('palRev').addEventListener('change', e => { st.palRev = e.target.checked; R = rampOf(st.palette, st.palRev); palLabel(); recolourAll(); share.touch(); });
 $('cyc').addEventListener('input', e => { st.cycleSpeed = +e.target.value; $('cyco').textContent = st.cycleSpeed ? st.cycleSpeed.toFixed(1) + '×' : 'off'; share.touch(); });
 segClick('finish', d => { st.finish = d.f; recolourAll(); share.touch(); });

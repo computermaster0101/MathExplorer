@@ -46,8 +46,6 @@
     <div class="lbl">Colour by</div>
     <div class="seg g3" id="cmode"><button data-c="1" class="on">Angle + rings</button><button data-c="0">Angle</button><button data-c="2">Angle + size</button><button data-c="3">Grid</button><button data-c="4">Checks</button><button data-c="5">Size only</button></div>
     <p class="note" id="cmodeNote"></p>
-    <div class="lbl" style="margin-top:12px">Angle colours</div>
-    <div class="seg" id="angleCol"><button data-a="0" class="on">Rainbow</button><button data-a="1">Palette</button></div>
     <div class="lbl" style="margin-top:12px">Palette</div>
     <div class="swatches" id="palettes"></div>
     <p class="note" id="palName" style="margin-top:6px"></p>
@@ -86,7 +84,7 @@
   <div class="explain">
     <p id="about"></p>
     <details class="topic"><summary>Reading the colours</summary>
-      <p>Every point z of the plane is a complex number. The function sends it somewhere else, to w = f(z). The colour at z shows where w points: its <strong>angle</strong> sets the colour (red to the right, then round the rainbow), and with rings on, each ring is one doubling of its <strong>size</strong>. So the picture shows the whole function at once, every input with its output.</p>
+      <p>Every point z of the plane is a complex number. The function sends it somewhere else, to w = f(z). The colour at z shows where w points: its <strong>angle</strong> sets the colour (with the Colour wheel palette, red to the right, then round the rainbow; any other palette runs out and back as you go round), and with rings on, each ring is one doubling of its <strong>size</strong>. So the picture shows the whole function at once, every input with its output.</p>
       <div class="btns"><button class="btn try" data-try="z">Try it: f(z) = z, the colour wheel itself</button></div>
     </details>
     <details class="topic"><summary>Zeros and poles</summary>

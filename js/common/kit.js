@@ -1,6 +1,7 @@
 // Shared building blocks for explorers: panel helpers (segmented buttons, palette swatches, stats, share codes) and the
 // standard keys, so every explorer's keys mean the same thing (see "Keys are the same in both explorers" in CLAUDE.md).
 import { PALETTES, css } from './palettes.js';
+import { colourControls } from './colours.js';
 
 export const $ = id => document.getElementById(id);
 export const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
@@ -29,6 +30,7 @@ export function buildSwatches(el, current, onPick) {
     b.addEventListener('click', () => { el.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); onPick(name); });
     el.appendChild(b);
   }
+  colourControls(el);   /* Hue, Saturation, Light and Your palette, shared by every explorer */
 }
 /** The legend bar's background for a palette ramp. */
 export const rampCss = r => `linear-gradient(90deg,${r.map(c => css(c)).join(',')})`;

@@ -1,7 +1,7 @@
 // Complex Functions explorer: colour every point z of the plane (or of the Riemann sphere) by where f sends it.
 // Importing this module boots the explorer; the exports are the lifecycle the shell (js/main.js) drives.
 import { $, clamp, segClick, clickNext, setRange, setCheck, clickData, setStats, buildSwatches, rampCss, r4, r8, num, standardKeys, buildKeys, makeShare } from '../../js/common/kit.js';
-import { rampOf, rampUniform, sampleRamp, hexRGB, PAL_GLSL } from '../../js/common/palettes.js';
+import { rampOf, rampUniform, sampleRamp, hexRGB, PAL_GLSL, palTitle, loops } from '../../js/common/palettes.js';
 import { parseFormula, toGLSL, toJS, usesVar, FORMULA_GLSL } from '../../js/common/formula.js';
 import { makeGL, noWebGL } from '../../js/common/gl.js';
 import { makeView2D } from '../../js/common/view2d.js';
@@ -47,8 +47,8 @@ const FNS = {
 };
 
 // ---------- state ----------
-const st = { fn: 'cubic', custom: '', steps: 1, c: [-0.8, 0.156], cWander: false, view: 'plane', spin: true, yaw: 0.6, pitch: 0.35, sz: 1, style: 1, angle: 0, dens: 1, axes: false,
-  palette: 'aurora', palRev: false, cycle: 0, cycleSpeed: 0, bg: '#0b0d12', paused: false, mm: 80, high: 8,
+const st = { fn: 'cubic', custom: '', steps: 1, c: [-0.8, 0.156], cWander: false, view: 'plane', spin: true, yaw: 0.6, pitch: 0.35, sz: 1, style: 1, dens: 1, axes: false,
+  palette: 'wheel', palRev: false, cycle: 0, cycleSpeed: 0, bg: '#0b0d12', paused: false, mm: 80, high: 8,
   roots: [[1, 0], [-0.5, 0.866], [-0.5, -0.866]], poles: [[0.6, 0.6]] };
 const formulaNow = () => (FNS[st.fn] && FNS[st.fn].f ? FNS[st.fn].f : st.fn === 'custom' ? st.custom : null);
 
@@ -60,14 +60,14 @@ function fsFor(expr) {
   return `#version 300 es
 precision highp float;
 out vec4 outC;
-uniform vec2 u_res, u_center, u_c, u_ang; uniform float u_scale, u_density, u_cycle, u_zoomS, u_flash; uniform int u_steps, u_style, u_angle, u_sphere, u_axes, u_nr, u_np;
+uniform vec2 u_res, u_center, u_c, u_ang; uniform float u_scale, u_density, u_cycle, u_zoomS, u_flash; uniform int u_steps, u_style, u_loop, u_sphere, u_axes, u_nr, u_np;
 uniform vec3 u_bg; uniform mat3 u_rot; uniform vec2 u_roots[8], u_poles[8];
 ${PAL_GLSL}
 ${FORMULA_GLSL}
 ${SPECIAL_GLSL}
 vec2 F(vec2 z, vec2 c){ ${expr === null ? 'vec2 n=vec2(1.0,0.0), d=vec2(1.0,0.0); for (int i=0;i<8;i++){ if (i<u_nr) n=cm(n,z-u_roots[i]); if (i<u_np) d=cm(d,z-u_poles[i]); } return cdiv(n,d);' : 'return ' + expr + ';'} }
-vec3 hue(float t){ return clamp(abs(mod(t*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0,0.0,1.0); }
-vec3 angleCol(vec2 w){ float t=fract(atan(w.y,w.x)/6.2831853+1.0+u_cycle); return u_angle==0 ? mix(vec3(0.12),hue(t),0.94) : pal(t*0.999); }
+// the angle picks a colour from the palette: once round for a palette that ends where it starts (the colour wheel), there and back for the rest, so there's no seam
+vec3 angleCol(vec2 w){ float t=fract(atan(w.y,w.x)/6.2831853+1.0+u_cycle); return u_loop==1 ? pal(t*0.4999) : pal(t*0.999); }
 vec3 colourAt(vec2 z){
   // with more than one step, points that run off to infinity are shaded by how quickly they escaped (their angle there is meaningless noise)
   vec2 w=z; int esc=-1; for (int i=0;i<64;i++){ if (i>=u_steps) break; w=F(w,u_c); if (u_steps>1 && dot(w,w)>1e8){ esc=i; break; } if (dot(w,w)>1e20) break; }
@@ -133,7 +133,7 @@ function draw() {
   G.fit(Math.min(devicePixelRatio, 1.5)); if (!prog) return;
   g.useProgram(prog.p); const U = n => prog.u(n), w = cv.width, h = cv.height, pu = rampUniform(R);
   g.uniform2f(U('u_res'), w, h); g.uniform2f(U('u_center'), view.cx, view.cy); g.uniform2f(U('u_ang'), Math.cos(view.rot), Math.sin(view.rot)); g.uniform1f(U('u_scale'), view.eff()); g.uniform2f(U('u_c'), st.c[0], st.c[1]);
-  g.uniform1i(U('u_steps'), st.steps); g.uniform1i(U('u_style'), st.style); g.uniform1i(U('u_angle'), st.angle); g.uniform1f(U('u_density'), st.dens); g.uniform1f(U('u_cycle'), st.cycle);
+  g.uniform1i(U('u_steps'), st.steps); g.uniform1i(U('u_style'), st.style); g.uniform1i(U('u_loop'), loops(R) ? 1 : 0); g.uniform1f(U('u_density'), st.dens); g.uniform1f(U('u_cycle'), st.cycle);
   g.uniform1i(U('u_sphere'), st.view === 'sphere' ? 1 : 0); g.uniform1i(U('u_axes'), st.axes ? 1 : 0); g.uniform3f(U('u_bg'), ...hexRGB(st.bg)); g.uniform1f(U('u_zoomS'), st.sz * (1 - 0.03 * pulseNow) * Math.max(1, h / Math.max(1, w))); g.uniform1f(U('u_flash'), flashNow);
   g.uniformMatrix3fv(U('u_rot'), false, rotMat()); g.uniform3fv(U('u_pal'), pu.data); g.uniform1i(U('u_npal'), pu.n);
   const flat = (a, n) => { const f = new Float32Array(16); a.slice(0, 8).forEach((p, i) => { f[i * 2] = p[0]; f[i * 2 + 1] = p[1]; }); return f; };
@@ -162,7 +162,7 @@ function showPointer() {
 
 // ---------- panel ----------
 $('fnList').innerHTML = Object.entries(FNS).map(([k, f]) => `<button data-f="${k}">${f.name}</button>`).join('');
-segClick('fnList', d => pickFn(d.f));
+segClick('fnList', d => { pickFn(d.f); if (st.view === 'sphere') clickData('#viewMode', 'v', 'plane'); });   /* every function opens on the plane; the sphere is chosen for one at a time */
 function pickFn(k, keep) {
   if (k !== 'custom' && !FNS[k]) return; st.fn = k; document.querySelectorAll('#fnList button').forEach(b => b.classList.toggle('on', b.dataset.f === k));
   $('rootSec').hidden = k !== 'roots';
@@ -177,7 +177,7 @@ function labels() {
   $('title').textContent = st.steps > 1 ? `${name}, ${st.steps} steps` : name; $('subtitle').textContent = f ? f.alt : 'your own function'; $('gv-shapes').textContent = name;
   $('about').innerHTML = f ? `<strong>${f.name}.</strong> ${f.info}` : `<strong>Your own function.</strong> Every point z is coloured by where your formula sends it. Zeros are where all the colours meet running one way round; poles, the other way.`;
   const L = st.style === 5 ? ['small', 'large'] : ['angle 0', 'one turn']; $('lgL').textContent = L[0]; $('lgR').textContent = L[1];
-  $('lgBar').style.background = st.style === 5 || st.angle === 1 ? rampCss(R) : 'linear-gradient(90deg,#f33,#ff3,#3f3,#3ff,#33f,#f3f,#f33)';
+  $('lgBar').style.background = rampCss(st.style === 5 || loops(R) ? R : R.concat(R.slice(0, -1).reverse()));   /* angles run there and back through a palette that doesn't loop */
   $('cmodeNote').textContent = ['Angle only: the colour shows which way w points.', 'Angle, plus rings where the size doubles: the classic phase portrait.', 'Angle, darkening toward zeros and whitening toward poles.', 'Lines where w\'s real and imaginary parts are whole numbers: they cross at right angles wherever f is smooth.', 'A chessboard laid on the answers, carried back: you see how f stretches and turns each square.', 'Size only, coloured by the palette: a map of the landscape |f(z)|.'][st.style];
   const el = $('stageCap'); let cap = progErr ? '<b>That formula didn\'t work.</b> ' + progErr : '';
   if (!cap && st.fn === 'julia' && st.steps >= 6) cap = `<b>${st.steps} steps of z² + c.</b> Points that run off to infinity are shaded by how quickly they escape; those that stay keep the angle colours. The intricate edge between them is the Julia set for c = ${fmtC(st.c, 3)}.`;
@@ -198,10 +198,8 @@ $('removeLast').addEventListener('click', () => { if (st.poles.length >= st.root
 $('dens').addEventListener('input', e => { st.dens = +e.target.value; $('denso').textContent = st.dens.toFixed(1) + '×'; dirty = true; share.touch(); });
 $('axes').addEventListener('change', e => { st.axes = e.target.checked; dirty = true; share.touch(); });
 segClick('cmode', d => { st.style = +d.c; labels(); dirty = true; share.touch(); });
-segClick('angleCol', d => { st.angle = +d.a; labels(); dirty = true; share.touch(); });
-// picking a palette (a real click, not a link loading) while the angles are drawn as a rainbow switches them to the palette, or the click would show nothing
-buildSwatches($('palettes'), st.palette, name => { st.palette = name; if (window.event && window.event.isTrusted && st.angle === 0 && st.style !== 5) clickData('#angleCol', 'a', '1'); R = rampOf(st.palette, st.palRev); palLabel(); labels(); dirty = true; share.touch(); });
-const palLabel = () => { $('palName').textContent = 'Palette: ' + st.palette.replace('_', ' & ').replace(/^./, c => c.toUpperCase()) + (st.palRev ? ' (reversed)' : '') + (st.angle === 0 && st.style !== 5 ? ' (used by Size only, or with Angle colours: Palette)' : ''); };
+buildSwatches($('palettes'), st.palette, name => { st.palette = name; R = rampOf(st.palette, st.palRev); palLabel(); labels(); dirty = true; share.touch(); });
+const palLabel = () => { $('palName').textContent = 'Palette: ' + palTitle(st.palette) + (st.palRev ? ' (reversed)' : ''); };
 $('palRev').addEventListener('change', e => { st.palRev = e.target.checked; R = rampOf(st.palette, st.palRev); palLabel(); labels(); dirty = true; share.touch(); });
 $('cyc').addEventListener('input', e => { st.cycleSpeed = +e.target.value; $('cyco').textContent = st.cycleSpeed ? st.cycleSpeed.toFixed(1) + '×' : 'off'; share.touch(); });
 segClick('bg', d => { st.bg = d.b; dirty = true; share.touch(); });
@@ -231,7 +229,7 @@ const REC = addRecorder({ stage: cv.parentElement, name: () => fileBase(), bg: (
 // the Visualizer: a new function, palette or slow change every eight bars; when the chorus comes in, the function is
 // fed back into itself step by step (it grows into a fractal), and goes back to one step at the next change
 makeVisualizer(MO, { preset: 'mvd=0.3&mvw=1&mvb=0.35&mvn=0.15', shape: () => pickButton('#fnList button'),
-  drop: () => { go(); return () => { stepsAnim = null; setRange('steps', 1); }; }, extra: [['rainbow or palette angles', () => pickButton('#angleCol button')]] });
+  drop: () => { go(); return () => { stepsAnim = null; setRange('steps', 1); }; } });
 let running = false, tPrev = 0, wanderT = 0, frame = 0;
 function loop(now) {
   if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frame++;
@@ -277,7 +275,7 @@ const encode = () => { const p = new URLSearchParams(); p.set('f', st.fn); if (s
   if (st.view === 'sphere') { p.set('vw', 'sphere'); p.set('yp', [st.yaw, st.pitch, st.sz].map(r4).join('_')); if (!st.spin) p.set('sp', 0); }
   else { p.set('v', [view.cx, view.cy, view.scale].map(r8).join('_')); if (view.rot) p.set('vr', r4(view.rot)); }
   MO.encode(p);
-  p.set('cm', st.style); if (st.angle) p.set('ac', st.angle); if (st.dens !== 1) p.set('dn', st.dens); if (st.axes) p.set('ax', 1);
+  p.set('cm', st.style); p.set('ac', 'p'); if (st.dens !== 1) p.set('dn', st.dens); if (st.axes) p.set('ax', 1);
   p.set('pal', st.palette); if (st.palRev) p.set('rev', 1); if (st.cycleSpeed) p.set('cyc', st.cycleSpeed); if (st.bg !== '#0b0d12') p.set('bg', st.bg.slice(1));
   return p.toString(); };
 function apply(code) {
@@ -290,8 +288,10 @@ function apply(code) {
   clickData('#viewMode', 'v', p.get('vw') === 'sphere' ? 'sphere' : 'plane'); const yp = (p.get('yp') || '').split('_').map(Number); if (yp.length === 3 && yp.every(isFinite)) { st.yaw = yp[0]; st.pitch = yp[1]; st.sz = clamp(yp[2], 0.35, 2.2); }
   setCheck('spin', p.get('sp') !== '0');
   const v = (p.get('v') || '').split('_').map(Number); if (v.length === 3 && v.every(isFinite) && v[2] > 0) view.set(v[0], v[1], v[2]); else view.reset(); view.rot = num(p, 'vr', 0); MO.decode(p);
-  clickData('#cmode', 'c', p.get('cm') || '1'); clickData('#angleCol', 'a', p.get('ac') || '0'); setRange('dens', num(p, 'dn', 1)); setCheck('axes', p.get('ax') === '1');
-  clickData('#palettes', 'pal', p.get('pal') || 'aurora'); setCheck('palRev', p.get('rev') === '1'); setRange('cyc', num(p, 'cyc', 0)); clickData('#bg', 'b', '#' + (p.get('bg') || '0b0d12'));
+  clickData('#cmode', 'c', p.get('cm') || '1'); setRange('dens', num(p, 'dn', 1)); setCheck('axes', p.get('ax') === '1');
+  // links from before angles always used the palette: without ac (or ac=0) the angles were the colour wheel
+  const oldWheel = !['p', '1'].includes(p.get('ac')) && (p.get('cm') || '1') !== '5';
+  clickData('#palettes', 'pal', oldWheel ? 'wheel' : (p.get('pal') || 'wheel')); setCheck('palRev', p.get('rev') === '1'); setRange('cyc', num(p, 'cyc', 0)); clickData('#bg', 'b', '#' + (p.get('bg') || '0b0d12'));
   dirty = true; return true;
 }
 const share = makeShare('complex', encode, apply);

@@ -3,6 +3,7 @@ import { shared } from '../shared.js';
 import { $ } from '../util.js';
 import { st } from '../state.js';
 import { PALETTES, css } from '../render/colour.js';
+import { colourControls } from '../../../js/common/colours.js';
 import { SHAPES } from '../geometry/polytopes.js';
 import { HD_MAX } from '../geometry/higher-dim.js';
 import { FINISH, HOME, canvas, mainLayer, pingLayer, pivot, renderer, sliceLayer } from '../render/scene.js';
@@ -47,6 +48,7 @@ for (const [name, stops] of Object.entries(PALETTES)){
   b.addEventListener('click', ()=>{ st.palette=name; palBox.querySelectorAll('button').forEach(x=>x.classList.toggle('on', x===b)); palLabel(); refreshColours(); });
   palBox.appendChild(b);
 }
+colourControls(palBox);
 function palLabel(){ const b=palBox.querySelector('button.on'); $('palName').textContent='Palette: '+(b?b.title:'')+(st.palRev?' (reversed)':''); }
 palLabel();
 $('palRev').addEventListener('change', e=>{ st.palRev=e.target.checked; refreshColours(); palLabel(); });

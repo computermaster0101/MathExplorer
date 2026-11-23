@@ -3,8 +3,8 @@ import { shared } from '../shared.js';
 import { st } from '../state.js';
 
 // ---------- colour ----------
-import { PALETTES } from '../../../js/common/palettes.js';   // the table is shared by every explorer
-export { PALETTES };
+import { PALETTES, rampOf } from '../../../js/common/palettes.js';   // the table (and the colour adjustments) are shared by every explorer
+export { PALETTES, rampOf };
 shared.RAMP = PALETTES.aurora; shared.DIRCOL = []; shared.SOLID = [1,1,1]; shared.CELLCOL = [];
 export const AXISCOL = [[1,0.32,0.32],[0.3,0.88,0.4],[0.32,0.58,1],[0.8,0.52,1]];
 export function wColor(w){

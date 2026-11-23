@@ -20,14 +20,24 @@ let active = null;
 export const activeExplorer = () => active;
 export const setActiveExplorer = name => { active = name; };
 
-const hashFor = (explorer, code) => '#/' + explorer + (code ? '/' + code : '');
+// the shell's own part of every view code (the colour adjustments, js/common/colours.js), added after the explorer's
+let extra = () => '';
+export const setCodeExtra = fn => { extra = fn; };
+const withExtra = code => { const x = extra(); return x ? (code ? code + '&' + x : x) : code; };
+const hashFor = (explorer, code) => { code = withExtra(code); return '#/' + explorer + (code ? '/' + code : ''); };
+const lastCode = {};
 
 /** Record the current view in the address bar, without adding a history entry. Ignored unless that explorer is the one on screen. */
 export function setViewCode(explorer, code) {
   if (explorer !== active) return;
-  const h = hashFor(explorer, code);
+  lastCode[explorer] = code; const h = hashFor(explorer, code);
   if (location.hash !== h) try { history.replaceState(null, '', h); } catch (e) { /* sandboxed frames may refuse */ }
 }
 
 /** A full link that opens this explorer at this view. */
 export const shareLink = (explorer, code) => location.href.split('#')[0] + hashFor(explorer, code);
+/** The shell's part changed: rewrite the address and the explorer's link box with the explorer's last code. */
+export function refreshView() {
+  if (!active || lastCode[active] == null) return; setViewCode(active, lastCode[active]);
+  for (const id of ['linkBox', 'viewLink']) { const b = document.getElementById(id); if (b && b.isConnected && document.activeElement !== b && /^https?:/.test(b.value)) b.value = shareLink(active, lastCode[active]); }
+}

@@ -82,6 +82,10 @@ input.txt,select.txt{width:100%;box-sizing:border-box;background:#0e1118;border:
 .swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
 .swatches button{height:26px;border-radius:8px;border:2px solid transparent;cursor:pointer;padding:0}
 .swatches button.on{border-color:var(--text)}
+/* the colour controls under the swatches (js/common/colours.js) */
+.cAdj{margin:10px 0 4px} .cAdj .row{margin-top:6px} .cAdj .btns{margin-top:8px}
+.myPal{margin-bottom:10px;padding:10px;border:1px solid var(--line);border-radius:10px} .myCols{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:6px 0 2px}
+.myCols input[type=color]{width:100%;height:30px;padding:0;border:1px solid var(--line);border-radius:8px;background:none;cursor:pointer} .myCols input[type=color]::-webkit-color-swatch-wrapper{padding:2px} .myCols input[type=color]::-webkit-color-swatch{border:none;border-radius:6px}
 .explain{color:var(--mute);font-size:13px}
 .explain p{margin:0 0 9px}
 .explain strong{color:var(--text);font-weight:500}
@@ -134,9 +138,9 @@ details.sub p{margin:0 0 10px;line-height:1.55}
 #xCard p{margin:6px 0 8px;color:#c9cfdc;line-height:1.45} #xCard ul{margin:4px 0 10px;padding-left:18px;color:#c9cfdc} #xCard li{margin:3px 0}
 .xcHead{display:flex;align-items:center;gap:8px} .xcHead b{flex:1;font-size:15px} .xcX{background:none;border:0;color:var(--mute);cursor:pointer;font-size:14px} .xcTry{font-size:12px;color:var(--mute)} .xcBtns{display:flex;justify-content:flex-end}
 #tourBar{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:8;display:flex;gap:8px;align-items:center;background:rgba(19,22,30,.94);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 14px;max-width:calc(100% - 24px);font-size:13px}
-#consentBar{position:fixed;left:12px;right:12px;bottom:12px;z-index:55;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;max-width:720px;margin:0 auto;background:rgba(19,22,30,.97);border:1px solid var(--line);border-radius:12px;padding:10px 12px 10px 16px;box-shadow:0 10px 30px rgba(0,0,0,.45);font-size:13px}
-.cbBtns{display:flex;gap:8px} body.consentAsk #xCard{bottom:110px} body.touring #consentBar{display:none}
-.modalBack{position:fixed;inset:0;z-index:70;background:rgba(4,6,10,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+#consentBar{position:fixed;left:12px;right:12px;bottom:12px;z-index:70;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;max-width:720px;margin:0 auto;background:rgba(19,22,30,.97);border:1px solid var(--line);border-radius:12px;padding:10px 12px 10px 16px;box-shadow:0 10px 30px rgba(0,0,0,.45);font-size:13px}
+.cbBtns{display:flex;gap:8px} body.consentAsk #xCard{bottom:110px}
+.modalBack{position:fixed;inset:0;z-index:80;background:rgba(4,6,10,.6);display:flex;align-items:center;justify-content:center;padding:16px}
 .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;max-width:520px;color:var(--text)} .modal h2{margin:0 0 8px;font-size:18px} .modal p{color:#c9cfdc;line-height:1.5}
 .xextra{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-top:1px solid var(--line);margin-top:4px} .xextra button{background:none;border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:5px 9px;font:12px Inter,sans-serif;cursor:pointer} .xextra button:hover{color:var(--text)}
 .app.zen #xCard, .app.zen #tourBar{display:none !important}

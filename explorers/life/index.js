@@ -1,7 +1,7 @@
 // Growing Patterns explorer: Life-like cellular automata, Lenia (smooth life) and Gray–Scott reaction–diffusion, each
 // stepped on the graphics card by drawing the next state from the last one. Importing this module boots the explorer.
 import { $, clamp, segClick, clickNext, setRange, setCheck, clickData, setStats, buildSwatches, rampCss, num, standardKeys, buildKeys, makeShare } from '../../js/common/kit.js';
-import { rampOf, rampUniform, hexRGB, PAL_GLSL } from '../../js/common/palettes.js';
+import { rampOf, rampUniform, hexRGB, PAL_GLSL, palTitle } from '../../js/common/palettes.js';
 import { makeGL, noWebGL } from '../../js/common/gl.js';
 import { saveCanvasPNG, saveFile } from '../../js/common/save.js';
 import { stlFromTriangles, heightfieldTriangles } from '../../js/common/stl.js';
@@ -305,7 +305,7 @@ $('relief').addEventListener('change', e => { st.relief = e.target.checked; dirt
 let R = rampOf('aurora', false);
 const recolour = () => { R = rampOf(st.palette, st.palRev); palLabel(); labels(); dirty = true; };
 buildSwatches($('palettes'), st.palette, name => { st.palette = name; recolour(); share.touch(); });
-const palLabel = () => { $('palName').textContent = 'Palette: ' + st.palette.replace('_', ' & ').replace(/^./, c => c.toUpperCase()) + (st.palRev ? ' (reversed)' : ''); };
+const palLabel = () => { $('palName').textContent = 'Palette: ' + palTitle(st.palette) + (st.palRev ? ' (reversed)' : ''); };
 $('palRev').addEventListener('change', e => { st.palRev = e.target.checked; recolour(); share.touch(); });
 $('cyc').addEventListener('input', e => { st.cycleSpeed = +e.target.value; $('cyco').textContent = st.cycleSpeed ? st.cycleSpeed.toFixed(1) + '×' : 'off'; share.touch(); });
 segClick('bg', d => { st.bg = d.b; dirty = true; share.touch(); });

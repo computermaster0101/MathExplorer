@@ -2,7 +2,7 @@
 // times tables on a circle and roses, each drawn by its machine as you watch.
 // Importing this module boots the explorer; the exports are the lifecycle the shell (js/main.js) drives.
 import { $, clamp, segClick, clickNext, setRange, setCheck, clickData, setStats, buildSwatches, rampCss, r4, num, standardKeys, buildKeys, makeShare } from '../../js/common/kit.js';
-import { rampOf, sampleRamp, css } from '../../js/common/palettes.js';
+import { rampOf, sampleRamp, css, palTitle } from '../../js/common/palettes.js';
 import { makeView2D } from '../../js/common/view2d.js';
 import { saveCanvasPNG, saveFile, fileName } from '../../js/common/save.js';
 import { stlFromTriangles, heightfieldTriangles } from '../../js/common/stl.js';
@@ -159,7 +159,7 @@ $('lw').addEventListener('input', e => { st.lw = +e.target.value; $('lwo').textC
 $('glow').addEventListener('change', e => { st.glow = e.target.checked; share.touch(); });
 segClick('cmode', d => { st.cmode = d.c; labels(); share.touch(); });
 buildSwatches($('palettes'), st.palette, name => { st.palette = name; palLabel(); share.touch(); });
-const palLabel = () => { $('palName').textContent = 'Palette: ' + st.palette.replace('_', ' & ').replace(/^./, c => c.toUpperCase()) + (st.palRev ? ' (reversed)' : ''); $('lgBar').style.background = rampCss(rampOf(st.palette, st.palRev)); };
+const palLabel = () => { $('palName').textContent = 'Palette: ' + palTitle(st.palette) + (st.palRev ? ' (reversed)' : ''); $('lgBar').style.background = rampCss(rampOf(st.palette, st.palRev)); };
 $('palRev').addEventListener('change', e => { st.palRev = e.target.checked; palLabel(); share.touch(); });
 $('cyc').addEventListener('input', e => { st.cycleSpeed = +e.target.value; $('cyco').textContent = st.cycleSpeed ? st.cycleSpeed.toFixed(1) + '×' : 'off'; share.touch(); });
 segClick('bg', d => { st.bg = d.b; lightStage(); share.touch(); });

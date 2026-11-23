@@ -1,4 +1,5 @@
 import { shared } from '../shared.js';
+import { palTitle } from '../../../js/common/palettes.js';
 import { $ } from '../util.js';
 import { TYPES } from '../fractals/types.js';
 import { isExt, st, toDisp } from '../state.js';
@@ -68,7 +69,7 @@ export const CMODE_NOTE=['Smooth: how fast each point escapes, blended so there 
 function setStats(a,la,b,lb,c,lc){ $('s1').textContent=a; $('s1l').textContent=la; $('s2').textContent=b; $('s2l').textContent=lb; $('s3').textContent=c; $('s3l').textContent=lc; }
 export const curName=()=> st.mode==='grow' ? GROW[st.grow.shape].name : st.mode==='d3' ? S3[st.d3.shape].name : TYPES[st.type].name;
 export function updateLabels(){
-  $('gv-shapes').textContent=curName(); $('gv-style').textContent=st.palette.replace('_',' & ');
+  $('gv-shapes').textContent=curName(); $('gv-style').textContent=palTitle(st.palette);
   $('g-ctl').querySelector('.gt').textContent={explore:'Explore',grow:'Grow',link:'Julia link',orbit:'Orbit',d3:'3D'}[st.mode]+' controls';
   const T=TYPES[st.type], jv=st.julia||T.juliaOnly; let about='', more='';
   if (st.mode==='grow'){ const sh=GROW[st.grow.shape]; $('title').textContent=sh.name; $('subtitle').textContent=`fractal dimension ${sh.dim?sh.dim.toFixed(3)+' = '+sh.dimTxt:sh.dimTxt}`;
