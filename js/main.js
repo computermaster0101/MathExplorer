@@ -26,6 +26,7 @@ import { parseRoute, DEFAULT_EXPLORER, setActiveExplorer } from './shell/route.j
 const HOME_TITLE = document.title; let bareHome = !location.hash;   // opened at the plain address: keep the home title until the visitor moves on
 import { onLayoutChange, setGoing } from './shell/layout.js';
 import { setToolbarExplorer } from './shell/toolbar.js';
+import './shell/perf.js';   // slow graphics: a notice, lighter starts, and recovery when the graphics card resets
 import { setKeyHandler, syncKeyPrefs } from './shell/keys.js';
 import { colourFromCode, colourSync } from './common/colours.js';
 import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
