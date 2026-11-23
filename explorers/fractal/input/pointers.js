@@ -21,12 +21,13 @@ glc.addEventListener('pointermove', e=>{
   if (!ptrs.has(e.pointerId)){ if (st.mode==='explore' && e.pointerType==='mouse'){ st.hover=[x,y]; } return; }
   const prev=ptrs.get(e.pointerId); ptrs.set(e.pointerId,{x,y}); const dx=x-prev.x, dy=y-prev.y;
   if (ptrs.size===1){
-    if (st.mode==='d3'){ if ((st.d3.dragMode==='move') !== (e.shiftKey || !!(e.buttons&2))) pan3(dx,dy); else turn3(dx,dy); }   /* Shift-drag or right-drag does the other one */
+    /* mouse: dragging does the Dragging setting, Shift- or right-drag the other; touch: one finger looks around (with Move chosen) and two fingers move */
+    if (st.mode==='d3'){ if ((st.d3.dragMode==='move') !== (e.shiftKey || !!(e.buttons&2) || e.pointerType==='touch')) pan3(dx,dy); else turn3(dx,dy); }
     else if (st.mode==='grow'){ st.grow.gv.ox+=dx; st.grow.gv.oy+=dy; }
     else if (st.mode==='link' && dragDesc && dragDesc.side==='L'){ if (!notAvail()) setCFrom(dragDesc,x,y); }
     else if (dragDesc){ panBy(dragDesc,dx,dy); }
   } else if (ptrs.size===2){ const [a,b]=[...ptrs.values()], d=Math.hypot(a.x-b.x,a.y-b.y), mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
-    if (lastMid){ const ddx=mx-lastMid[0], ddy=my-lastMid[1]; if (st.mode==='d3'){ if (st.d3.dragMode==='move') turn3(ddx,ddy); else pan3(ddx,ddy); }   /* on a touch screen two fingers do the other one (and pinch moves closer) */ else if (st.mode==='grow'){ st.grow.gv.ox+=ddx; st.grow.gv.oy+=ddy; } else if (!(st.mode==='link' && dragDesc && dragDesc.side==='L')) panBy(descAt(mx,my),ddx,ddy); }
+    if (lastMid){ const ddx=mx-lastMid[0], ddy=my-lastMid[1]; if (st.mode==='d3'){ if (st.d3.dragMode==='move') pan3(ddx,ddy); else turn3(ddx,ddy); }   /* two fingers do the Dragging setting (and pinch moves closer) */ else if (st.mode==='grow'){ st.grow.gv.ox+=ddx; st.grow.gv.oy+=ddy; } else if (!(st.mode==='link' && dragDesc && dragDesc.side==='L')) panBy(descAt(mx,my),ddx,ddy); }
     lastMid=[mx,my]; if (lastPinch) zoomBy(lastPinch/d, mx, my); lastPinch=d; }
 });
 const endP=e=>{ const p=ptrs.get(e.pointerId), zt=e.pointerType==='touch' && touchTapping();   /* in full screen a touch tap pauses (the shell): no tap actions here */ if (e.pointerType==='mouse' && st.mode==='explore') st.hover=[e.offsetX,e.offsetY]; ptrs.delete(e.pointerId); if (ptrs.size<2){ lastPinch=0; lastMid=null; }
