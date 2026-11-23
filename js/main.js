@@ -86,7 +86,10 @@ function markSwitcher(name) {
 }
 
 let queue = Promise.resolve();
-const route = () => { queue = queue.then(show).catch(e => console.error(e)); };
+// how the visitor got to the explorer, for analytics: 'home' (the plain address, or one naming no explorer, opened the
+// default), 'link' (an address naming an explorer: a shared link, a bookmark, a search result), 'menu' (moved there inside
+// the app: the explorer menu, a link between explorers, back / forward). Lets the default explorer's opens be told apart.
+const route = via => { queue = queue.then(() => show(via)).catch(e => console.error(e)); };
 
 // shapes that moved to their own explorer: old links to them still open them, in their new home
 const MOVED = { surface: { knot: ['unknot', 'trefoil', 'figure8', 'cinquefoil', 'torusknot', 'lissajous', 'k61', 'k62', 'k63', 'k72', 'k73', 'k74', 'granny', 'square', 'hopf', 'solomon', 'whitehead', 'chain', 'olympic', 'borromean'],
@@ -97,11 +100,11 @@ function epicyclesMoved(name, code) { const p = new URLSearchParams(code); if (n
   for (const k of ['own', 'pal', 'rev', 'cyc', 'bg', 'spd']) if (p.has(k)) q.set(k, p.get(k)); return ['draw', q.toString()]; }
 function movedTo(name, code) { const m = MOVED[name], k = new URLSearchParams(code).get('s'); if (!m || !k) return null; for (const to in m) if (EXPLORERS[to] && m[to].includes(k)) return to; return null; }
 
-async function show() {
+async function show(via) {
   let { explorer: name, code } = parseRoute();
   const to = movedTo(name, code); if (to) { name = to; try { history.replaceState(null, '', '#/' + name + '/' + code); } catch (e) { /* sandboxed */ } }
   const ep = epicyclesMoved(name, code); if (ep) { [name, code] = ep; try { history.replaceState(null, '', '#/' + name + '/' + code); } catch (e) { /* sandboxed */ } }
-  if (!EXPLORERS[name]) { name = DEFAULT_EXPLORER; code = ''; try { history.replaceState(null, '', '#/' + name); } catch (e) { /* sandboxed */ } }
+  if (!EXPLORERS[name]) { if (via === 'link') via = 'home'; name = DEFAULT_EXPLORER; code = ''; try { history.replaceState(null, '', '#/' + name); } catch (e) { /* sandboxed */ } }
   colourFromCode(code);   // a link's colour adjustments (shared by every explorer), before the explorer reads the rest
   if (name === current) { if (code) { (await loaded[name]).showView?.(code); colourSync(); } return; }
 
@@ -132,7 +135,7 @@ async function show() {
   if (!first && code) api.showView?.(code);
   setKeyHandler(api.onKey); setGoing(api.going); onLayoutChange(() => api.layoutChanged?.()); setSoundHelp(api.soundHelp);
   api.start?.(); colourSync(); setToolbarExplorer(api);
-  pageView(name, EXPLORERS[name].title); explorerShown(name, EXPLORERS[name].title, !!code);   // analytics (names only), and first-visit help
+  pageView(name, EXPLORERS[name].title, via); explorerShown(name, EXPLORERS[name].title, !!code);   // analytics (names only), and first-visit help
 }
 
 // the explorer menu: the button opens the list; choosing one (or clicking elsewhere, or Esc) closes it
@@ -151,5 +154,5 @@ $('privacyBtn').addEventListener('click', () => showPrivacy());
 $('reportBtn').addEventListener('click', () => openReport());
 consentBar();
 $('resetBtn').addEventListener('click', async () => { if (current) (await loaded[current].catch(() => null))?.reset?.(); });
-window.addEventListener('hashchange', () => { bareHome = false; route(); });
-route();
+window.addEventListener('hashchange', () => { bareHome = false; route('menu'); });
+route(bareHome ? 'home' : 'link');
