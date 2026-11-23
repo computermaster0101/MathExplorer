@@ -262,7 +262,7 @@ $('prBtn').addEventListener('click', () => {
 // ---------- keys, sharing, lifecycle ----------
 export function onKey(e) {
   return standardKeys(e, {
-    pause: () => { st.paused = !st.paused; dirty = true; }, go, renew: () => { stepsAnim = null; setRange('steps', 1); }, reset: resetView,
+    pause: () => { if (st.paused) st.paused = false; else if (moving()) st.paused = true; else go(); dirty = true; },   /* nothing moving: Space builds up the steps, like G */ go, renew: () => { stepsAnim = null; setRange('steps', 1); }, reset: resetView,
     shape: dir => clickNext('#fnList button', dir), palette: dir => clickNext('#palettes button', dir), colourMode: dir => clickNext('#cmode button', dir),
     reverse: () => $('palRev').click(), cycle: () => setRange('cyc', st.cycleSpeed > 0 ? 0 : 1),
     zoom: f => { if (st.view === 'sphere') { st.sz = clamp(st.sz * f, 0.35, 2.2); dirty = true; } else view.zoomAt(f); },
@@ -303,6 +303,8 @@ export function start() { running = true; tPrev = performance.now(); dirty = tru
 export function stop() { running = false; REC.stop(); }
 export const reset = resetView;
 export const going = () => !!stepsAnim;
+/** Anything moving that Space would pause (else the picture's play icon shows). */
+export function moving() { return !!stepsAnim || st.cycleSpeed > 0 || MO.moving(); }
 /* the picture's Go button (null hides it) and what its slower / faster buttons move (js/shell/toolbar.js) */
 export const goLabel = () => 'Grow the steps';
 export const speedCtl = () => null;

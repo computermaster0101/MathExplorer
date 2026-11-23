@@ -14,7 +14,7 @@ const nudge = (id, d) => { const el=$(id), v=Math.min(+el.max, Math.max(+el.min,
 let lastTurn=1, lastCyc=1;
 // Space: resume if paused; pause if anything moves (spin, turntable, knife sweep, build, unfold, ping, flying, colour
 // cycling all hold still where they are); with nothing moving, start this mode's main motion, as Space always did.
-function moving(){ return fly.on || st.cycleSpeed>0 || (st.turn && !st.turnHold) || (st.spin && (st.mode==='explore' || st.mode==='ping' || (st.mode==='slice' && st.sliceSpin)))
+export function moving(){ return fly.on || st.cycleSpeed>0 || (st.turn && !st.turnHold) || (st.spin && (st.mode==='explore' || st.mode==='ping' || (st.mode==='slice' && st.sliceSpin)))
   || (st.mode==='slice' && st.sweep) || (st.mode==='build' && st.build.playing) || (st.mode==='unfold' && st.unf.playing) || (st.mode==='ping' && st.ping.playing); }
 function spacePause(){
   if (st.paused){ st.paused=false; return; }

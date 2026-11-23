@@ -11,7 +11,7 @@ import { zoomBy } from './pointers.js';
 const clickNext=(sel,dir=1)=>{ const bs=[...document.querySelectorAll(sel)], i=bs.findIndex(b=>b.classList.contains('on')); bs[(i+dir+bs.length)%bs.length].click(); };
 let lastCyc=1;
 // Is anything moving that Space should pause?
-function moving(){ const D=st.d3;
+export function moving(){ const D=st.d3;
   if (st.cycleSpeed>0) return true;
   if (st.mode==='explore') return !!(st.dive||st.endlessRun||st.fly);
   if (st.mode==='link') return !!st.link.auto;

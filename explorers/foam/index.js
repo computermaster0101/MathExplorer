@@ -262,7 +262,7 @@ buildKeys($('keyTable'), [['G', 'Fly through the foam / stop'], ['N', 'A new ran
 function go() { st.paused = false; if (fly.on) endFly(); else startFly(); }
 function renew() { if (!fm().seeded) return; live = null; st.seed = Math.floor(Math.random() * 9999) + 1; rebuild(); buildOnly(); labels(); share.touch(); }
 function resetView() { endFly(); S.reset(); st.paused = false; share.touch(); }
-function moving() { return fly.on || !!live || st.spin || st.cycleSpeed > 0 || MO.moving(); }
+export function moving() { return fly.on || !!live || st.spin || st.cycleSpeed > 0 || MO.moving(); }
 
 // ---------- loop ----------
 const MO = makeMotion3D(S, { spinRow: $('spin').closest('label'), speedRow: $('speed').closest('.row'), rate: () => 0.3, spinOn: () => st.spin, speed: () => st.speed,
