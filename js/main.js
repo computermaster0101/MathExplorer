@@ -35,6 +35,7 @@ import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
 import { pageView, consentBar, showPrivacy } from './shell/analytics.js';
 import { explorerShown, takeTour, aboutThis } from './shell/tour.js';
 import { openReport } from './shell/report.js';
+import './shell/haptics.js';   // vibration on touch, where the phone can (the setting in Music & sound)
 
 const EXPLORERS = {
   fractal:   { title: 'Fractals' },
