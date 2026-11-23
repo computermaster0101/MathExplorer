@@ -237,7 +237,7 @@ const cellCentre = (i, exploded) => { const [x, y, z] = maze.xyz(i); return new 
 function newMaze(seed) {
   if (seed != null) st.seed = seed; const [X, Y, Z] = LEVELS[st.level];
   maze = makeMaze(X, Y, Z, st.method, st.loops, st.seed); buildMazeScene(false);
-  Object.assign(mz, { glide: null, cell: 0, steps: 0, deadEnds: 0, visits: new Uint16Array(maze.N), t0: performance.now(), done: false, solved: false, path: null, u: 0, hint: 0, build: null, hand: null, mode: 'drive', usedMap: false, ghost: st.race ? { u: 0, path: solve(maze, 0, goalCell()) } : null });
+  Object.assign(mz, { walk: null, off: null, cell: 0, steps: 0, deadEnds: 0, visits: new Uint16Array(maze.N), t0: performance.now(), done: false, solved: false, path: null, u: 0, hint: 0, build: null, hand: null, mode: 'drive', usedMap: false, ghost: st.race ? { u: 0, path: solve(maze, 0, goalCell()) } : null });
   mz.visits[0] = 1; mz.pos.copy(cellCentre(0)); mz.yaw = firstYaw(0); mz.pitch = 0; mazeView(); labels(); share.touch();
 }
 function firstYaw(i) { for (const [d, yaw] of [[0, -Math.PI / 2], [2, Math.PI], [1, Math.PI / 2], [3, 0]]) if (isOpen(maze, i, d)) return yaw; return 0; }
@@ -298,42 +298,65 @@ function mazeCollide(p) {   // keep the eye inside the rooms: walls, floors and 
   p.x = clamp(p.x, r, maze.X - r); p.z = clamp(p.z, r, maze.Y - r); p.y = clamp(p.y, 0.2, (maze.Z - 1) * H + H - 0.2);
 }
 const mazeClock = new Groove();
-// a tap (no drag) steps into the next room the way you're looking: the touch screen's W
+// a tap (no drag) walks the way you're looking, down the corridor to the next fork: the touch screen's W
 let tapAt = null;
 canvas.addEventListener('pointerdown', e => { tapAt = { x: e.clientX, y: e.clientY, t: performance.now() }; });
 canvas.addEventListener('pointerup', e => { const t = tapAt; tapAt = null; if (e.pointerType === 'touch' && touchTapping()) return;   /* full screen: a tap pauses */ if (!t || Math.hypot(e.clientX - t.x, e.clientY - t.y) > 8 || performance.now() - t.t > 400) return;
-  if (st.kind === 'maze' && maze && !mz.over && mz.mode === 'drive' && !mz.glide) stepRoom(); });
+  if (st.kind === 'maze' && maze && !mz.over) { if (mz.mode === 'drive') stepRoom(); else if (mz.mode === 'go') mz.mode = 'drive'; } });   /* a tap while walking stops */
+const driving = () => mz.mode === 'drive' || mz.mode === 'go';   // the visitor's own moves (a tap's walk counts as theirs)
+// A smooth line along a route of rooms: through the middle of each doorway, and round each corner inside its room (a curve from
+// the doorway in to the doorway out, pulled toward the room's middle), so the drive neither stops in each room nor turns on the
+// spot. Issue #33: it slid to the middle of every room, stopped, turned, and went on, which looked square and blocky.
+// u runs 0 … route.length − 1 (room i at u = i); returns the point p and the direction d.
+function follow(route, u) {
+  const n = route.length; if (n < 2) return { p: cellCentre(route[0]), d: null };
+  const i = clamp(Math.round(u), 0, n - 1), t = clamp(u - i + 0.5, 0, 1), C = cellCentre(route[i]), mid = j => cellCentre(route[j]).add(C).multiplyScalar(0.5);
+  const A = i > 0 ? mid(i - 1) : C.clone().multiplyScalar(2).sub(mid(1)), B = i < n - 1 ? mid(i + 1) : C.clone().multiplyScalar(2).sub(mid(n - 2)), q = 1 - t;
+  return { p: A.clone().multiplyScalar(q * q).addScaledVector(C, 2 * q * t).addScaledVector(B, t * t), d: C.clone().sub(A).multiplyScalar(2 * q).addScaledVector(B.clone().sub(C), 2 * t) };
+}
+// start a route from wherever the eye is: the gap to the route's own start fades out over the first room
+function startRoute() { mz.u = 0; mz.off = null; }
+// A tap walks the way you're looking down the whole corridor, round its bends, stopping at the next fork, dead end or the goal
+// (one room a tap was slow going on a phone).
 function stepRoom() {
   const fwd = [-Math.sin(mz.yaw) * Math.cos(mz.pitch), -Math.cos(mz.yaw) * Math.cos(mz.pitch), Math.sin(mz.pitch)], V = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];   /* in maze axes: x, y (world z), floor */
   let best = -1, bd = 0.45; for (let d = 0; d < 6; d++) { if (!isOpen(maze, mz.cell, d)) continue; const k = V[d][0] * fwd[0] + V[d][1] * fwd[1] + V[d][2] * fwd[2]; if (k > bd) { bd = k; best = d; } }
   if (best < 0) { flashCap('A wall that way: drag to turn, then tap.'); capTimer = 1.5; return; }
-  mz.glide = { a: mz.pos.clone(), b: cellCentre(neighbour(maze, mz.cell, best)), t: 0 }; }
+  const r = [mz.cell]; let prev = mz.cell, c = neighbour(maze, mz.cell, best); r.push(c);
+  while (r.length < 400 && c !== goalCell() && degree(maze, c) === 2) { let nx = -1; for (let d = 0; d < 6; d++) if (isOpen(maze, c, d) && neighbour(maze, c, d) !== prev) nx = neighbour(maze, c, d); if (nx < 0) break; prev = c; c = nx; r.push(c); }
+  mz.walk = r; startRoute(); mz.mode = 'go'; }
 function stepMaze(dt) {
   const k = drive(), f = (k.fast ? 3 : 1) * k.scale;
   if (mz.build) { mz.build.t += dt; const n = Math.floor(mz.build.t / mz.build.dt); applyOpenings(n); if (n >= maze.steps.length) { mz.build = null; applyOpenings(Infinity); } }
   if (mz.over) { S.step(dt); placePlayerMarker(); ghostStep(dt); return; }
   if (S.pointers.size || Math.abs(S.vel.x) + Math.abs(S.vel.y) > 1e-5) { mz.yaw -= S.vel.x * 1.2; mz.pitch = clamp(mz.pitch - S.vel.y * 1.2, -1.3, 1.3); S.vel.x = S.vel.y = 0; }
-  if ((mz.mode === 'solve' && mz.path) || (mz.mode === 'hand' && mz.hand)) {   // (a new maze mid-solve clears the route)
-    const route = mz.mode === 'solve' ? mz.path : mz.hand.path, speed = mz.mode === 'solve' ? 1.6 : 2.6;
-    if (!st.paused) mz.u = Math.min(route.length - 1, mz.u + mazeClock.delta(dt, speed, 1, true));   // with a steady beat: one room per beat, turning corners on the beat
-    const i0 = Math.floor(mz.u), w = mz.u - i0, a = cellCentre(route[i0]), b = cellCentre(route[Math.min(route.length - 1, i0 + 1)]);
-    mz.pos.lerpVectors(a, b, w * w * (3 - 2 * w)); const d = b.clone().sub(a);
-    if (Math.abs(d.x) + Math.abs(d.z) > 0.01) { const want = Math.atan2(-d.x, -d.z); let dy = want - mz.yaw; while (dy > Math.PI) dy -= 2 * Math.PI; while (dy < -Math.PI) dy += 2 * Math.PI; mz.yaw += dy * Math.min(1, dt * 6); }
-    mz.pitch += ((Math.abs(d.y) > 0.01 ? Math.sign(d.y) * 0.9 : 0) - mz.pitch) * Math.min(1, dt * 4);
-    if (mz.u >= route.length - 1) { const reached = route[route.length - 1] === goalCell(); mz.mode = 'drive';
+  if (mz.mode === 'go' && (k.any || !mz.walk)) mz.mode = 'drive';   // keys take over from a tap's walk
+  if ((mz.mode === 'solve' && mz.path) || (mz.mode === 'hand' && mz.hand) || mz.mode === 'go') {   // (a new maze mid-solve clears the route)
+    const route = mz.mode === 'solve' ? mz.path : mz.mode === 'go' ? mz.walk : mz.hand.path, speed = mz.mode === 'solve' ? 1.6 : mz.mode === 'go' ? 2.2 : 2.6, end = route.length - 1;
+    if (!mz.off) mz.off = mz.pos.clone().sub(follow(route, 0).p);
+    // even speed, easing in at the start and out at the end; with a steady beat it surges a room per beat
+    const ease = Math.min(1, 0.3 + 1.4 * mz.u, 0.2 + 1.2 * (end - mz.u));
+    if (!st.paused) mz.u = Math.min(end, mz.u + mazeClock.delta(dt, speed, 1, true) * ease);
+    const F = follow(route, mz.u), w = Math.min(1, mz.u), fade = 1 - w * w * (3 - 2 * w); mz.pos.copy(F.p).addScaledVector(mz.off, fade);
+    // look a little ahead along the curve, so the view turns into a corner as it's reached rather than after
+    const d = follow(route, Math.min(end, mz.u + 0.35)).d || F.d;
+    if (d) { const h = Math.hypot(d.x, d.z);
+      if (h > 0.05) { const want = Math.atan2(-d.x, -d.z); let dy = want - mz.yaw; while (dy > Math.PI) dy -= 2 * Math.PI; while (dy < -Math.PI) dy += 2 * Math.PI; mz.yaw += dy * Math.min(1, dt * 5); }
+      mz.pitch += (clamp(Math.atan2(d.y, h), -0.9, 0.9) - mz.pitch) * Math.min(1, dt * 4); }
+    if (mz.u >= end) { const reached = route[end] === goalCell(), was = mz.mode; mz.mode = 'drive'; mz.walk = null;
+      if (was === 'go') { /* a tap's walk: nothing to say */ } else
       if (mz.hand) flashCap(reached ? `<b>Out by the left-hand rule</b>, in ${mz.hand.path.length - 1} steps.` : '<b>The left hand went round and round.</b> With loops, keeping your hand on the wall can circle an island forever, and never reach the goal in the middle.');
       else if (reached) { mz.done = true; flashCap('<b>Solved.</b> That was the shortest route. Now press N for a new maze and try to match it yourself.'); } mz.hand = null; labels(); }
   } else {
     if (k.any) { mz.yaw -= k.turnX * 1.8 * f * dt; mz.pitch = clamp(mz.pitch + k.turnY * 1.2 * f * dt, -1.3, 1.3); }
     else if (!S.pointers.size) mz.pitch *= Math.exp(-dt * 1.5);
     const fwd = new V3(-Math.sin(mz.yaw) * Math.cos(mz.pitch), Math.sin(mz.pitch), -Math.cos(mz.yaw) * Math.cos(mz.pitch)), right = new V3(Math.cos(mz.yaw), 0, -Math.sin(mz.yaw)), sp = 1.9 * f * dt;
-    if (k.any && !st.paused) { mz.glide = null; mz.pos.addScaledVector(fwd, k.slideY * sp).addScaledVector(right, k.slideX * sp); mazeCollide(mz.pos); }
-    else if (mz.glide) { const G2 = mz.glide; G2.t = Math.min(1, G2.t + dt / 0.45); const e = G2.t * G2.t * (3 - 2 * G2.t); mz.pos.lerpVectors(G2.a, G2.b, e); if (G2.t >= 1) mz.glide = null; }
+    if (k.any && !st.paused) { mz.pos.addScaledVector(fwd, k.slideY * sp).addScaledVector(right, k.slideX * sp); mazeCollide(mz.pos); }
   }
   // which room are we in now?
   const c = maze.id(clamp(Math.floor(mz.pos.x), 0, maze.X - 1), clamp(Math.floor(mz.pos.z), 0, maze.Y - 1), clamp(Math.floor((mz.pos.y - EYE + 0.5) / H), 0, maze.Z - 1));
-  if (c !== mz.cell) { mz.cell = c; if (mz.mode === 'drive') { mz.steps++; if (degree(maze, c) === 1 && c !== 0 && c !== goalCell() && !mz.visits[c]) mz.deadEnds++; } mz.visits[c]++; refreshMarks();
-    if (c === goalCell() && mz.mode === 'drive' && !mz.done && !mz.solved) finishMaze(); }
+  if (c !== mz.cell) { mz.cell = c; if (driving()) { mz.steps++; if (degree(maze, c) === 1 && c !== 0 && c !== goalCell() && !mz.visits[c]) mz.deadEnds++; } mz.visits[c]++; refreshMarks();
+    if (c === goalCell() && driving() && !mz.done && !mz.solved) finishMaze(); }
   if (mz.hint > 0) { mz.hint -= dt; if (mz.hint <= 0) refreshMarks(); }
   ghostStep(dt);
   const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(mz.pitch, mz.yaw, 0, 'YXZ')); putCamera(mz.pos, q); setFov(80); lamp.intensity = 0.9; lamp.distance = 3.2; setFog(0.5, 7 - st.fog * 4);
@@ -353,10 +376,10 @@ function finishMaze() {
   flashCap(`<b>Out!</b> ${mz.steps} steps; the shortest route is ${best}. Score <b>${Math.round(eff * 100)}%</b> in ${secs.toFixed(0)} s, ${mz.deadEnds} dead end${mz.deadEnds === 1 ? '' : 's'}${mz.usedMap ? ', with the map' : ''}${mz.ghost && mz.ghost.won ? '' : mz.ghost ? ', <b>ahead of the solver</b>' : ''}.${better ? ' A new best for this maze.' : ''}`);
   capTimer = 9; labels();
 }
-function solveDive() { if (!maze) return; if (mz.over) { mz.over = false; mazeView(); } mz.path = solve(maze, mz.cell, goalCell()); mz.u = 0; mz.mode = 'solve'; mz.solved = true; refreshMarks(); labels(); }
+function solveDive() { if (!maze) return; if (mz.over) { mz.over = false; mazeView(); } mz.path = solve(maze, mz.cell, goalCell()); startRoute(); mz.mode = 'solve'; mz.solved = true; refreshMarks(); labels(); }
 function showHint() { if (!maze) return; mz.path = solve(maze, mz.cell, goalCell()); mz.u = 0; mz.hint = 3; refreshMarks(); }
 function leftHand() { if (!maze) return; if (maze.Z > 1) { flashCap('<b>In 3D there is no "left wall" to follow.</b> Choose level 1 (one floor) to try the left-hand rule.'); return; } if (mz.over) { mz.over = false; mazeView(); }
-  mz.hand = wallFollow(maze, mz.cell, goalCell(), maze.N * 8); mz.u = 0; mz.mode = 'hand'; labels(); }
+  mz.hand = wallFollow(maze, mz.cell, goalCell(), maze.N * 8); startRoute(); mz.mode = 'hand'; labels(); }
 function watchBuild() { if (!maze) return; mz.over = true; mazeView(); mz.build = { t: 0, dt: Math.min(0.08, 6 / maze.steps.length) }; applyOpenings(0); labels(); }
 
 // ======================================================================================================
@@ -429,8 +452,8 @@ function labels() {
   else if (st.kind === 'foam') { const f = FOAMS[st.foam]; t = f.name; sub = f.alt; about = `<strong>${f.name}.</strong> ${f.info}`; hint = ffly.on ? 'Arrows or drag: steer · W S: speed · G: stop' : 'Drag to turn · scroll to zoom · G to fly through the foam';
     $('fFly').textContent = ffly.on ? 'Stop flying' : 'Fly through the foam'; pr = 'Prints the edges of the bubbles as a frame (the Plateau borders), ready to hold up to the light.'; }
   else if (st.kind === 'maze') { const [X, Y, Z] = LEVELS[st.level]; t = st.race ? 'Race the solver' : 'Maze'; sub = `${X} × ${Y} rooms on ${Z} floor${Z > 1 ? 's' : ''}, maze number ${st.seed}`;
-    about = st.race ? '<strong>Race the solver.</strong> A pink ghost drives the shortest route to the goal. Drive yourself (arrows to turn, W to go) and try to get there first, by the best route you can find.' : '<strong>A maze.</strong> Find your way to the golden ring. Arrows turn, W and S move, A and D step sideways; look up or down (↑ ↓) and move to climb shafts between floors. On a touch screen, drag to look and tap to step into the next room. G shows the shortest route by driving it; T gives a hint; O shows the map.';
-    hint = mz.over ? 'The map: drag to turn · O to go back in' : mz.mode === 'solve' ? 'Watching the solver drive the shortest route…' : '← →: turn · ↑ ↓: look up / down · W S: move · A D: step aside · tap: next room · G: solve · T: hint · O: map';
+    about = st.race ? '<strong>Race the solver.</strong> A pink ghost drives the shortest route to the goal. Drive yourself (arrows to turn, W to go) and try to get there first, by the best route you can find.' : '<strong>A maze.</strong> Find your way to the golden ring. Arrows turn, W and S move, A and D step sideways; look up or down (↑ ↓) and move to climb shafts between floors. On a touch screen, drag to look and tap to walk that way down the corridor, round its bends, to the next fork (tap again to stop). G shows the shortest route by driving it; T gives a hint; O shows the map.';
+    hint = mz.over ? 'The map: drag to turn · O to go back in' : mz.mode === 'solve' ? 'Watching the solver drive the shortest route…' : '← →: turn · ↑ ↓: look up / down · W S: move · A D: step aside · tap: walk to the next fork (tap again to stop) · G: solve · T: hint · O: map';
     $('mMethodNote').textContent = { dfs: 'Wander until stuck, back up, branch: long winding corridors and few dead ends.', prim: 'Grow outward from the start, picking at random: lots of short dead ends.', wilson: 'Random walks with their loops erased: every possible maze equally likely.' }[st.method];
     let best = null; try { best = JSON.parse(localStorage.getItem(`mathexplorer.maze.${st.level}.${st.method}.${st.loops}.${st.goal}.${st.seed}`) || 'null'); } catch (e) { /* blocked */ }
     $('mBest').textContent = best ? `Your best on this maze: ${Math.round(best.eff * 100)}% in ${best.secs.toFixed(0)} s.` : 'No score on this maze yet: reach the goal yourself to set one.';
