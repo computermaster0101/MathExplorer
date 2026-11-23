@@ -46,12 +46,18 @@ const conj = x => [x[0], -x[1]], csqrt = x => { const m = Math.hypot(x[0], x[1])
 const mob = (M, z) => cdiv(cadd(cm(M[0], z), M[1]), cadd(cm(M[2], z), M[3]));
 const mul = (A, B) => [cadd(cm(A[0], B[0]), cm(A[1], B[2])), cadd(cm(A[0], B[1]), cm(A[1], B[3])), cadd(cm(A[2], B[0]), cm(A[3], B[2])), cadd(cm(A[2], B[1]), cm(A[3], B[3]))];
 const norm = M => { const s = csqrt(cadd(cm(M[0], M[3]), cm(M[1], M[2]).map(x => -x))), k = cdiv([1, 0], s); return M.map(e => cm(e, k)); };
+// On the sphere and the disc a true move of the world keeps the form [[a, b], [-K b̄, ā]] with |a|² + K|b|² = 1. Products of
+// many small moves drift away from it by rounding, and the drift grows (issue #35: a long fast glide faded the tiling away),
+// so after every change the view is put back onto the nearest true move. The flat world also zooms, so it's left alone.
+const snap = M => { if (!geo.K) return M; M = norm(M); const K = geo.K, a = cm(cadd(M[0], conj(M[3])), [0.5, 0]), b = cm(cadd(M[1], cm(conj(M[2]), [-K, 0])), [0.5, 0]);
+  const n = a[0] * a[0] + a[1] * a[1] + K * (b[0] * b[0] + b[1] * b[1]); if (!(n > 1e-9)) return ID(); const k = 1 / Math.sqrt(n), A = [a[0] * k, a[1] * k], B = [b[0] * k, b[1] * k];
+  return [A, B, cm(conj(B), [-K, 0]), conj(A)]; };
 const ID = () => [[1, 0], [0, 0], [0, 0], [1, 0]];
 // the move that sends 0 to t, along a straight line of the world (a rotation of the ball when K = 1)
 const T = t => [[1, 0], t, cm(conj(t), [-geo.K, 0]), [1, 0]];
 const ROT = th => [[Math.cos(th), Math.sin(th)], [0, 0], [0, 0], [1, 0]];
 let MV = ID(), par = 0;   // the view: screen point z shows the tiling at MV(z); par flips the two-colouring after a half turn
-const apply = S => { MV = norm(mul(MV, S)); };
+const apply = S => { MV = snap(mul(MV, S)); };
 const moveBetween = (z0, z1) => apply(mul(T(z0), T([-z1[0], -z1[1]])));   // the point under z1 now shows what z0 showed
 
 // keep the middle of the screen inside the first tile, using the tiling's own turns, so the numbers never grow
@@ -59,10 +65,10 @@ function outside(w) { const g = geo; return g.K < 0 ? Math.hypot(w[0] - g.c, w[1
 function recentre() {
   const zc = toModelXY(0, 0); if (!zc) return; let w = mob(MV, zc);
   for (let i = 0; i < 60; i++) {
-    const k = Math.round(Math.atan2(w[1], w[0]) / (2 * geo.a)); if (k) { const g = ROT(-k * 2 * geo.a); MV = norm(mul(g, MV)); w = mob(g, w); }
+    const k = Math.round(Math.atan2(w[1], w[0]) / (2 * geo.a)); if (k) { const g = ROT(-k * 2 * geo.a); MV = snap(mul(g, MV)); w = mob(g, w); }
     if (!outside(w)) break;
     const m = [geo.x0, 0], H = mul(T(m), mul([[-1, 0], [0, 0], [0, 0], [1, 0]], T([-m[0], 0])));   // half turn about the middle of the edge
-    MV = norm(mul(H, MV)); w = mob(H, w); par ^= 1;
+    MV = snap(mul(H, MV)); w = mob(H, w); par ^= 1;
   }
 }
 
@@ -413,7 +419,7 @@ function applyCode(code) {
   else { const [a, b] = t.split('_').map(Number); if (a >= 3 && b >= 3 && a <= 12 && b <= 12) {
     st.cm = ['tiles', 'triangles', 'rings', 'lines'].includes(p.get('cm')) ? p.get('cm') : 'tiles'; st.wk = KINDS[p.get('wk')] ? p.get('wk') : 'regular'; st.model = p.get('md') || ''; setPQ(a, b, true);
     if (MODELS[geo.K].some(m => m[0] === p.get('md'))) { st.model = p.get('md'); showKind(); }
-    st.zoom = clamp(num(p, 'zm', st.zoom), 0.02, 3); const m = (p.get('m') || '').split('_').map(Number); if (m.length === 8 && m.every(isFinite)) { MV = norm([[m[0], m[1]], [m[2], m[3]], [m[4], m[5]], [m[6], m[7]]]); par = p.get('pr') === '1' ? 1 : 0; recentre(); }
+    st.zoom = clamp(num(p, 'zm', st.zoom), 0.02, 3); const m = (p.get('m') || '').split('_').map(Number); if (m.length === 8 && m.every(isFinite)) { MV = snap(norm([[m[0], m[1]], [m[2], m[3]], [m[4], m[5]], [m[6], m[7]]]));   /* links saved after drifting (#35) open mended */ par = p.get('pr') === '1' ? 1 : 0; recentre(); }
     setCheck('dual', p.get('du') === '1'); setCheck('tri', p.get('tr') === '1'); setCheck('spin', p.get('sp') === '1'); setRange('speed', num(p, 'spd', 1));
     st.gliding = p.has('gl'); if (st.gliding) glideDir = num(p, 'gl', Math.PI / 2); $('goBtn').textContent = st.gliding ? 'Stop gliding' : 'Glide'; ok = true; } }
   pview.rot = flat2d() ? num(p, 'vr', 0) : 0; MO.decode(p);
