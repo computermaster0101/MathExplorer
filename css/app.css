@@ -53,13 +53,18 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 #stageBtns [data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:500 12px Inter,sans-serif;pointer-events:none;opacity:0;transition:opacity .15s .35s;z-index:31}
 #stageBtns [data-tip]:hover::after,#stageBtns [data-tip]:focus-visible::after,#stageBtns [data-tip].tipShow::after{opacity:1} #stageBtns [aria-expanded="true"]::after{display:none}
 #stageBtns > :first-child[data-tip]::after{left:0;transform:none}
-.musicWrap{position:relative;display:inline-flex} .ibtn.on{color:var(--accent);border-color:var(--accent)} .app[data-explorer="fractal"] canvas.picking{cursor:crosshair !important}
+.musicWrap{position:relative;display:inline-flex}
+/* the button row's groups (View, Player, Go, More): a fold handle shows one icon when folded, a narrow arrow when open */
+.tbGroup{display:inline-flex;align-items:center;gap:6px} .tbGroup[hidden]{display:none} .tbGroup + .tbGroup{margin-left:4px;padding-left:8px;border-left:1px solid var(--line)}
+.tbBody{display:inline-flex;align-items:center;gap:6px} .tbGroup.folded .tbBody{display:none} .tbHandle[hidden]{display:none}
+.tbGroup:not(.folded) .tbHandle{width:18px;border-color:transparent;background:transparent;opacity:.75} .tbGroup:not(.folded) .tbHandle:hover{opacity:1}
+.shareWrap{position:relative;display:inline-flex} #tbShare.rec::before{content:'';position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:#ff4d4f} .ibtn.on{color:var(--accent);border-color:var(--accent)} .app[data-explorer="fractal"] canvas.picking{cursor:crosshair !important}
 /* the ? help menu, at the end of the buttons on the picture */
 .helpWrap{position:relative;display:inline-flex} .helpBtn{min-width:30px;font-weight:600}
-#helpMenu,#musicMenu{position:absolute;top:calc(100% + 6px);left:0;min-width:210px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.45);z-index:30}
-#helpMenu[hidden],#musicMenu[hidden]{display:none} #helpMenu button,#helpMenu a,#musicMenu button{background:none;border:0;color:var(--text);font:13px Inter,sans-serif;text-align:left;padding:8px 10px;border-radius:7px;cursor:pointer;text-decoration:none;white-space:nowrap}
-#helpMenu button:hover,#helpMenu a:hover,#helpMenu button:focus-visible,#helpMenu a:focus-visible,#musicMenu button:hover,#musicMenu button:focus-visible{background:rgba(255,255,255,.07);outline:none} #helpMenu hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
-@media (max-width:460px){ #stageBtns{gap:2px;flex-wrap:wrap;max-width:calc(100% - 16px)} .ibtn{width:29px} .tbSep{display:none} }   /* phones: tighter, without the dividers, so the row fits */   /* the narrowest phones wrap the ? onto a second row rather than off the screen */
+#helpMenu,#musicMenu,#shareMenu{position:absolute;top:calc(100% + 6px);left:0;min-width:210px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.45);z-index:30}
+#helpMenu[hidden],#musicMenu[hidden],#shareMenu[hidden]{display:none} #helpMenu button,#helpMenu a,#musicMenu button,#shareMenu button{background:none;border:0;color:var(--text);font:13px Inter,sans-serif;text-align:left;padding:8px 10px;border-radius:7px;cursor:pointer;text-decoration:none;white-space:nowrap}
+#helpMenu button:hover,#helpMenu a:hover,#helpMenu button:focus-visible,#helpMenu a:focus-visible,#musicMenu button:hover,#musicMenu button:focus-visible,#shareMenu button:hover,#shareMenu button:focus-visible{background:rgba(255,255,255,.07);outline:none} #helpMenu hr,#shareMenu hr{border:0;border-top:1px solid var(--line);margin:4px 2px} #shareMenu button[hidden]{display:none}
+@media (max-width:460px){ #stageBtns{gap:2px;flex-wrap:wrap;max-width:calc(100% - 16px)} .ibtn{width:29px} .tbGroup,.tbBody{gap:2px} .tbGroup + .tbGroup{margin-left:2px;padding-left:4px} }   /* phones: tighter, without the dividers, so the row fits */   /* the narrowest phones wrap the ? onto a second row rather than off the screen */
 #zenExit{position:absolute;top:12px;right:12px;display:none;z-index:6;transition:opacity .5s}
 #pausedTag{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:6;padding:5px 12px;border-radius:999px;background:rgba(10,12,18,.72);border:1px solid rgba(255,255,255,.14);color:#e8ecf4;font-size:12px;letter-spacing:.02em;pointer-events:none}
 
