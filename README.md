@@ -72,3 +72,16 @@ index.html#/fractal/v=11&m=explore&t=mandelbrot&x=-0.6&y=0&sc=1.25
 index.html#/polytope/s=8&m=slice&...
 index.html#/tiling/t=7_3&md=disc&...
 ```
+
+## License
+
+Copyright (C) 2026 computermaster0101
+
+Math Explorer is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See [LICENSE](LICENSE) for the full text.
+
+Third-party parts keep their own licenses:
+
+- [three.js](https://threejs.org/) r128, in `vendor/three/`: MIT, see [vendor/three/LICENSE](vendor/three/LICENSE).
+- The Inter and JetBrains Mono fonts, loaded from Google Fonts (not stored here): SIL Open Font License 1.1.
+
+No music or recordings are included; any you use for testing stay on your own machine (they're in `.gitignore`).

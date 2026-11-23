@@ -1,6 +1,7 @@
 # Deploy to https://mathexplorer.thedigitalspace.net on every push to main (or by hand from the Actions tab).
 # AWS trusts GitHub's sign-in for this repository's main branch only (no stored keys); the role it gets can upload to the
-# site bucket and refresh CloudFront, and nothing else (no deletes).
+# site bucket and refresh CloudFront, and nothing else (no deletes). The role's address is kept in the repository variable
+# AWS_DEPLOY_ROLE (Settings → Secrets and variables → Actions → Variables), not in this file.
 name: Deploy
 
 on:
@@ -21,9 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check the deploy role is set
+        env:
+          ROLE: ${{ vars.AWS_DEPLOY_ROLE }}
+        run: '[ -n "$ROLE" ] || { echo "::error::Add the repository variable AWS_DEPLOY_ROLE (the deploy role ARN) under Settings > Secrets and variables > Actions > Variables."; exit 1; }'
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::493695230962:role/mathexplorer-github-deploy
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE }}
           aws-region: us-east-1
       - name: Upload and refresh
         run: bash ./deploy.sh

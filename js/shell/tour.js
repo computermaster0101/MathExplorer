@@ -89,6 +89,18 @@ function endTour(how) {
   const pn = $('panel'); if (pn) pn.scrollTop = 0; scrollTo(0, 0);   // back to the top, where the shapes are
   window.removeEventListener('keydown', tourKey, true); window.removeEventListener('resize', place); T.root.remove(); T = null; document.body.classList.remove('touring');
   if (current && !store.get(CARD + current.name)) showCard(current.name, current.title);   // then this explorer's own card
+  if (how === 'tour_skip') laterHint();
+}
+// after a skip (or closing the shared-link bar): where the tour lives, for a few seconds, beside the explorer menu
+function laterHint() {
+  const sw = $('switcher'); if (!sw) return; const old = $('tourHint'); if (old) old.remove();
+  const r = sw.getBoundingClientRect(), seen = r.top >= 0 && r.bottom <= innerHeight;   /* on a phone the menu is below the picture */
+  const h = document.createElement('div'); h.id = 'tourHint'; h.setAttribute('role', 'status');
+  h.innerHTML = `You can take the tour any time from the <b>explorer menu</b>${seen ? '' : ' below the picture'}.`;
+  document.body.appendChild(h);
+  if (seen) { const w = Math.min(300, innerWidth - 24); h.style.width = w + 'px'; h.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left)) + 'px'; h.style.top = (r.bottom + 10) + 'px'; h.classList.add('arrow'); sw.classList.add('tourPulse'); }
+  else h.classList.add('top');
+  setTimeout(() => { h.classList.add('out'); sw.classList.remove('tourPulse'); }, 5500); setTimeout(() => h.remove(), 6200);
 }
 
 // ---------- the explorer's card ----------
@@ -109,7 +121,7 @@ function showBar(title) {
   b.innerHTML = `<span>You're looking at <b>${title}</b>. New here?</span><button class="sbtn on" id="tbGo">Take the tour</button><button class="sbtn" id="tbX" aria-label="Close">✕</button>`;
   $('stage').appendChild(b);
   b.querySelector('#tbGo').onclick = () => { hideBar(); startTour('shared_link'); };
-  b.querySelector('#tbX').onclick = () => { hideBar(); try { sessionStorage.setItem('mathexplorer.tourBar', '1'); } catch (e) { /* fine */ } };
+  b.querySelector('#tbX').onclick = () => { hideBar(); laterHint(); try { sessionStorage.setItem('mathexplorer.tourBar', '1'); } catch (e) { /* fine */ } };
 }
 const hideBar = () => { const b = $('tourBar'); if (b) b.remove(); };
 
