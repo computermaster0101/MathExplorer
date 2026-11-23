@@ -12,11 +12,15 @@ on:
 
 jobs:
   claude:
+    # Only the owner and collaborators can call Claude: the repository is public, and anyone can comment.
+    # (Reports from the site's form are opened by the owner's token, but the form breaks every @, so they can't call it.)
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      (
+        (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+        (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+        (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      ) && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association || github.event.review.author_association || github.event.issue.author_association)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -47,4 +51,7 @@ jobs:
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
           # claude_args: '--allowed-tools Bash(gh pr *)'
+          # Fixes go on their own branch, as a pull request; only the owner merges into main (which deploys the site).
+          claude_args: |
+            --append-system-prompt "Work on a new branch and open a pull request for it. Never push to, merge into or rebase main: the repository owner reviews and merges, because main deploys the live site. Follow CLAUDE.md (no build step, no npm dependencies, three.js stays vendored)." 
 
