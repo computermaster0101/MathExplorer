@@ -83,10 +83,11 @@ stage.addEventListener('pointermove', e => { if (e.pointerType === 'touch' && T.
 const press = (key, shift) => document.dispatchEvent(new KeyboardEvent('keydown', { key, shiftKey: !!shift, bubbles: true }));
 const lift = e => {
   if (e.pointerType !== 'touch') return; clearTimeout(T.hold); T.touch = performance.now(); T.n = Math.max(0, T.n - 1);
-  // a swipe (full screen): quick, long enough, and mostly one way
+  // a swipe (full screen): deliberate, so dragging round the picture never counts: across at least 40% of the screen's
+  // shorter side (and 140 px), in under 300 ms, and three times further one way than the other
   const g = T.start; if (T.n === 0) T.start = null;
   if (g && T.n === 0 && !T.multi && inZen() && e.type !== 'pointercancel') { const dx = e.clientX - g.x, dy = e.clientY - g.y, ax = Math.abs(dx), ay = Math.abs(dy);
-    if (performance.now() - g.t < 400 && Math.max(ax, ay) > 60 && Math.max(ax, ay) > 2 * Math.min(ax, ay)) { T.down = null; T.last = 0; clearTimeout(T.timer);
+    if (performance.now() - g.t < 300 && Math.max(ax, ay) > Math.max(140, 0.4 * Math.min(innerWidth, innerHeight)) && Math.max(ax, ay) > 3 * Math.min(ax, ay)) { T.down = null; T.last = 0; clearTimeout(T.timer);
       if (ax > ay) press(dx < 0 ? 'v' : 'c'); else press(dy < 0 ? 'x' : 'z'); return; } }
   const d = T.down; if (T.n > 0 || !d) return; T.down = null;
   if (T.multi || e.type === 'pointercancel' || Math.hypot(e.clientX - d.x, e.clientY - d.y) > 12 || performance.now() - d.t > 300) return;
