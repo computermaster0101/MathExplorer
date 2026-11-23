@@ -19,8 +19,9 @@ if (LIVE) {
 }
 /** Record an event (no-op away from the live site, except a note in the console). */
 export function track(name, params = {}) { if (LIVE) gtag('event', name, params); else if (TEST) window.__trackLog.push([name, params]); }
-/** A page view for the explorer on screen: its name only, never the view code. */
-export function pageView(explorer, title) { track('page_view', { page_title: title, page_location: location.origin + '/#/' + explorer, page_path: '/' + explorer }); track('explorer_open', { explorer }); }
+/** A page view for the explorer on screen: its name only, never the view code. via says how the visitor got there
+ *  ('home', 'link' or 'menu': js/main.js), so the explorer the plain address opens isn't overcounted as a choice. */
+export function pageView(explorer, title, via = '') { track('page_view', { page_title: title, page_location: location.origin + '/#/' + explorer, page_path: '/' + explorer }); track('explorer_open', { explorer, via }); }
 
 // ---------- the actions worth counting, from one listener (so no explorer needs to know about analytics) ----------
 // (the buttons on the picture and their menus are counted by toolbar.js as `toolbar` events)
