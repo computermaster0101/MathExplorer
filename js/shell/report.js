@@ -1,4 +1,4 @@
-// "Report a problem" (in the explorer menu): a short form that becomes a GitHub issue on MathExplorer, through a small
+// "Report a problem" (in the ? menu on the picture): a short form that becomes a GitHub issue on MathExplorer, through a small
 // AWS Lambda (aws/report/index.mjs), which holds the GitHub token; the page never sees it. Issues are public, so the form
 // asks for nothing personal: what happened, and optionally the link to the view on screen. It also sends the explorer,
 // the browser and screen size, and the last few error messages from this page, which is what usually finds the bug.

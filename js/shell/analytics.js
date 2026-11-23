@@ -23,7 +23,7 @@ export function track(name, params = {}) { if (LIVE) gtag('event', name, params)
 export function pageView(explorer, title) { track('page_view', { page_title: title, page_location: location.origin + '/#/' + explorer, page_path: '/' + explorer }); track('explorer_open', { explorer }); }
 
 // ---------- the actions worth counting, from one listener (so no explorer needs to know about analytics) ----------
-const ACTIONS = { vizBtn: 'visualizer', vizStageBtn: 'visualizer', zenBtn: 'fullscreen', snap: 'snapshot', recBtn: 'record_video', copyLink: 'share_link', prBtn: 'print_3d', sndPlay: 'music_play', sndMic: 'music_mic', sndTab: 'music_tab' };
+const ACTIONS = { vizBtn: 'visualizer', vizStageBtn: 'visualizer', zenBtn: 'fullscreen', snap: 'snapshot', recBtn: 'record_video', copyLink: 'share_link', prBtn: 'print_3d', helpBtn: 'help_menu', sndPlay: 'music_play', sndMic: 'music_mic', sndTab: 'music_tab' };
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button'); if (!b || !ACTIONS[b.id]) return;
   track(ACTIONS[b.id], { explorer: document.getElementById('app').dataset.explorer || '' }); }, true);
 document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('#ghLink,#ghMenu'); if (a) track('github', { from: a.id === 'ghLink' ? 'header' : 'menu' }); }, true);
