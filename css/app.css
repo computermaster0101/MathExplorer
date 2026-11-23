@@ -59,7 +59,7 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 #helpMenu,#musicMenu{position:absolute;top:calc(100% + 6px);left:0;min-width:210px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.45);z-index:30}
 #helpMenu[hidden],#musicMenu[hidden]{display:none} #helpMenu button,#helpMenu a,#musicMenu button{background:none;border:0;color:var(--text);font:13px Inter,sans-serif;text-align:left;padding:8px 10px;border-radius:7px;cursor:pointer;text-decoration:none;white-space:nowrap}
 #helpMenu button:hover,#helpMenu a:hover,#helpMenu button:focus-visible,#helpMenu a:focus-visible,#musicMenu button:hover,#musicMenu button:focus-visible{background:rgba(255,255,255,.07);outline:none} #helpMenu hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
-@media (max-width:460px){ #stageBtns{gap:3px;flex-wrap:wrap;max-width:calc(100% - 16px)} .ibtn{width:32px} }   /* the narrowest phones wrap the ? onto a second row rather than off the screen */
+@media (max-width:460px){ #stageBtns{gap:2px;flex-wrap:wrap;max-width:calc(100% - 16px)} .ibtn{width:29px} .tbSep{display:none} }   /* phones: tighter, without the dividers, so the row fits */   /* the narrowest phones wrap the ? onto a second row rather than off the screen */
 #zenExit{position:absolute;top:12px;right:12px;display:none;z-index:6;transition:opacity .5s}
 #pausedTag{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:6;padding:5px 12px;border-radius:999px;background:rgba(10,12,18,.72);border:1px solid rgba(255,255,255,.14);color:#e8ecf4;font-size:12px;letter-spacing:.02em;pointer-events:none}
 

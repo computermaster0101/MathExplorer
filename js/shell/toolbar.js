@@ -1,5 +1,6 @@
 // The buttons on the picture, as icons with names on hover (and on a long press on a touch screen): hide panel, full
-// screen, reset view; play / pause and go (dive, fly, ride…); slower and faster; music and the Visualizer; help (?).
+// screen, reset view; play / pause and go (dive, fly, ride…); zoom out (backwards) and in, with a mouse (on a touch screen
+// pinching does it); slower and faster; music and the Visualizer; help (?).
 // Hidden with the rest of the row in full screen, so never in the Visualizer. Explorers say what Go is called right now
 // (`goLabel()`, null to hide it) and what slower / faster move (`speedCtl()`: a range input's id, { id, invert } when a
 // bigger number is slower, or { label, step(dir) }; null to hide them). The buttons press the same keys the keyboard does.
@@ -13,8 +14,10 @@ export const ICON = {
   play: svg('<path d="M7 4l13 8-13 8z" fill="currentColor"/>'),
   pause: svg('<rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/>'),
   go: svg('<circle cx="12" cy="12" r="9"/><path d="M10 8l4 4-4 4"/>'),
-  slower: svg('<line x1="6" y1="12" x2="18" y2="12"/>'),
-  faster: svg('<line x1="6" y1="12" x2="18" y2="12"/><line x1="12" y1="6" x2="12" y2="18"/>'),
+  slower: svg('<path d="M4 17a8 8 0 0 1 16 0"/><line x1="12" y1="17" x2="7.5" y2="12"/><circle cx="12" cy="17" r="1" fill="currentColor"/>'),
+  faster: svg('<path d="M4 17a8 8 0 0 1 16 0"/><line x1="12" y1="17" x2="16.5" y2="12"/><circle cx="12" cy="17" r="1" fill="currentColor"/>'),
+  zoomOut: svg('<circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/><line x1="7.5" y1="10.5" x2="13.5" y2="10.5"/>'),
+  zoomIn: svg('<circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/><line x1="7.5" y1="10.5" x2="13.5" y2="10.5"/><line x1="10.5" y1="7.5" x2="10.5" y2="13.5"/>'),
   music: svg('<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>'),
 };
 /** Give a picture button its icon and name (shown on hover, read by screen readers). */
@@ -37,6 +40,20 @@ function speed(dir) {
   // multiplying feels even across the range; a range through zero (Polytopes' 4D spin) steps by a tenth instead
   let n = lo < 0 ? v + dir * (hi - lo) / 10 : (dir > 0 ? v * 1.25 : v / 1.25);
   n = Math.min(hi, Math.max(lo, Math.round(n / st) * st)); el.value = n; el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+// zoom out / in: the same as the scroll wheel over the middle of the picture (every explorer zooms with the wheel, so this
+// does whatever zooming means there); a click is one step, holding keeps zooming smoothly
+function wheelAtMiddle(dy) {
+  const r = $('stage').getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+  const el = document.elementFromPoint(x, y); if (!el || !el.closest('#stage') || el.closest('#stageBtns')) return;
+  el.dispatchEvent(new WheelEvent('wheel', { deltaY: dy, deltaMode: 0, clientX: x, clientY: y, bubbles: true, cancelable: true }));
+}
+for (const [id, dir] of [['tbOut', 1], ['tbIn', -1]]) {
+  const b = $(id); let rep = null, held = false;
+  b.addEventListener('pointerdown', e => { if (e.button) return; held = false; clearInterval(rep); rep = setTimeout(() => { held = true; rep = setInterval(() => wheelAtMiddle(dir * 30), 40); }, 300); });
+  const stop = () => { clearTimeout(rep); clearInterval(rep); rep = null; };
+  b.addEventListener('pointerup', stop); b.addEventListener('pointerleave', stop); b.addEventListener('pointercancel', stop);
+  b.addEventListener('click', () => { if (!held) wheelAtMiddle(dir * 240); held = false; });   /* a click (or Enter) is one wheel notch-and-a-half */
 }
 $('tbSlower').addEventListener('click', () => speed(-1));
 $('tbFaster').addEventListener('click', () => speed(1));
@@ -73,6 +90,7 @@ function refresh() {
   const g = api.goLabel ? api.goLabel() : null, go = $('tbGo'); go.hidden = !g; if (g) setTip(go, g + ' (G)');
   const sn = speedName(); $('tbSlower').hidden = $('tbFaster').hidden = !sn;
   if (sn) { setTip($('tbSlower'), `Slower: ${sn}`); setTip($('tbFaster'), `Faster: ${sn}`); }
+  const z = !api.canZoom || api.canZoom(); for (const e of document.querySelectorAll('.tbZoom')) e.hidden = !z;
   $('tbSep2').hidden = !g && !sn;
   if (!musicMenu.hidden && app.classList.contains('zen')) toggleMusic(false);
 }
@@ -92,5 +110,6 @@ $('stageBtns').addEventListener('click', e => { if (pressed && performance.now()
 for (const [id, ic, name] of [['panelBtn', 'panel', 'Hide panel (H)'], ['zenBtn', 'zen', 'Full screen (F)'], ['resetBtn', 'reset', 'Reset view (R)']]) { const b = $(id); b.innerHTML = ICON[ic]; setTip(b, name); }
 musicBtn.innerHTML = ICON.music; setTip(musicBtn, 'Music and the Visualizer');
 $('tbGo').innerHTML = ICON.go; $('tbSlower').innerHTML = ICON.slower; $('tbFaster').innerHTML = ICON.faster;
+$('tbOut').innerHTML = ICON.zoomOut; $('tbIn').innerHTML = ICON.zoomIn; setTip($('tbOut'), 'Zoom out: back (−, or the wheel)'); setTip($('tbIn'), 'Zoom in: forwards (+, or the wheel)');
 setTip($('helpBtn'), 'Help: the tour, keys, Report a problem (?)');
 refresh();
