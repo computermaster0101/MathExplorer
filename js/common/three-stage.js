@@ -3,6 +3,7 @@
 // including the see-through soap-film "Bubble" (shared with the 4D Polytopes explorer).
 import * as THREE from 'three';
 import { drive } from '../shell/keys.js';
+import { sleepThree } from './gl.js';
 
 /**
  * A soap-film look: nearly clear where you look straight through, bright at the rim, with the rainbow sheen of a thin film
@@ -54,6 +55,7 @@ export function makeFinishes(){ return {
 export function makeStage3D(canvas, opts={}){
   const z0=opts.z||6, zMin=opts.zMin||1.2, zMax=opts.zMax||14;
   const renderer=new THREE.WebGLRenderer({ canvas, antialias:true, preserveDrawingBuffer:true });
+  sleepThree(renderer);   // asleep while another explorer is on screen (js/common/gl.js)
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setClearColor(0x0b0d12);
   const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(38, 1, 0.01, 200); camera.position.set(0,0,z0);
   const hemi=new THREE.HemisphereLight(0xdfe6ff, 0x1a1420, 0.75); scene.add(hemi);

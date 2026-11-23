@@ -54,7 +54,8 @@ function lost() {
   document.body.appendChild(d); $('lostReload').onclick = () => location.reload(); $('lostReload').focus();
 }
 // the event is sent to the canvas and doesn't bubble, so listen on the way down
-document.addEventListener('webglcontextlost', e => { if (e.target && e.target.tagName === 'CANVAS' && e.target.width > 1) lost(); }, true);
+// (a canvas marked data-asleep was put to sleep on purpose, while its explorer is off screen: js/common/gl.js)
+document.addEventListener('webglcontextlost', e => { if (e.target && e.target.tagName === 'CANVAS' && e.target.width > 1 && !e.target.dataset.asleep) lost(); }, true);
 if (FORCE === 'lost') setTimeout(lost, 2500);
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', softwareNotice); else setTimeout(softwareNotice, 0);

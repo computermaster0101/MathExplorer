@@ -41,7 +41,12 @@ function build() {
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.ok) throw new Error(j.error || 'Couldn\'t send the report just now.');
       track('report_sent', { explorer });
-      st.innerHTML = j.url ? `Thank you! It's <a href="${j.url}" target="_blank" rel="noopener">issue #${j.number}</a> on GitHub.` : 'Thank you!';
+      // the link is built as an element, and only for an issue on this repository, so nothing in the reply can become markup
+      st.textContent = 'Thank you!';
+      if (typeof j.url === 'string' && j.url.startsWith('https://github.com/computermaster0101/MathExplorer/issues/')) {
+        const a = document.createElement('a'); a.href = j.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'issue #' + (parseInt(j.number, 10) || '');
+        st.append(' It\'s ', a, ' on GitHub.');
+      }
       $('rpSend').hidden = true; $('rpCancel').textContent = 'Close';
     } catch (er) { st.textContent = (er && er.message) || 'Couldn\'t send the report just now.'; $('rpSend').disabled = false; }
   });

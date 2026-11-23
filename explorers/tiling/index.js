@@ -341,6 +341,7 @@ function turn(th) { const zc = toModelXY(0, 0); if (!zc) return; apply(mul(T(zc)
 
 // ---------- loop ----------
 let running = false, tPrev = 0, frame = 0, dirty = true, flashNow = 0, pulseNow = 0, voiceNow = 0;
+G.onWake(() => { dirty = true; });   // back from sleep (js/common/gl.js): draw again
 // Motion (its own group): drift, zoom and turn, on flat patterns and on {p, q} worlds alike, and Slowly change
 const MO = makeMotion2D({ rows: $('glideSec'),
   pan: (dx, dy) => { if (!flat2d()) slide(2 * dx, 2 * dy); else { pview.glide(dx, dy);
