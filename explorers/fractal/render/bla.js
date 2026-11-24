@@ -33,8 +33,10 @@ function buildBLA(slot, cmax){
 export const moveCapped=type=>type>=1 && type<=5 && (shared.moveCap??0.6)<1;
 export function render2DAll(hq, strip){
   const g=gl, b=hexRGB(st.bg); g.viewport(0,0,glc.width,glc.height);
-  if (strip){ g.enable(g.SCISSOR_TEST); g.scissor(0,strip[0],glc.width,strip[1]-strip[0]); } else { g.clearColor(b[0],b[1],b[2],1); g.clear(g.COLOR_BUFFER_BIT); }
-  if (TYPES[st.type].cpu){ g.disable(g.SCISSOR_TEST); return; }
+  // strip: [from, to) of the picture's height; drawn as that share of scattered pixels, not a band (u_part in the shader)
+  const part = strip ? [strip[0]/glc.height, strip[1]>=glc.height ? 2 : strip[1]/glc.height] : null;
+  if (!strip){ g.clearColor(b[0],b[1],b[2],1); g.clear(g.COLOR_BUFFER_BIT); }
+  if (TYPES[st.type].cpu) return;
   for (const d of viewDescs()){
     const v=d.v, type=st.type, full=effIter(v), iter=!hq && moveCapped(type) ? Math.min(full, Math.max(150, Math.round(full*(shared.moveCap??0.6)))) : full; let refLen=0, tex=null, ctex=null;
     let refOff=[0,0], exP=null, blaP=null; const ext=extT(type) && isExt() && d.v===st.vE, jul=d.julia||type===5, jcc=type===5?PHX:st.jc;
@@ -50,9 +52,8 @@ export function render2DAll(hq, strip){
         if (!B || B.ref!==slot.refId || cmax>B.cmax || cmax<B.cmax/16) buildBLA(slot, cmax*2); blaP=slot.bla?slot:null; } }
     const s=bufScale, vp={x:Math.round(d.x*s), y:Math.round((cssH-d.y-d.h)*s), w:Math.round(d.w*s), h:Math.round(d.h*s)};
     const aa = hq ? (iter>2500 ? 1 : iter>1200 ? Math.min(2,st.aa) : st.aa) : 1;
-    draw2D(main, vp, {cx:v.cx, cy:v.cy, scale:v.scale, rot:v.rot, c: type===5 ? PHX : st.jc, iter, type, julia:d.julia||type===5, aa, refLen, tex, ctex, refOff, ext:exP, bla:blaP, dim:d.dim});
+    draw2D(main, vp, {cx:v.cx, cy:v.cy, scale:v.scale, rot:v.rot, c: type===5 ? PHX : st.jc, iter, type, julia:d.julia||type===5, aa, refLen, tex, ctex, refOff, ext:exP, bla:blaP, dim:d.dim, part});
   }
-  g.disable(g.SCISSOR_TEST);
   if (!strip) calm(hq);
 }
 // keep the last picture on screen (stretched) while the sharp one is drawn strip by strip

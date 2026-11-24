@@ -12,7 +12,7 @@ const FS2=`#version 300 es
 precision highp float; precision highp int;
 uniform vec2 u_res, u_org, u_center, u_c, u_refOff;
 uniform float u_scale, u_rot, u_power, u_density, u_cycle, u_flash;
-uniform int u_inTest; uniform int u_iter, u_type, u_julia, u_cmode, u_inside, u_aa, u_refLen, u_dim, u_seq, u_seqLen, u_ext, u_scaleE;
+uniform int u_inTest; uniform vec2 u_part; uniform int u_iter, u_type, u_julia, u_cmode, u_inside, u_aa, u_refLen, u_dim, u_seq, u_seqLen, u_ext, u_scaleE;
 uniform float u_scaleM, u_bail; uniform vec2 u_refOffS;
 uniform int u_blaOn, u_blaL; uniform int u_blaOff[18]; uniform sampler2D u_blaAB, u_blaR;
 uniform sampler2D u_ref, u_refC;
@@ -215,6 +215,9 @@ vec3 sampleAt(vec2 px){
   return mix(u_bg, col, 0.18+0.82*smoothstep(1.0, 9.0, nu));
 }
 void main(){
+  // the sharp picture drawn a part at a time (loop.js): each part is a scattered share of the pixels, so the whole picture
+  // sharpens at once instead of a line travelling up it (issue #67)
+  float rk=fract(dot(gl_FragCoord.xy, vec2(0.7548776662, 0.5698402910))); if (rk<u_part.x || rk>=u_part.y) discard;
   vec2 px=gl_FragCoord.xy-u_org; vec3 c=vec3(0.0); int N=max(u_aa,1);
   for (int a=0;a<3;a++){ if (a>=N) break; for (int b=0;b<3;b++){ if (b>=N) break; c+=sampleAt(px-0.5+(vec2(float(a),float(b))+0.5)/float(N)); } }
   c/=float(N*N);
@@ -566,7 +569,7 @@ export function draw2D(C, vp, o){
   g.uniform2f(P.u('u_center'),o.cx,o.cy); g.uniform1f(P.u('u_scale'),o.scale); g.uniform1f(P.u('u_rot'),o.rot);
   g.uniform2f(P.u('u_c'),o.c[0],o.c[1]); g.uniform1f(P.u('u_power'),o.power!=null?o.power:st.power);
   g.uniform1i(P.u('u_iter'),o.iter); g.uniform1i(P.u('u_type'),o.type); g.uniform1i(P.u('u_julia'),o.julia?1:0);
-  g.uniform1i(P.u('u_cmode'),st.cmode); g.uniform1i(P.u('u_inside'),st.inside); g.uniform1i(P.u('u_inTest'),shared.noInsideTest?0:1); g.uniform1i(P.u('u_aa'),o.aa||1);
+  g.uniform1i(P.u('u_cmode'),st.cmode); g.uniform1i(P.u('u_inside'),st.inside); g.uniform1i(P.u('u_inTest'),shared.noInsideTest?0:1); g.uniform1i(P.u('u_aa'),o.aa||1); g.uniform2f(P.u('u_part'),o.part?o.part[0]:0,o.part?o.part[1]:2);
   const ex=o.ext; g.uniform1i(P.u('u_ext'),ex?1:0); if (ex){ g.uniform1f(P.u('u_scaleM'),ex.M); g.uniform1i(P.u('u_scaleE'),ex.E); g.uniform2f(P.u('u_refOffS'),ex.offS[0],ex.offS[1]); }
   g.uniform2f(P.u('u_refOff'),(o.refOff||[0,0])[0],(o.refOff||[0,0])[1]); g.uniform1i(P.u('u_refLen'),o.refLen||0); g.uniform1i(P.u('u_dim'),o.dim?1:0);
   g.uniform1f(P.u('u_density'),effDensity()); g.uniform1f(P.u('u_cycle'),st.cycle); g.uniform1f(P.u('u_flash'),flash());
