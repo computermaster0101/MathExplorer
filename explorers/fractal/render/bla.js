@@ -1,8 +1,10 @@
+import { shared } from '../shared.js';
 import { PHX, TYPES } from '../fractals/types.js';
 import { isExt, st } from '../state.js';
 import { hexRGB } from '../color/palettes.js';
 import { aux, auxCv, blaTex, draw2D, gl, glc, main, makeRef, refSlots, upRef } from './webgl.js';
-import { bufScale, cssH, deepT, effIter, extT, refShift, requestExtRef, viewDescs } from '../view.js';
+import { bufScale, cssH, cssW, deepT, effIter, extT, refShift, requestExtRef, toOff, viewDescs } from '../view.js';
+import { fixToNum } from '../math/big-fixed.js';
 
 // ---------- BLA: shortcuts that skip many steps at once while a pixel stays close to the reference ----------
 const BLA_EPS=Math.pow(2,-24);
@@ -45,6 +47,7 @@ export function render2DAll(hq, strip){
     draw2D(main, vp, {cx:v.cx, cy:v.cy, scale:v.scale, rot:v.rot, c: type===5 ? PHX : st.jc, iter, type, julia:d.julia||type===5, aa, refLen, tex, ctex, refOff, ext:exP, bla:blaP, dim:d.dim});
   }
   g.disable(g.SCISSOR_TEST);
+  if (!strip) calm(hq);
 }
 // keep the last picture on screen (stretched) while the sharp one is drawn strip by strip
 const FSB=`#version 300 es
@@ -55,3 +58,37 @@ export function grabFrame(){ gl.bindTexture(gl.TEXTURE_2D,blitTex); gl.copyTexIm
 export function drawBlit(){ if (!blitOK) return; const P=main.prog('blit',FSB); gl.useProgram(P.p); gl.viewport(0,0,glc.width,glc.height); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,blitTex); gl.uniform1i(P.u('u_img'),0); gl.uniform2f(P.u('u_res'),glc.width,glc.height); gl.drawArrays(gl.TRIANGLES,0,3); }
 export function auxRender(o, w, h){ if (auxCv.width!==w || auxCv.height!==h){ auxCv.width=w; auxCv.height=h; }
   draw2D(aux, {x:0,y:0,w,h}, Object.assign({rot:0, iter:220, aa:1, refLen:0, tex:null, c:st.jc}, o)); return auxCv; }
+// ---- calming the static while moving ----
+// The Burning Ship, Tricorn, Multibrot, Celtic and Phoenix have wide areas of detail finer than a pixel. One point per pixel
+// lands on unrelated detail in neighbouring pixels, so a moving picture looks like crawling static. Each moving frame is
+// blended with the frame before, moved to where that frame's points now sit on screen: a few frames' points average in each
+// pixel, as anti-aliasing would, for the cost of two copies and one blend. Still pictures are drawn sharp as before (and
+// become the history the next moving frame starts from). shared.calm = false turns it off, for comparing.
+const FSC=`#version 300 es
+precision highp float; uniform sampler2D u_cur, u_hist; uniform vec2 u_res, u_a, u_ex, u_ey; uniform float u_w; out vec4 o;
+void main(){ vec2 uv=gl_FragCoord.xy/u_res; vec3 c=texture(u_cur,uv).rgb; vec2 h=u_a+uv.x*u_ex+uv.y*u_ey;
+  if (h.x>=0.0 && h.y>=0.0 && h.x<=1.0 && h.y<=1.0) c=mix(c, texture(u_hist,h).rgb, u_w); o=vec4(c,1.0); }`;
+const linTex=()=>{ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t); for (const [k,v] of [[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D,k,v); return t; };
+const CALM={ cur:null, hist:null, ok:false, key:'', v:null, w:0, h:0, weight:0.75 };
+export const calmOn=()=>st.mode==='explore' && st.type>=1 && st.type<=5 && shared.calm!==false;
+const calmKey=()=>[st.type, st.julia?1:0, st.jc.join(), st.power, st.cmode, st.palette, st.palRev?1:0, st.inside, st.bg, st.density, glc.width, glc.height].join('|');
+function calm(hq){
+  if (!calmOn() || !gl.isContextLost || gl.isContextLost()){ CALM.ok=false; return; }
+  if (!CALM.cur){ CALM.cur=linTex(); CALM.hist=linTex(); }
+  const v=st.vE, key=calmKey(), W=glc.width, H=glc.height;
+  if (!hq && CALM.ok && CALM.key.split('|').slice(0,-2).join('|')===key.split('|').slice(0,-2).join('|')){
+    // where each corner of this frame was on the last one (both are similarities of the plane, so three points fix it)
+    const P=CALM.v, d={x:0,y:0,w:cssW,h:cssH,v}, dcx=v.bx!=null && P.bx!=null ? fixToNum(v.bx-P.bx) : (v.cx-P.cx)+((v.lx||0)-(P.lx||0)), dcy=v.by!=null && P.by!=null ? fixToNum(v.by-P.by) : (v.cy-P.cy)+((v.ly||0)-(P.ly||0));
+    const c=Math.cos(P.rot), s=Math.sin(P.rot);
+    const prevUV=(u,w)=>{ const o=toOff(d, u*cssW, (1-w)*cssH), dx=(o[0]+dcx)/P.scale, dy=(o[1]+dcy)/P.scale, px=c*dx+s*dy, py=-s*dx+c*dy;
+      return [(P.cw/2+px*P.ch/2)/P.cw, 1-(P.ch/2-py*P.ch/2)/P.ch]; };
+    const a=prevUV(0,0), bx=prevUV(1,0), by=prevUV(0,1);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,CALM.cur); gl.copyTexImage2D(gl.TEXTURE_2D,0,gl.RGB,0,0,W,H,0);
+    const Pr=main.prog('calm',FSC); gl.useProgram(Pr.p); gl.viewport(0,0,W,H);
+    gl.uniform1i(Pr.u('u_cur'),0); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,CALM.hist); gl.uniform1i(Pr.u('u_hist'),1);
+    gl.uniform2f(Pr.u('u_res'),W,H); gl.uniform2f(Pr.u('u_a'),a[0],a[1]); gl.uniform2f(Pr.u('u_ex'),bx[0]-a[0],bx[1]-a[1]); gl.uniform2f(Pr.u('u_ey'),by[0]-a[0],by[1]-a[1]);
+    gl.uniform1f(Pr.u('u_w'), shared.calmW ?? CALM.weight); gl.drawArrays(gl.TRIANGLES,0,3); gl.activeTexture(gl.TEXTURE0); }
+  // this frame (blended or sharp) is the next one's history
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,CALM.hist); gl.copyTexImage2D(gl.TEXTURE_2D,0,gl.RGB,0,0,W,H,0);
+  CALM.ok=true; CALM.key=key; CALM.v={cx:v.cx, lx:v.lx||0, cy:v.cy, ly:v.ly||0, bx:v.bx, by:v.by, scale:v.scale, rot:v.rot, cw:cssW, ch:cssH};
+}
