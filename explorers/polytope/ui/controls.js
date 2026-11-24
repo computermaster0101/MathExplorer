@@ -5,8 +5,6 @@ import { st } from '../state.js';
 import { PALETTES, css } from '../render/colour.js';
 import { colourControls } from '../../../js/common/colours.js';
 import { SHAPES } from '../geometry/polytopes.js';
-import { STAR_LIST } from '../geometry/star-list.js';
-import { STAR_SYM } from '../geometry/ustar.js';
 import { HD_MAX } from '../geometry/higher-dim.js';
 import { FINISH, HOME, canvas, mainLayer, pingLayer, pivot, renderer, sliceLayer } from '../render/scene.js';
 import { renderView } from '../render/stereo.js';
@@ -18,6 +16,8 @@ import { I4, KNIFE_NOTES, KNIFE_TURN, knifeNow, newPing } from '../modes/ping.js
 import { panelFit } from '../panels/extra-panels.js';
 import { notAvail, refreshColours, updateCellLabel, updateLabels } from './text.js';
 import { dlNote, downloads, exportBtn, updatePrintNote } from '../io/export.js';
+import { STAR_LIST } from '../geometry/star-list.js';
+import { STAR_SYM } from '../geometry/ustar.js';
 
 // ---------- UI wiring ----------
 export function setSeg(group, el){ group.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b===el)); }
