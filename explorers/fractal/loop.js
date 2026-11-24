@@ -6,7 +6,7 @@ import { drive, setPausedTag } from '../../js/shell/keys.js';
 import { hexRGB, minus } from './color/palettes.js';
 import { ctxLost, gl, glc, octx, refSlots } from './render/webgl.js';
 import { cssH, cssW, deepT, effIter, extT, minScale, moveCentre, ovScale, panBy, runGrid, sizeBuffers, startGrid, touch, viewDescs } from './view.js';
-import { drawBlit, grabFrame, render2DAll } from './render/bla.js';
+import { drawBlit, grabFrame, moveCapped, render2DAll } from './render/bla.js';
 import { notAvail } from './ui/notice.js';
 import { budDraw, budStep } from './modes/buddhabrot.js';
 import { d3Bound, d3Extra, d3MinDist, dive3UI, steer3Reset, steer3Step, f3Ready, pan3, turn3, nestDive, nestIn, nestOut, nestStraight, render3D, retarget3, setDive3, start3Warp, syncT3 } from './modes/fractal3d.js';
@@ -126,7 +126,8 @@ function stripReady(now, P){
     if (took<pace.vsync*2.2) P.strip=Math.min(1024,Math.ceil(P.strip*1.4)); else if (took>pace.vsync*4) P.strip=Math.max(8,Math.floor(P.strip/2)); }
   return fences.length < (P.slow ? 1 : 2); }
 // What the sharp 2D picture will cost: the moving cost at full scale, times the smoothing's samples (2×2 smoothing: 4).
-function hqCost(){ const aa=effIter(st.vE)>2500 ? 1 : effIter(st.vE)>1200 ? Math.min(2,st.aa) : st.aa; return work.perQ2*aa*aa; }
+/* moving frames on some fractals take fewer steps (moveCapped): the sharp one costs up to that many times more, so err on the side of strips */
+function hqCost(){ const it=effIter(st.vE), aa=it>2500 ? 1 : it>1200 ? Math.min(2,st.aa) : st.aa, cap=moveCapped(st.type) ? it/Math.min(it, Math.max(150, Math.round(it*(shared.moveCap??0.6)))) : 1; return work.perQ2*aa*aa*cap; }
 // the shell starts and stops the loop as this explorer comes on and off screen
 let running=false;
 export function startLoop(){ if (running) return; running=true; tPrev=performance.now(); requestAnimationFrame(loop); }
