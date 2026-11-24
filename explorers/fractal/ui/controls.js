@@ -36,12 +36,13 @@ export function setMode(m){ st.paused=false;
 segClick('modes', d=>setMode(d.m));
 export function typeChanged(){ const T=TYPES[st.type]; st.iterNeed=0; $('customBox').hidden=st.type!==11; st.dive=false; st.endlessRun=false; if (typeof diveUI==='function') diveUI(); if (T.juliaOnly||T.newton){ st.julia=false; $('juliaChk').checked=false; }
   $('juliaRow').hidden=!T.julia; $('jcBox').hidden=!(st.julia && T.julia); $('powRow').hidden=!T.power;
-  resetViews(); buildPlaces(); if (T.places[0][4]) st.lyaSeq=T.places[0][4]; $('budRow').hidden=!T.cpu; if (st.mode==='orbit' && !notAvail()) newOrbit(); refSlots.forEach(s=>s.key=''); touch(); updateLabels(); }
+  resetViews(); buildPlaces(); if (typeof T.places[0][4]==='string') st.lyaSeq=T.places[0][4]; $('budRow').hidden=!T.cpu; if (st.mode==='orbit' && !notAvail()) newOrbit(); refSlots.forEach(s=>s.key=''); touch(); updateLabels(); }
 segClick('types', d=>{ st.type=+d.t; typeChanged(); });
 export function buildPlaces(){ const T=TYPES[st.type]; $('places').innerHTML=T.places.map((p,i)=>`<button data-i="${i}">${p[0]}</button>`).join(''); st.placeIdx=0; }
 $('places').addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return; flyTo(+b.dataset.i); });
 export function flyTo(i){ const T=TYPES[st.type]; if (st.julia && !T.juliaOnly){ st.julia=false; $('juliaChk').checked=false; $('jcBox').hidden=true; resetViews(); updateLabels(); }
-  const p=T.places[i]; st.placeIdx=i; if (p[4]) { st.lyaSeq=p[4]; updateLabels(); } const a=st.vE; st.dive=false; $('diveBtn').classList.remove('on'); $('diveBtn').textContent='Dive in';
+  const p=T.places[i]; st.placeIdx=i; if (typeof p[4]==='string') { st.lyaSeq=p[4]; updateLabels(); }
+  if (typeof p[4]==='number' && T.power && st.power!==p[4]) setRange('pow', p[4]);   /* a Multibrot place is for one power */ const a=st.vE; st.dive=false; $('diveBtn').classList.remove('on'); $('diveBtn').textContent='Dive in';
   st.endlessRun=false; const bx=ddFrom(p[1]), by=ddFrom(p[2]); startFly(p[0], bx, by, p[3], null, null, {bx:strToFix(p[1]), by:strToFix(p[2])});
   document.querySelectorAll('#places button').forEach(x=>x.classList.toggle('on', +x.dataset.i===i)); touch(); }
 function startFly(name, bx, by, scale, then, msg, big){ const a=st.vE, dist=Math.hypot(bx[0]-a.cx,by[0]-a.cy), ls0=Math.log(a.scale), ls1=Math.log(scale);
