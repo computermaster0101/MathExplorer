@@ -3,11 +3,16 @@
 // encrypted SSM parameter /mathexplorer/github-token; it is never in this code, the repository or the page.
 // Guards: only the live site's origin, small bodies, a hidden trap field for bots, a few reports per visitor per
 // 10 minutes and a cap per hour, @mentions defused, and nothing personal asked for (the issues are public).
+// A picture of the screen, sent only when the visitor ticks the box, must be a JPEG under 500 KB; it is saved under
+// reports/ in the site's bucket (the role may only add files there) and shown in the issue from the site's own address.
 import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { randomBytes } from 'node:crypto';
 
 const REPO = 'computermaster0101/MathExplorer';
 const SITE = 'https://mathexplorer.thedigitalspace.net';
-const ssm = new SSMClient({});
+const BUCKET = 'mathexplorer.thedigitalspace.net';
+const ssm = new SSMClient({}), s3 = new S3Client({});
 let token = null;
 const perIp = new Map(); let hour = { t: 0, n: 0 };
 
@@ -21,9 +26,11 @@ export const handler = async (event) => {
   if (method !== 'POST') return reply(405, { error: 'POST only' });
   if (h.origin !== SITE) return reply(403, { error: 'Reports are accepted from the site only.' });
   const raw = event.isBase64Encoded ? Buffer.from(event.body || '', 'base64').toString('utf8') : (event.body || '');
-  if (raw.length > 12000) return reply(413, { error: 'Too long.' });
+  if (raw.length > 12000 + 700000) return reply(413, { error: 'Too long.' });
   let b; try { b = JSON.parse(raw); } catch (e) { return reply(400, { error: 'Bad request.' }); }
   if (b.website) return reply(200, { ok: true });   // the hidden field: only bots fill it in
+  // everything but the picture keeps to the old size limit
+  if (JSON.stringify({ ...b, shot: '' }).length > 12000) return reply(413, { error: 'Too long.' });
 
   const now = Date.now(), ip = event.requestContext?.http?.sourceIp || '?';
   const mine = (perIp.get(ip) || []).filter(t => now - t < 600000);
@@ -37,11 +44,26 @@ export const handler = async (event) => {
   const view = typeof b.view === 'string' && b.view.startsWith(SITE + '/') && b.view.length < 4000 ? b.view : '';
   const ua = clean(b.browser, 300), screen = clean(b.screen, 40);
   const errs = Array.isArray(b.errors) ? b.errors.slice(0, 5).map(e => clean(e, 200)) : [];
+  // the picture: a JPEG (it must start and end like one), under 500 KB
+  let jpg = null;
+  if (typeof b.shot === 'string' && b.shot.startsWith('data:image/jpeg;base64,')) {
+    const buf = Buffer.from(b.shot.slice(23), 'base64'), n = buf.length;
+    if (n > 1000 && n < 500000 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff && buf[n - 2] === 0xff && buf[n - 1] === 0xd9) jpg = buf;
+  }
+  let shotLine = '';
+  if (jpg) {
+    const key = `reports/${new Date().toISOString().slice(0, 10)}-${randomBytes(9).toString('hex')}.jpg`;
+    try {
+      await s3.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: jpg, ContentType: 'image/jpeg', CacheControl: 'public, max-age=31536000, immutable' }));
+      shotLine = `### What was on screen\n\n![The picture when the report was sent](${SITE}/${key})\n`;
+    } catch (e) { console.error('Couldn\'t save the picture', e); shotLine = '_(A picture was sent but couldn\'t be saved.)_\n'; }
+  }
 
   const first = what.split('\n')[0].slice(0, 70);
   const title = `Report${explorer ? ' (' + explorer + ')' : ''}: ${first}${what.split('\n')[0].length > 70 ? '…' : ''}`;
   const body = [
     '### What happened', '', what, '',
+    shotLine,
     '### Details', '',
     explorer && `- **Explorer:** ${explorer}`,
     view && `- **View:** ${view}`,

@@ -164,6 +164,7 @@ details.sub p{margin:0 0 10px;line-height:1.55}
 .modalBack{position:fixed;inset:0;z-index:80;background:rgba(4,6,10,.6);display:flex;align-items:center;justify-content:center;padding:16px}
 .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;max-width:520px;color:var(--text)} .modal h2{margin:0 0 8px;font-size:18px} .modal p{color:#c9cfdc;line-height:1.5}
 #reportForm textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:96px;margin:4px 0 6px;font:13px Inter,sans-serif} #reportForm .modal{width:min(520px,100%)} .rpTrap{position:absolute;left:-10000px;width:1px;height:1px;opacity:0}
+#rpShotImg{display:block;max-width:100%;max-height:180px;margin:2px 0 6px;border:1px solid var(--line);border-radius:8px} #rpShotImg[hidden],#rpShotRow[hidden]{display:none}
 .app.zen #xCard, .app.zen #tourBar{display:none !important}
 #tourHint{position:fixed;z-index:65;background:var(--panel);border:1px solid var(--accent);border-radius:10px;padding:9px 12px;color:var(--text);font-size:13px;line-height:1.4;box-shadow:0 8px 28px rgba(0,0,0,.45);transition:opacity .6s}
 #tourHint.top{top:12px;left:12px;right:12px;max-width:420px;margin:0 auto} #tourHint.out{opacity:0}
