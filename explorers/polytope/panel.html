@@ -35,7 +35,7 @@
     <p class="note" id="morphNote"></p>
   </div>
   <div class="lbl" style="margin-top:12px">Every uniform shape <span style="color:var(--mute);font-weight:400">(all 47)</span></div>
-  <div class="seg g3" id="uniFam"><button data-u="a4">5-cell</button><button data-u="b4" class="on">Tesseract</button><button data-u="f4">24-cell</button><button data-u="h4">120 / 600-cell</button><button data-u="other">Others</button></div>
+  <div class="seg g3" id="uniFam"><button data-u="a4">5-cell</button><button data-u="b4" class="on">Tesseract</button><button data-u="f4">24-cell</button><button data-u="h4">120 / 600-cell</button><button data-u="other">Others</button><button data-u="star">Stars</button></div>
   <div class="seg shapes g2 uniList" data-u="a4" data-note="The 5-cell’s mirrors make 9 shapes (its diagram reads the same backwards, so the other 6 choices repeat these)." style="margin-top:6px" hidden>
     <button data-alias="5">5-cell</button>
     <button data-s="r5">Rectified 5-cell</button>
@@ -92,6 +92,13 @@
   </div>
   <div class="seg shapes g2 uniList" data-u="other" data-note="The grand antiprism, found by John Conway and Michael Guy with a computer search in 1965: the only convex uniform 4D shape that comes from none of the mirror families." style="margin-top:6px" hidden>
     <button data-s="ga">Grand antiprism</button>
+  </div>
+  <div class="seg shapes g2 uniList" data-u="star" style="margin-top:6px" hidden data-note="Star uniform shapes: built the same way from mirrors that meet at star angles, so their cells pass through one another. The search behind this list tried every such set of mirrors and every choice of rings, and kept each different picture once (a shape with exactly the corners and edges of another, or of one of the 47, is left out). Step through them with the arrows; the diagram shows each one&#x27;s mirrors and rings.">
+    <button data-s="ustar">Star uniform shapes</button>
+  </div>
+  <div id="ustarRow" hidden style="margin-top:8px">
+    <div class="seg" id="ustarSym"><button data-y="0" class="on">All</button><button data-y="14400">120-cell</button><button data-y="1152">24-cell</button><button data-y="384">Tesseract</button></div>
+    <div class="btns" style="margin-top:6px;align-items:center"><button class="btn" id="ustarPrev" aria-label="Previous star shape">◀</button><span id="ustarPos" style="flex:1;text-align:center;color:var(--mute);font-size:13px"></span><button class="btn" id="ustarNext" aria-label="Next star shape">▶</button></div>
   </div>
   <div id="uniDia" hidden style="margin-top:6px"></div>
   <p class="note" id="uniNote">These mirrors make 15 shapes. Three of them are 24-cell-family shapes too, listed under 24-cell: the 24-cell itself (the rectified 16-cell), the rectified 24-cell (the cantellated 16-cell) and the truncated 24-cell (the cantitruncated 16-cell).</p>
@@ -412,6 +419,7 @@
     <p>Which mirrors are ringed gives the name. The first alone is the regular shape, and the last alone its dual. The first two: truncated. The second alone: rectified. The middle two: bitruncated. The first and third: cantellated. The first and last: runcinated. The first three: cantitruncated. The first, second and last: runcitruncated. All four: omnitruncated. The small diagram under the list shows the current shape's rings.</p>
     <p>The cells come from the diagram too. Leave out one mirror. If every piece of what's left still has a ring, those mirrors build one kind of cell: three in a row make a polyhedron, and a pair with a lone mirror make a prism. There are as many of that cell as the whole family of mirror copies is bigger than the copies those three can make on their own: 120 copies for the 5-cell's mirrors, 384 for the tesseract's, 1,152 for the 24-cell's and 14,400 for the 120-cell's.</p>
     <p>Four families of 15 choices make 60, but the 5-cell's and the 24-cell's diagrams read the same backwards, so only 9 of each are different, and three of the tesseract's are 24-cell shapes. That leaves 45. The last two are made another way: the snub 24-cell takes away every other corner of the truncated 24-cell, and the grand antiprism, which Conway and Guy found with a computer, comes from none of the families at all.</p>
+    <p><strong>Star uniform shapes.</strong> Let neighbouring mirrors meet at star angles instead (a half turn divided by 5/2, 5/3, 5/4, 3/2 or 4/3) and the same rings build star shapes, whose cells pass through one another. A search through every set of four such mirrors found 569 whose reflections make a finite group (most with the 120-cell’s symmetry) and, across all their rings, 123 different pictures that aren’t one of the 47. They’re under <b>Stars</b>, each with its diagram. Many star shapes have exactly the corners and edges of another, so as pictures they appear once: four of the ten regular star polytopes, for one, are the same picture.</p>
     <div class="btns"><button class="btn try" data-try="rt8|explore">Try it: the runcitruncated tesseract</button><button class="btn try" data-try="o24|explore">Try it: the omnitruncated 24-cell</button></div>
   </details>
   <details class="topic"><summary>Schläfli symbols: {4,3,3} and friends</summary>

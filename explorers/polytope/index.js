@@ -13,6 +13,7 @@ import './geometry/prisms.js';
 import './geometry/cousins3d.js';
 import './geometry/wythoff.js';
 import './geometry/uniform.js';
+import './geometry/ustar.js';
 import './geometry/faces.js';
 import './geometry/schlafli.js';
 import './math/rotate4d.js';
