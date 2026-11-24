@@ -30,7 +30,7 @@ export const ptrs=new Map();
 // lower frame rate shows less than a soft picture.
 export const MOTION_Q={
   smooth:  { d3:[0.6, 0.85, 0.3], d2:[1, 1, 0.3], dive:0 },      // [start, ceiling, floor]: how it always was
-  balanced:{ d3:[0.85, 1, 0.5],  d2:[1, 1, 0.6], dive:0.1, lift:0.15 },   // lift: the fractals whose moving frames take fewer steps (render/bla.js) stay this much sharper
+  balanced:{ d3:[0.85, 1, 0.5],  d2:[1, 1, 0.6], dive:0.1 },
   sharp:   { d3:[1, 1, 1],       d2:[1, 1, 1],   dive:0 },
 };
 // the viewer's own choice wins; without one, slow graphics (no graphics card, little memory) start smooth rather than sharp
@@ -40,5 +40,4 @@ export function qLimits(){ const M=MOTION_Q[st.motionQ]||MOTION_Q.balanced, [sta
   // the floor is a share of the screen's pixels; on a sharper screen (devicePixelRatio 2) Smooth and Balanced may soften as far,
   // counted in CSS pixels, as on an ordinary one, since four times the pixels cost four times as much (Sharp never softens)
   const k = st.mode==='d3' || floor>=1 ? 1 : Math.min(window.devicePixelRatio||1, 2);
-  const lift = st.mode!=='d3' && M.lift && st.type>=1 && st.type<=5 ? M.lift : 0;
-  return { start, max, floor: Math.min(max, (floor+lift+(diving?M.dive:0))/k) }; }
+  return { start, max, floor: Math.min(max, (floor+(diving?M.dive:0))/k) }; }
