@@ -25,12 +25,6 @@ function buildBLA(slot, cmax){
     if (!(A<1e30) || !(B<1e30) || !(lv.rr[j]>0)) continue; ab[4*k]=lv.ar[j]; ab[4*k+1]=lv.ai[j]; ab[4*k+2]=lv.br[j]; ab[4*k+3]=lv.bi[j]; rv[k]=Math.log2(lv.rr[j]); } });
   blaTex(slot,'blaAB',gl.RGBA32F,gl.RGBA,1024,H,ab); blaTex(slot,'blaRt',gl.R32F,gl.RED,1024,H,rv);
   slot.bla={L:levels.length, off, cmax, ref:slot.refId}; }
-// Moving pictures on the Burning Ship, Tricorn, Multibrot, Celtic and Phoenix take at most 60% of the steps (never fewer than
-// 150); the sharp picture once it stops takes them all. Their inside points run every step, so this makes a moving frame
-// 1.2-1.7x cheaper, and that pays for their higher floor in qLimits(): they looked fuzzy while moving on phones, where the
-// Mandelbrot set (which skips its inside points) stayed sharp. Under 1% of pixels change when the sharp picture arrives,
-// except where many points escape late (Burning Ship near its hull, ten times in: 8%).
-export const moveCapped=type=>type>=1 && type<=5 && (shared.moveCap??0.6)<1;
 export function render2DAll(hq, strip){
   const g=gl, b=hexRGB(st.bg); g.viewport(0,0,glc.width,glc.height);
   // strip: [from, to) of the picture's height; drawn as that share of scattered pixels, not a band (u_part in the shader)
@@ -38,7 +32,7 @@ export function render2DAll(hq, strip){
   if (!strip){ g.clearColor(b[0],b[1],b[2],1); g.clear(g.COLOR_BUFFER_BIT); }
   if (TYPES[st.type].cpu) return;
   for (const d of viewDescs()){
-    const v=d.v, type=st.type, full=effIter(v), iter=!hq && moveCapped(type) ? Math.min(full, Math.max(150, Math.round(full*(shared.moveCap??0.6)))) : full; let refLen=0, tex=null, ctex=null;
+    const v=d.v, type=st.type, iter=effIter(v); let refLen=0, tex=null, ctex=null;
     let refOff=[0,0], exP=null, blaP=null; const ext=extT(type) && isExt() && d.v===st.vE, jul=d.julia||type===5, jcc=type===5?PHX:st.jc;
     if (deepT(type)){ const base=[type, type===3?Math.round(st.power):'', jul?1:0, jul?jcc.join():''].join('|'), key=base+(ext?'|x':'|s'), slot=refSlots[d.slot]; let sh=refShift(slot,v);
       if (slot.key!==key || !slot.c || (!slot.escaped && slot.maxIt<iter) || Math.hypot(sh[0],sh[1])>0.4*v.scale){
