@@ -35,7 +35,7 @@ export function onKey(e){
     case 'z': case 'Z': case 'x': case 'X': case ',': case '.': case '<': case '>': clickNext(st.mode==='grow'?'#growShapes button':st.mode==='d3'?'.sh3 button':'#types button', 'xX.>'.includes(k)?1:-1); break;
     case '+': case '=': zoomBy(0.8, cssW/2, cssH/2); break;
     case '-': case '_': zoomBy(1.25, cssW/2, cssH/2); break;
-    case 'g': case 'G': if (st.mode==='explore') $('diveBtn').click(); else if (st.mode==='d3') $('dive3Btn').click(); else used=false; break;
+    case 'g': case 'G': if (st.mode==='explore') $(e.shiftKey ? 'diveOutBtn' : 'diveBtn').click(); else if (st.mode==='d3') $('dive3Btn').click(); else used=false; break;
     case 'p': case 'P': if (st.mode==='explore'){ flyTo((st.placeIdx+1)%TYPES[st.type].places.length); } else used=false; break;
     /* J: swap with the Julia panel (the Julia set at the middle, or at the pointer while it's over the picture), and back */
     case 'j': case 'J': if (juliaAvail()) juliaSwap(); else if (st.mode==='link') $('linkOpen').click(); else used=false; break;

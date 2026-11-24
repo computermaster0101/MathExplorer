@@ -78,8 +78,9 @@
       <div class="seg" id="budMode"><button data-bm="buddha" class="on">Buddhabrot</button><button data-bm="nebula">Nebulabrot</button><button data-bm="anti">Anti</button></div>
       <p class="note" id="budNote">It keeps sharpening the longer you watch. Moving or zooming starts the count again.</p>
     </div>
-    <div class="btns" style="margin-top:10px"><button class="btn" id="diveBtn">Dive in</button><button class="btn" id="resetView">Reset view</button></div>
+    <div class="btns" style="margin-top:10px"><button class="btn" id="diveBtn">Dive in</button><button class="btn" id="diveOutBtn">Dive out</button><button class="btn" id="resetView">Reset view</button></div>
     <label class="check" style="margin-top:4px"><input type="checkbox" id="endlessChk" checked> Endless: never stops. When the digits run out it flies back out and dives somewhere new</label>
+    <label class="check" style="margin-left:22px"><input type="checkbox" id="endlessBackChk"> Dive back out the way it came instead of flying (slower: as long as the dive in)</label>
     <label class="check"><input type="checkbox" id="steerChk"> Steer toward detail while diving (T)</label>
     <p class="note" style="margin-top:6px">While diving, tap or click anywhere to steer toward that spot. Reset view starts a new trip.</p>
     <div class="row"><span style="width:74px">Dive speed</span><input type="range" id="diveSpd" min="0.1" max="2" step="0.05" value="0.5"><output id="diveo">0.5×</output></div>
@@ -286,6 +287,7 @@
   <div class="sec"><table class="keys">
     <tr><td><kbd>Space</kbd></td><td>Pause / resume everything that's moving (starts a dive, or the mode's motion, when nothing is)</td></tr>
     <tr><td><kbd>G</kbd></td><td>Dive in / stop diving (Explore and 3D)</td></tr>
+    <tr><td><kbd>Shift</kbd> + <kbd>G</kbd></td><td>Dive out / stop (Explore)</td></tr>
     <tr><td><kbd>T</kbd></td><td>Steer dives toward detail on / off</td></tr>
     <tr><td><kbd>← → ↑ ↓</kbd></td><td>3D: turn (round the shape, or in place while diving) · 2D: move around</td></tr>
     <tr><td><kbd>W A S D</kbd></td><td>3D: slide up, left, down, right · 2D: move around</td></tr>

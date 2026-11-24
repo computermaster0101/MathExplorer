@@ -15,7 +15,7 @@ import { drawOrbit, newOrbit, orbitIdx } from './modes/orbit.js';
 import { drawCentreMark, drawLink, drawTapMark, pathC } from './modes/julia-link.js';
 import { drawInsets } from './ui/insets.js';
 import { refreshLegend, updateDynamic } from './ui/learn.js';
-import { advanceFly, bsSweep, diveUI, endlessWarp, pwAt, syncR4, syncW, twAmp } from './ui/controls.js';
+import { advanceFly, bsSweep, diveUI, endlessNewSpot, endlessWarp, pwAt, syncR4, syncW, twAmp, topScale } from './ui/controls.js';
 import { writeHash } from './io/share.js';
 import { BeatGate, Groove, Phase, colourStep, cycleBeats, energyMul, pulseFx as pulse, reacting, voiceFx as voice } from '../../js/shell/audio/react.js';
 import { recFrame } from './io/recorder.js';
@@ -189,7 +189,10 @@ export function loop(now){
   if (st.cycleSpeed>0 && !st.paused){ st.cycle=(st.cycle+dt*st.cycleSpeed*0.06)%1; anim=true; if (frameN%10===0) refreshLegend(); }
   if (ptrs.size) anim=true;
   st.keyDriveT-=dt;
-  if (st.mode==='explore' && !st.paused){ if (st.fly){ advanceFly(dt); anim=true; } else if (st.dive){ const v=st.vE, ms=minScale(st.type);
+  if (st.mode==='explore' && !st.paused && !st.fly && st.dive && st.diveDir<0){ const v=st.vE, top=topScale();   // diving out (issue #68): the same pace, the other way
+    v.scale=Math.min(top, v.scale*Math.exp(dt*st.diveSpeed*0.4*diveEnergy())); touch(); anim=true;
+    if (v.scale>=top){ if (st.endlessRun) endlessNewSpot(); else { st.dive=false; st.diveDir=1; diveUI(); } } }
+  else if (st.mode==='explore' && !st.paused){ if (st.fly){ advanceFly(dt); anim=true; } else if (st.dive){ const v=st.vE, ms=minScale(st.type);
     st.manualT-=dt; const keys=st.keyDriveT>0;   // steering with the keys: the automatic steering waits
     if (st.steer && !keys){ if (!shared.gridJob) startGrid('steer'); runGrid(5); }
     if (st.steerTo && !keys){ const sc=v.scale, man=st.manualT>0, gain=man?1.8:0.9, mxv=man?1.0:st.steerCentreIn?0.9:0.45; let tx=st.steerTo[0]/sc*gain, ty=st.steerTo[1]/sc*gain; const m=Math.hypot(tx,ty); if (m>mxv){ tx*=mxv/m; ty*=mxv/m; }
