@@ -232,7 +232,7 @@ function stepFoamFly(dt) {
 let maze = null; const H = 1, TH = 0.07, EYE = 0.45;
 const mz = { mode: 'drive', pos: new V3(), yaw: 0, pitch: 0, cell: 0, steps: 0, deadEnds: 0, visits: null, t0: 0, done: false, solved: false, path: null, u: 0, hint: 0, over: false, build: null, hand: null, ghost: null, usedMap: false };
 const wallMat = patchMaterial(plain()), floorMat = plain({ roughness: 0.8 }), markMat = new THREE.MeshBasicMaterial({ color: 0xffffff }), goalMat = new THREE.MeshBasicMaterial({ color: 0xffd36e });
-let walls = null, wallKey = null, floors = null, crumbs = null, pathMarks = null, goalMesh = null, playerMesh = null, ghostMesh = null;
+let walls = null, slabs = null, posts = null, wallKey = null, floors = null, crumbs = null, pathMarks = null, goalMesh = null, playerMesh = null, ghostMesh = null;
 const goalCell = () => (st.goal === 'centre' ? maze.id(Math.floor(maze.X / 2), Math.floor(maze.Y / 2), Math.floor((maze.Z - 1) / 2)) : maze.N - 1);
 const cellCentre = (i, exploded) => { const [x, y, z] = maze.xyz(i); return new V3(x + 0.5, z * H * (exploded ? 1.8 : 1) + EYE, y + 0.5); };
 function newMaze(seed) {
@@ -242,39 +242,104 @@ function newMaze(seed) {
   mz.visits[0] = 1; mz.pos.copy(cellCentre(0)); mz.yaw = firstYaw(0); mz.pitch = 0; mazeView(); labels(); share.touch();
 }
 function firstYaw(i) { for (const [d, yaw] of [[0, -Math.PI / 2], [2, Math.PI], [1, Math.PI / 2], [3, 0]]) if (isOpen(maze, i, d)) return yaw; return 0; }
-// every wall is one instance of a box, so watching the maze being built can take walls away one at a time
+// Rounded walls. Each wall is a thin slab with a quarter-round cove where it meets the floor and the ceiling, swept along its
+// length; a round post at every inside corner where walls meet carries the same profile turned round its axis, so the ends of
+// walls are round and the coves run on round them, and every inside corner between two walls has an upright cove too. Walls
+// round the outside are coved on the inside only, with a plain round post at their corners. Square boxes looked
+// old-fashioned. Every piece is an instance, so watching the maze being built can still take walls away one at a time (a
+// post or corner cove goes with the walls that hold it).
+const COVE = 0.13;
+function wallProfile(top) {   /* half the cross-section (z ≥ 0), as strips of [z, y, normal z, normal y]; a sharp edge starts a new strip */
+  const t = TH / 2, f0 = -H / 2 + t - 0.003, f1 = H / 2 - t + 0.003;
+  const arc = (cz, cy, a0, a1, n = 10) => [...Array(n + 1)].map((_, i) => { const a = a0 + (a1 - a0) * i / n, z = cz + COVE * Math.cos(a), y = cy + COVE * Math.sin(a); return [z, y, (cz - z) / COVE, (cy - y) / COVE]; });
+  const side = arc(t + COVE, f0 + COVE, -Math.PI / 2, -Math.PI);
+  if (!top) return [[[0, f0, 0, -1], [t + COVE, f0, 0, -1]], [...side, [t, H / 2, 1, 0]], [[t, H / 2, 0, 1], [0, H / 2, 0, 1]]];
+  return [[[0, f0, 0, -1], [t + COVE, f0, 0, -1]], [...side, ...arc(t + COVE, f1 - COVE, Math.PI, Math.PI / 2)], [[t + COVE, f1, 0, 1], [0, f1, 0, 1]]];
+}
+const flatProfile = () => [[[0, -H / 2, 0, -1], [TH / 2, -H / 2, 0, -1]], [[TH / 2, -H / 2, 1, 0], [TH / 2, H / 2, 1, 0]], [[TH / 2, H / 2, 0, 1], [0, H / 2, 0, 1]]];
+function meshOf(P, N, I) {   /* each triangle wound to face along its normals (DoubleSide flips the normal on back faces) */
+  for (let k = 0; k < I.length; k += 3) { const [a, b, c] = [I[k], I[k + 1], I[k + 2]].map(i => i * 3), u = [0, 1, 2].map(j => P[b + j] - P[a + j]), v = [0, 1, 2].map(j => P[c + j] - P[a + j]);
+    const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    if ([0, 1, 2].reduce((sum, j) => sum + n[j] * (N[a + j] + N[b + j] + N[c + j]), 0) < 0) { const x = I[k + 1]; I[k + 1] = I[k + 2]; I[k + 2] = x; } }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setIndex(I); return g;
+}
+function sweepGeo(sides, len = 1) {   /* along x: [profile, +1 or −1] for each side of the wall */
+  const P = [], N = [], I = [];
+  for (const [strips, m] of sides) for (const sp of strips) { const base = P.length / 3; for (const [z, y, nz, ny] of sp) for (const x of [-len / 2, len / 2]) { P.push(x, y, z * m); N.push(0, ny, nz * m); }
+    for (let i = 0; i < sp.length - 1; i++) { const q = base + 2 * i; I.push(q, q + 1, q + 3, q, q + 3, q + 2); } }
+  return meshOf(P, N, I);
+}
+function revolveGeo(strips, n = 24) {   /* turned round the y axis */
+  const P = [], N = [], I = [];
+  for (const sp of strips) { const base = P.length / 3; for (const [r, y, nr, ny] of sp) for (let k = 0; k <= n; k++) { const a = k / n * 2 * Math.PI, c = Math.cos(a), sn = Math.sin(a); P.push(r * c, y, r * sn); N.push(nr * c, ny, nr * sn); }
+    for (let i = 0; i < sp.length - 1; i++) for (let k = 0; k < n; k++) { const q = base + i * (n + 1) + k, w = q + n + 1; I.push(q, w, q + 1, q + 1, w, w + 1); } }
+  return meshOf(P, N, I);
+}
+function filletGeo(top, n = 10) {   /* the upright cove in the corner between walls along +x and +z */
+  const t = TH / 2, c = t + COVE, f0 = -H / 2 + t - 0.003, f1 = top ? H / 2 - t + 0.003 : H / 2, P = [], N = [], I = [];
+  for (let i = 0; i <= n; i++) { const a = Math.PI + Math.PI / 2 * i / n, x = c + COVE * Math.cos(a), z = c + COVE * Math.sin(a); for (const y of [f0, f1]) { P.push(x, y, z); N.push((c - x) / COVE, 0, (c - z) / COVE); } }
+  for (let i = 0; i < n; i++) { const q = 2 * i; I.push(q, q + 1, q + 3, q, q + 3, q + 2); }
+  if (!top) { const base = P.length / 3; P.push(t, H / 2, t); N.push(0, 1, 0); for (let i = 0; i <= n; i++) { P.push(P[6 * i], H / 2, P[6 * i + 2]); N.push(0, 1, 0); } for (let i = 0; i < n; i++) I.push(base, base + 1 + i, base + 2 + i); }   /* its top, seen on the map */
+  return meshOf(P, N, I);
+}
+let mazeParts = null;
+const YAXIS = new V3(0, 1, 0), turnY = a => new THREE.Quaternion().setFromAxisAngle(YAXIS, a), turnQ = [0, 1, 2, 3].map(q => turnY(-q * Math.PI / 2));
 function buildMazeScene(exploded) {
-  clear(world); const { X, Y, Z } = maze, list = [], ex = exploded ? 1.8 : 1;
+  clear(world); const { X, Y, Z } = maze, list = [], ex = exploded ? 1.8 : 1, count = { wall: 0, edge: 0, slab: 0 }, corners = new Map();
   wallKey = new Map();
-  const add = (k, cx, cy, cz, sx, sy, sz, floorLevel) => { wallKey.set(k, list.length); list.push({ cx, cy, cz, sx, sy, sz, z: floorLevel }); };
+  const corner = (gx, gy, z) => { const k = gx + ',' + gy + ',' + z; if (!corners.has(k)) corners.set(k, { gx, gy, z, y: z * H * ex + H / 2, edge: gx === 0 || gy === 0 || gx === X || gy === Y, d: [0, 0, 0, 0] }); return k; };
+  // a wall from corner a to corner b (along x, or along z when `along` is 'z'); `inside` turns a wall round the outside to face in
+  const wall = (key, cx, cz, along, z, a, b, inside) => { const m = inside == null ? 'wall' : 'edge', ang = inside == null ? (along === 'z' ? Math.PI / 2 : 0) : inside;
+    wallKey.set(key, list.length); list.push({ m, k: count[m]++, cx, cy: z * H * ex + H / 2, cz, q: turnY(ang), z, a, b, da: along === 'z' ? 1 : 0, db: along === 'z' ? 3 : 2 }); };
+  const slab = (key, cx, cy, cz, z) => { wallKey.set(key, list.length); list.push({ m: 'slab', k: count.slab++, cx, cy, cz, z }); };
   for (let z = 0; z < Z; z++) for (let y = 0; y < Y; y++) for (let x = 0; x < X; x++) {
     const i = maze.id(x, y, z), b = z * H * ex;
-    add(i + ':0', x + 1, b + H / 2, y + 0.5, TH, H, 1 + TH, z); add(i + ':2', x + 0.5, b + H / 2, y + 1, 1 + TH, H, TH, z);
-    if (x === 0) add(i + ':1', 0, b + H / 2, y + 0.5, TH, H, 1 + TH, z); if (y === 0) add(i + ':3', x + 0.5, b + H / 2, 0, 1 + TH, H, TH, z);
-    add(i + ':5', x + 0.5, b, y + 0.5, 1 + TH, TH, 1 + TH, z);   // the floor under each room (a shaft down is an opening in it)
-    if (z === Z - 1 && !exploded) add(i + ':4', x + 0.5, b + H, y + 0.5, 1 + TH, TH, 1 + TH, z);   // the roof
+    wall(i + ':0', x + 1, y + 0.5, 'z', z, corner(x + 1, y, z), corner(x + 1, y + 1, z), x === X - 1 ? -Math.PI / 2 : null);
+    wall(i + ':2', x + 0.5, y + 1, 'x', z, corner(x, y + 1, z), corner(x + 1, y + 1, z), y === Y - 1 ? Math.PI : null);
+    if (x === 0) wall(i + ':1', 0, y + 0.5, 'z', z, corner(0, y, z), corner(0, y + 1, z), Math.PI / 2);
+    if (y === 0) wall(i + ':3', x + 0.5, 0, 'x', z, corner(x, 0, z), corner(x + 1, 0, z), 0);
+    slab(i + ':5', x + 0.5, b, y + 0.5, z);   // the floor under each room (a shaft down is an opening in it)
+    if (z === Z - 1 && !exploded) slab(i + ':4', x + 0.5, b + H, y + 0.5, z);   // the roof
   }
-  walls = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), wallMat, list.length); walls.userData.list = list;
+  const prof = wallProfile(!exploded), cl = [...corners.values()], inner = cl.filter(c => !c.edge), outer = cl.filter(c => c.edge);   /* the map has no roof, so no coves along its walls' tops */
+  inner.forEach((c, k) => { c.k = k; }); outer.forEach((c, k) => { c.k = k; });
+  const M = { wall: new THREE.InstancedMesh(sweepGeo([[prof, 1], [prof, -1]]), wallMat, count.wall), edge: new THREE.InstancedMesh(sweepGeo([[prof, 1], [flatProfile(), -1]]), wallMat, count.edge),
+    slab: new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), wallMat, count.slab), post: new THREE.InstancedMesh(revolveGeo(prof), wallMat, Math.max(1, inner.length)),
+    col: new THREE.InstancedMesh(revolveGeo(flatProfile()), wallMat, Math.max(1, outer.length)), fil: new THREE.InstancedMesh(filletGeo(!exploded), wallMat, 4 * cl.length) };
+  cl.forEach((c, k) => { c.f = 4 * k; });
+  mazeParts = { list, cl, M }; walls = M.wall;
   wallColours();
-  world.add(walls); applyOpenings(Infinity);
+  world.add(...Object.values(M)); applyOpenings(Infinity);
   crumbs = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.12, 0.12, 0.02, 16), markMat, maze.N); world.add(crumbs);
-  pathMarks = new THREE.InstancedMesh(new THREE.SphereGeometry(0.09, 12, 8), new THREE.MeshBasicMaterial({ color: 0x9fffd0 }), maze.N); world.add(pathMarks);
+  pathMarks = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 20, 10), new THREE.MeshBasicMaterial({ color: 0x9fffd0 }), maze.N); world.add(pathMarks);
   goalMesh = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.05, 12, 32), goalMat); goalMesh.position.copy(cellCentre(goalCell(), exploded)).setY(goalMesh.position.y - EYE + H * 0.5); world.add(goalMesh);
   const gl = new THREE.PointLight(0xffd36e, 1.2, 3, 1.5); goalMesh.add(gl);
   playerMesh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 12), new THREE.MeshBasicMaterial({ color: 0x9fd0ff })); playerMesh.visible = false; world.add(playerMesh);
   ghostMesh = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 12), new THREE.MeshBasicMaterial({ color: 0xff8fd0, transparent: true, opacity: 0.8 })); ghostMesh.visible = false; ghostMesh.add(new THREE.PointLight(0xff8fd0, 0.8, 2.5, 1.5)); world.add(ghostMesh);
   mz.exploded = exploded; refreshMarks();
 }
-function wallColours() { const list = walls.userData.list, Z = maze.Z; list.forEach((w, k) => { const c = tone(0.12 + 0.76 * (Z > 1 ? w.z / (Z - 1) : 0.5)).map(v => v * (w.sy < H ? 0.55 : 1)); walls.setColorAt(k, new THREE.Color(...c)); }); if (walls.instanceColor) walls.instanceColor.needsUpdate = true; }
+function wallColours() {
+  const { list, cl, M } = mazeParts, Z = maze.Z, col = (z, f) => new THREE.Color(...tone(0.12 + 0.76 * (Z > 1 ? z / (Z - 1) : 0.5)).map(v => v * f));
+  list.forEach(w => M[w.m].setColorAt(w.k, col(w.z, w.m === 'slab' ? 0.55 : 1)));
+  for (const c of cl) { const k = col(c.z, 1); M[c.edge ? 'col' : 'post'].setColorAt(c.k, k); for (let q = 0; q < 4; q++) M.fil.setColorAt(c.f + q, k); }
+  for (const m of Object.values(M)) if (m.instanceColor) m.instanceColor.needsUpdate = true;
+}
 // show the walls that are still standing: all of them, or only those not yet opened after `upto` building steps
 function applyOpenings(upto) {
-  const list = walls.userData.list, M = new THREE.Matrix4(), hidden = new Set(), steps = maze.steps;
+  const { list, cl, M } = mazeParts, T = new THREE.Matrix4(), hidden = new Set(), steps = maze.steps;
   const n = Math.min(upto, steps.length); for (let s = 0; s < n; s++) { const [i, d] = steps[s]; hidden.add(d % 2 === 0 ? i + ':' + d : neighbour(maze, i, d) + ':' + (d - 1)); }
   if (upto === Infinity) for (let i = 0; i < maze.N; i++) for (const d of [0, 2, 4]) if (isOpen(maze, i, d)) hidden.add(i + ':' + d);
   if (upto === Infinity) for (let i = 0; i < maze.N; i++) if (isOpen(maze, i, 5)) hidden.add(i + ':5');
   for (let s = 0; upto !== Infinity && s < n; s++) { const [i, d] = steps[s]; if (d === 4) hidden.add(neighbour(maze, i, 4) + ':5'); if (d === 5) hidden.add(i + ':5'); }
-  for (const [key, k] of wallKey) { const w = list[k], off = hidden.has(key) ? 0 : 1; M.makeScale(w.sx * off || 1e-6, w.sy * off || 1e-6, w.sz * off || 1e-6).setPosition(w.cx, w.cy, w.cz); walls.setMatrixAt(k, M); }
-  walls.instanceMatrix.needsUpdate = true; if (walls.instanceColor) walls.instanceColor.needsUpdate = true;
+  const P = new V3(), Sc = new V3(), one = new THREE.Quaternion(), gone = new V3(1e-6, 1e-6, 1e-6), corners = new Map(cl.map(c => [c.gx + ',' + c.gy + ',' + c.z, c]));
+  for (const c of cl) c.d.fill(0);
+  for (const [key, k] of wallKey) { const w = list[k], on = !hidden.has(key); P.set(w.cx, w.cy, w.cz);
+    if (w.m === 'slab') { T.compose(P, one, on ? Sc.set(1 + TH, TH, 1 + TH) : gone); M.slab.setMatrixAt(w.k, T); }
+    else { T.compose(P, w.q, on ? Sc.set(1, 1, 1) : gone); M[w.m].setMatrixAt(w.k, T); if (on) { corners.get(w.a).d[w.da]++; corners.get(w.b).d[w.db]++; } } }
+  // a post where walls meet (or one ends); an upright cove in each corner with a wall on both sides (directions +x, +z, −x, −z)
+  for (const c of cl) { P.set(c.gx, c.y, c.gy); const any = c.d.some(v => v); T.compose(P, one, any ? Sc.set(1, 1, 1) : gone); M[c.edge ? 'col' : 'post'].setMatrixAt(c.k, T);
+    for (let q = 0; q < 4; q++) { T.compose(P, turnQ[q], c.d[q] && c.d[(q + 1) % 4] ? Sc.set(1, 1, 1) : gone); M.fil.setMatrixAt(c.f + q, T); } }
+  for (const m of Object.values(M)) m.instanceMatrix.needsUpdate = true;
 }
 function refreshMarks() {
   const M = new THREE.Matrix4(), ex = mz.exploded; let k = 0;
@@ -282,7 +347,7 @@ function refreshMarks() {
   crumbs.instanceMatrix.needsUpdate = true; if (crumbs.instanceColor) crumbs.instanceColor.needsUpdate = true;
   const show = mz.path && (mz.hint > 0 || mz.over || mz.mode === 'solve') ? (mz.hint > 0 ? mz.path.slice(Math.max(0, Math.floor(mz.u)), Math.floor(mz.u) + 7) : mz.path) : [];
   for (let i = 0; i < maze.N; i++) { M.makeScale(1e-6, 1e-6, 1e-6); pathMarks.setMatrixAt(i, M); }
-  show.forEach(i => { const c = cellCentre(i, ex); M.makeScale(1, 1, 1).setPosition(c.x, c.y - 0.2, c.z); pathMarks.setMatrixAt(k++, M); });
+  show.forEach(i => { const c = cellCentre(i, ex); M.makeScale(1, 0.3, 1).setPosition(c.x, c.y - EYE + 0.065, c.z); pathMarks.setMatrixAt(k++, M); });
   pathMarks.instanceMatrix.needsUpdate = true;
 }
 function mazeView() {   // first person, or the map from above
@@ -292,7 +357,7 @@ function mazeView() {   // first person, or the map from above
   refreshMarks();
 }
 function mazeCollide(p) {   // keep the eye inside the rooms: walls, floors and roofs are solid, openings are not
-  const r = 0.2, x = clamp(Math.floor(p.x), 0, maze.X - 1), y = clamp(Math.floor(p.z), 0, maze.Y - 1), z = clamp(Math.floor((p.y - EYE + 0.5) / H), 0, maze.Z - 1), i = maze.id(x, y, z);
+  const r = 0.27, x = clamp(Math.floor(p.x), 0, maze.X - 1), y = clamp(Math.floor(p.z), 0, maze.Y - 1), z = clamp(Math.floor((p.y - EYE + 0.5) / H), 0, maze.Z - 1), i = maze.id(x, y, z);
   if (p.x - x < r && !isOpen(maze, i, 1)) p.x = x + r; if (x + 1 - p.x < r && !isOpen(maze, i, 0)) p.x = x + 1 - r;
   if (p.z - y < r && !isOpen(maze, i, 3)) p.z = y + r; if (y + 1 - p.z < r && !isOpen(maze, i, 2)) p.z = y + 1 - r;
   const fl = z * H + 0.2, ce = z * H + H - 0.2; if (p.y < fl && !isOpen(maze, i, 5)) p.y = fl; if (p.y > ce && !isOpen(maze, i, 4)) p.y = ce;
@@ -333,7 +398,7 @@ function stepMaze(dt) {
   if (S.pointers.size || Math.abs(S.vel.x) + Math.abs(S.vel.y) > 1e-5) { mz.yaw -= S.vel.x * 1.2; mz.pitch = clamp(mz.pitch - S.vel.y * 1.2, -1.3, 1.3); S.vel.x = S.vel.y = 0; }
   if (mz.mode === 'go' && (k.any || !mz.walk)) mz.mode = 'drive';   // keys take over from a tap's walk
   if ((mz.mode === 'solve' && mz.path) || (mz.mode === 'hand' && mz.hand) || mz.mode === 'go') {   // (a new maze mid-solve clears the route)
-    const route = mz.mode === 'solve' ? mz.path : mz.mode === 'go' ? mz.walk : mz.hand.path, speed = mz.mode === 'solve' ? 1.6 : mz.mode === 'go' ? 2.2 : 2.6, end = route.length - 1;
+    const route = mz.mode === 'solve' ? mz.path : mz.mode === 'go' ? mz.walk : mz.hand.path, speed = (mz.mode === 'solve' ? 1 : mz.mode === 'go' ? 1.3 : 1.7) * 2 * k.scale, end = route.length - 1;
     if (!mz.off) mz.off = mz.pos.clone().sub(follow(route, 0).p);
     // even speed, easing in at the start and out at the end; with a steady beat it surges a room per beat
     const ease = Math.min(1, 0.3 + 1.4 * mz.u, 0.2 + 1.2 * (end - mz.u));
@@ -351,7 +416,7 @@ function stepMaze(dt) {
   } else {
     if (k.any) { mz.yaw -= k.turnX * 1.8 * f * dt; mz.pitch = clamp(mz.pitch + k.turnY * 1.2 * f * dt, -1.3, 1.3); }
     else if (!S.pointers.size) mz.pitch *= Math.exp(-dt * 1.5);
-    const fwd = new V3(-Math.sin(mz.yaw) * Math.cos(mz.pitch), Math.sin(mz.pitch), -Math.cos(mz.yaw) * Math.cos(mz.pitch)), right = new V3(Math.cos(mz.yaw), 0, -Math.sin(mz.yaw)), sp = 1.9 * f * dt;
+    const fwd = new V3(-Math.sin(mz.yaw) * Math.cos(mz.pitch), Math.sin(mz.pitch), -Math.cos(mz.yaw) * Math.cos(mz.pitch)), right = new V3(Math.cos(mz.yaw), 0, -Math.sin(mz.yaw)), sp = 1.2 * f * dt;
     if (k.any && !st.paused) { mz.pos.addScaledVector(fwd, k.slideY * sp).addScaledVector(right, k.slideX * sp); mazeCollide(mz.pos); }
   }
   // which room are we in now?
@@ -366,8 +431,9 @@ function stepMaze(dt) {
 function placePlayerMarker() { const c = cellCentre(mz.cell, true); playerMesh.position.copy(c); goalMesh.rotation.y += 0.02; }
 function ghostStep(dt) {   // racing the solver: a ghost that drives the shortest route at a steady pace
   if (!mz.ghost || mz.done) { if (ghostMesh) ghostMesh.visible = false; return; }
-  const P = mz.ghost.path; if (!st.paused) mz.ghost.u = Math.min(P.length - 1, mz.ghost.u + dt * 0.55);
+  const P = mz.ghost.path; if (!st.paused) mz.ghost.u = Math.min(P.length - 1, mz.ghost.u + dt * 0.35);
   const i0 = Math.floor(mz.ghost.u), w = mz.ghost.u - i0; ghostMesh.visible = true; ghostMesh.position.lerpVectors(cellCentre(P[i0], mz.over), cellCentre(P[Math.min(P.length - 1, i0 + 1)], mz.over), w);
+  ghostMesh.material.opacity = mz.over ? 0.8 : 0.8 * clamp((ghostMesh.position.distanceTo(mz.pos) - 0.25) / 0.5, 0, 1);   /* it starts where you do: fade it near the eye, where it filled the view */
   if (mz.ghost.u >= P.length - 1 && !mz.ghost.won) { mz.ghost.won = true; flashCap('<b>The solver got there first.</b> Keep going: your score is still measured against the shortest route.'); }
 }
 function finishMaze() {
