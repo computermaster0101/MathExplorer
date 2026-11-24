@@ -114,8 +114,10 @@ function resetSettings(){ const m=st.mode;
   else if (m==='grow'){ st.grow.angle={pyth:45, tree:28}; const sh=GROW[st.grow.shape]; if (sh.angle){ $('ang').value=st.grow.angle[sh.angle]; $('ango').textContent=st.grow.angle[sh.angle]+'°'; } }
   else setRange('rot',0);
   touch(); }
-export function resetView(){ st.paused=false; resetSettings(); if (st.mode==='explore' && st.endlessRun){ endlessWarp('reset'); return; }
-  if (st.mode==='d3' && (st.d3.dive||st.d3.warp) && st.endless){ start3Warp('reset'); return; }
+/* while an endless dive is going, reset flies back out and keeps diving; a paused one (a tap paused it) is stopped instead (issue #54) */
+export function resetView(){ const wasPaused=st.paused; st.paused=false; resetSettings();
+  if (st.mode==='explore' && st.endlessRun && !wasPaused){ endlessWarp('reset'); return; }
+  if (st.mode==='d3' && (st.d3.dive||st.d3.warp) && st.endless && !wasPaused){ start3Warp('reset'); return; }
   st.endlessRun=false; if (st.mode==='grow'){ st.grow.gv={ox:0,oy:0,z:1}; } else if (st.mode==='d3'){ nestReset(); st.d3.target=null; setDive3(false); st.d3.dist=d3Bound()*3.4; st.d3.yaw=0.7; st.d3.pitch=0.32; } else resetViews(); st.dive=false; diveUI(); touch(); }
 $('resetView').addEventListener('click', resetView);
 // grow
