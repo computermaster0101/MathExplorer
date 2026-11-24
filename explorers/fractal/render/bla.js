@@ -72,10 +72,16 @@ export function auxRender(o, w, h){ if (auxCv.width!==w || auxCv.height!==h){ au
 // become the history the next moving frame starts from). shared.calm = false turns it off, for comparing.
 const FSC=`#version 300 es
 precision highp float; uniform sampler2D u_cur, u_hist; uniform vec2 u_res, u_a, u_ex, u_ey; uniform float u_w; out vec4 o;
-void main(){ vec2 uv=gl_FragCoord.xy/u_res; vec3 c=texture(u_cur,uv).rgb; vec2 h=u_a+uv.x*u_ex+uv.y*u_ey;
-  if (h.x>=0.0 && h.y>=0.0 && h.x<=1.0 && h.y<=1.0) c=mix(c, texture(u_hist,h).rgb, u_w); o=vec4(c,1.0); }`;
+uniform float u_wMax;
+float lum(vec3 c){ return dot(c, vec3(0.3,0.59,0.11)); }
+void main(){ vec2 uv=gl_FragCoord.xy/u_res, e=1.0/u_res; vec3 c=texture(u_cur,uv).rgb; vec2 h=u_a+uv.x*u_ex+uv.y*u_ey;
+  // where neighbouring pixels jump between dark and bright (the speckle by the black edge of the Burning Ship's rigging),
+  // lean harder on the frames before
+  float l=lum(c), a=lum(texture(u_cur,uv+vec2(e.x,0.0)).rgb), b=lum(texture(u_cur,uv-vec2(e.x,0.0)).rgb), d=lum(texture(u_cur,uv+vec2(0.0,e.y)).rgb), f=lum(texture(u_cur,uv-vec2(0.0,e.y)).rgb);
+  float rough=max(max(abs(l-a),abs(l-b)),max(abs(l-d),abs(l-f))), w=mix(u_w, u_wMax, smoothstep(0.12, 0.45, rough));
+  if (h.x>=0.0 && h.y>=0.0 && h.x<=1.0 && h.y<=1.0) c=mix(c, texture(u_hist,h).rgb, w); o=vec4(c,1.0); }`;
 const linTex=()=>{ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t); for (const [k,v] of [[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D,k,v); return t; };
-const CALM={ cur:null, hist:null, ok:false, key:'', v:null, w:0, h:0, weight:0.75 };
+const CALM={ cur:null, hist:null, ok:false, key:'', v:null, w:0, h:0, weight:0.75, weightMax:0.92 };
 export const calmOn=()=>st.mode==='explore' && st.type>=1 && st.type<=5 && shared.calm!==false;
 const calmKey=()=>[st.type, st.julia?1:0, st.jc.join(), st.power, st.cmode, st.palette, st.palRev?1:0, st.inside, st.bg, st.density, glc.width, glc.height].join('|');
 function calm(hq){
@@ -93,7 +99,7 @@ function calm(hq){
     const Pr=main.prog('calm',FSC); gl.useProgram(Pr.p); gl.viewport(0,0,W,H);
     gl.uniform1i(Pr.u('u_cur'),0); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,CALM.hist); gl.uniform1i(Pr.u('u_hist'),1);
     gl.uniform2f(Pr.u('u_res'),W,H); gl.uniform2f(Pr.u('u_a'),a[0],a[1]); gl.uniform2f(Pr.u('u_ex'),bx[0]-a[0],bx[1]-a[1]); gl.uniform2f(Pr.u('u_ey'),by[0]-a[0],by[1]-a[1]);
-    gl.uniform1f(Pr.u('u_w'), shared.calmW ?? CALM.weight); gl.drawArrays(gl.TRIANGLES,0,3); gl.activeTexture(gl.TEXTURE0); }
+    gl.uniform1f(Pr.u('u_w'), shared.calmW ?? CALM.weight); gl.uniform1f(Pr.u('u_wMax'), Math.max(shared.calmW ?? CALM.weight, shared.calmMax ?? CALM.weightMax)); gl.drawArrays(gl.TRIANGLES,0,3); gl.activeTexture(gl.TEXTURE0); }
   // this frame (blended or sharp) is the next one's history
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,CALM.hist); gl.copyTexImage2D(gl.TEXTURE_2D,0,gl.RGB,0,0,W,H,0);
   CALM.ok=true; CALM.key=key; CALM.v={cx:v.cx, lx:v.lx||0, cy:v.cy, ly:v.ly||0, bx:v.bx, by:v.by, scale:v.scale, rot:v.rot, cw:cssW, ch:cssH};
