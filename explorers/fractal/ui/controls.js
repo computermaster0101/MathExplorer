@@ -3,7 +3,7 @@ import { $, clamp, clickIn, lerp, setCheck, setRange, smooth } from '../util.js'
 import { ddFrom } from '../math/double-double.js';
 import { dblToFix, fixToNum, strToFix } from '../math/big-fixed.js';
 import { JPRESETS, TYPES } from '../fractals/types.js';
-import { fitV, isExt, qLimits, st, toMath, view } from '../state.js';
+import { fitV, isExt, juliaView, qLimits, st, toMath, view } from '../state.js';
 import { escR2, startZ, stepFn } from '../fractals/iterate.js';
 import { PALETTES, css, fmtBig, fmtC, minus, setRamp } from '../color/palettes.js';
 import { colourControls } from '../../../js/common/colours.js';
@@ -53,17 +53,21 @@ export function advanceFly(dt){ const F=st.fly, v=st.vE; F.t+=dt; const u=clamp(
   if (u>=1){ v.scale=Math.exp(F.b.ls); st.fly=null; if (F.then) F.then(); } touch(); }
 // ---- endless dive: when the digits run out (or it's stuck in black), fly back to the top and dive somewhere new ----
 export function diveUI(){ const on=st.dive||st.endlessRun; $('diveBtn').classList.toggle('on',on); $('diveBtn').textContent=on?'Stop diving':'Dive in'; }
-function pickSpot(){ const T=TYPES[st.type], h=view(T.view); fitV(h, cssW/cssH); const d={x:0,y:0,w:cssW,h:cssH,v:h}; let pool=[];
-  if ((st.type<=4 || st.type===11) && !st.julia){ const f=stepFn(st.type), R2=escR2(st.type);
-    for (let gy=0;gy<22;gy++) for (let gx=0;gx<34;gx++){ const w=toWorld(d, cssW*(0.04+0.92*gx/33), cssH*(0.06+0.88*gy/21)), c=toMath(st.type,w); let z=startZ(st.type,c), n=-1;
+// the whole picture an endless dive flies back to: the fractal's, or on a Julia set the Julia set's (issue: a reset while
+// diving into a Julia set flew to the fractal's home and its places, the wrong spot)
+const juliaShown=()=>st.julia && !TYPES[st.type].juliaOnly;
+function homeView(){ const h=juliaShown() ? juliaView() : view(TYPES[st.type].view); fitV(h, cssW/cssH); return h; }
+function pickSpot(){ const T=TYPES[st.type], h=homeView(), jv=juliaShown(); const d={x:0,y:0,w:cssW,h:cssH,v:h}; let pool=[];
+  if ((st.type<=4 || st.type===11) && (!st.julia || jv)){ const f=stepFn(st.type), R2=escR2(st.type);
+    for (let gy=0;gy<22;gy++) for (let gx=0;gx<34;gx++){ const w=toWorld(d, cssW*(0.04+0.92*gx/33), cssH*(0.06+0.88*gy/21)), q=toMath(st.type,w), c=jv ? st.jc : q; let z=jv ? q : startZ(st.type,c), n=-1;
       for (let i=0;i<500;i++){ z=f(z,c); if (!(z[0]*z[0]+z[1]*z[1]<=R2)){ n=i; break; } } if (n>=30) pool.push({w, n}); } }
-  if (!pool.length) return T.places.length>1 ? (()=>{ const p=T.places[1+Math.floor(Math.random()*(T.places.length-1))]; return [ddFrom(p[1]),ddFrom(p[2])]; })() : [[h.cx+(Math.random()-0.5)*h.scale,0],[h.cy+(Math.random()-0.5)*h.scale,0]];
+  if (!pool.length) return T.places.length>1 && !jv ? (()=>{ const p=T.places[1+Math.floor(Math.random()*(T.places.length-1))]; return [ddFrom(p[1]),ddFrom(p[2])]; })() : [[h.cx+(Math.random()-0.5)*h.scale,0],[h.cy+(Math.random()-0.5)*h.scale,0]];
   let tot=0; for (const q of pool) tot+=q.n*q.n; let r=Math.random()*tot; for (const q of pool){ r-=q.n*q.n; if (r<=0) return [[q.w[0],0],[q.w[1],0]]; } return [[pool[0].w[0],0],[pool[0].w[1],0]]; }
 export function endlessWarp(why){ const T=TYPES[st.type], v=st.vE; st.dive=false; st.endlessRun=true; st.steerTo=null; st.vel=[0,0]; shared.gridJob=null; st.insideT=0; st.manualT=0; st.steerCentreIn=false; st.steerPref=Math.random()*2*Math.PI; const mag=v.def/v.scale;
   const msg = why==='reset' ? '<b>Starting a new trip.</b> Flying back to the top to pick a fresh spot on the edge.'
     : why==='inside' ? `<b>Landed inside the set at ×${fmtBig(mag)}</b>, where it's black all the way down. Flying back to the top to dive somewhere new.`
     : `<b>Out of digits at ×${fmtBig(mag)}.</b> This is as deep as the numbers go here, so it's flying back to the top to dive somewhere new.`;
-  const home=view(T.view); fitV(home, cssW/cssH);
+  const home=homeView();
   startFly('the top', [home.cx,0], [home.cy,0], home.scale, ()=>{ const sp=pickSpot();
     startFly('a new spot', sp[0], sp[1], home.scale*0.12, ()=>{ if (st.endlessRun){ st.dive=true; st.trip++; st.vel=[0,0]; shared.gridJob=null; } }, '<b>Picking a new spot on the edge…</b>'); }, msg);
   diveUI(); }
