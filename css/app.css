@@ -178,3 +178,13 @@ details.sub p{margin:0 0 10px;line-height:1.55}
   aside{border-left:0;border-top:1px solid var(--line)}
   .hint{display:none}
 }
+/* making a seamless loop (js/common/loopmaker.js): a progress bar over a cover that keeps hands off the picture */
+.loopCover{position:fixed;inset:0;z-index:61;background:transparent;cursor:progress}
+.loopBar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:62;width:min(520px,calc(100vw - 32px));box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.5);font:500 13px Inter,sans-serif;color:var(--text)}
+.loopBar{grid-template-columns:auto 1fr auto}
+.loopBar .loopPrev{grid-column:1;grid-row:1 / span 2;border-radius:6px;background:#000;max-height:96px}
+.loopBar .loopTxt{grid-column:2}
+.loopBar .btn{grid-column:3;grid-row:1 / span 2;flex:none}
+.loopBar .loopTrack{grid-column:2;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.loopBar .loopFill{height:100%;width:0;background:var(--accent);transition:width .2s}
+#stage.framing #stageBtns{display:none}

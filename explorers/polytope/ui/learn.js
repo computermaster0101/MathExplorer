@@ -3,7 +3,7 @@ import { $, clickData, setRange } from '../util.js';
 import { st } from '../state.js';
 import { dotN } from '../geometry/common.js';
 import { SHAPES, makeDuo } from '../geometry/polytopes.js';
-import { HD_MAKE } from '../geometry/higher-dim.js';
+import { HD_MAKE, hdOff } from '../geometry/higher-dim.js';
 import { WY_STOPS, makeMorph } from '../geometry/wythoff.js';
 import { HOME, camera, pivot } from '../render/scene.js';
 import { setStereo } from '../render/stereo.js';
@@ -39,7 +39,7 @@ export function applyMorph(full){ const s=+$('morphS').value; SHAPES.morph=makeM
   if (st.shape!=='morph') return;
   if (full || st.mode==='explore' || st.mode==='ping') shapeChanged(true); else updateLabels(); }
 
-$('hd').addEventListener('input', e=>{ const n=+e.target.value; $('hdo').textContent=n+'D'; SHAPES[st.shape]=HD_MAKE[st.shape](n); st.hdA=0;
+$('hd').addEventListener('input', e=>{ const n=+e.target.value; $('hdo').textContent=n+'D'; SHAPES[st.shape]=HD_MAKE[st.shape](n); st.hdA=0; hdOff.length=0;
   $('hdnote').textContent=SHAPES[st.shape].note; shapeChanged(); });
 for (const id of ['dp','dq']) $(id).addEventListener('input', ()=>{ $('dpo').textContent=$('dp').value; $('dqo').textContent=$('dq').value;
   SHAPES.d=makeDuo(+$('dp').value, +$('dq').value); shapeChanged(); });
@@ -57,7 +57,7 @@ $('play').addEventListener('click', togglePlay);
 function setCheckP(id, on){ const e=$(id); if (e && e.checked!==!!on) e.click(); }
 export function resetAll(){
   stopFly(); camera.position.x=camera.position.y=0; st.paused=false;   // back to the normal outside view
-  st.hdA=0; for (const k of ['xy','xw','yw','zw']) st[k]=0; syncAngles();
+  st.hdA=0; hdOff.length=0; for (const k of ['xy','xw','yw','zw']) st[k]=0; syncAngles();
   pivot.quaternion.setFromEuler(HOME); setZoomZ(8.5); vel.x=vel.y=0; shared.fitScale=null;
   clickData('#spinstyle','y','tumble'); if (st.spin) togglePlay(); st.turnHold=false;   // Reset view stops all motion, like the Fractal Explorer
   setRange('speed',0.6); setRange('turn',0); setRange('thk',0.4); setCheckP('conf',1);

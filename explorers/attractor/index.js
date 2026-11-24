@@ -7,6 +7,7 @@ import { makeStage3D } from '../../js/common/three-stage.js';
 import { makeView2D } from '../../js/common/view2d.js';
 import { saveCanvasPNG, saveFile, fileName } from '../../js/common/save.js';
 import { stlFromTriangles, tubeTriangles, heightfieldTriangles } from '../../js/common/stl.js';
+import { LOOP, loopRate, colourPart, TAU as LTAU } from '../../js/common/seamless.js';
 import { makeMotion3D, addRecorder } from '../../js/common/motion.js';
 import { makeVisualizer, pickButton, randomSlider } from '../../js/common/visualizer.js';
 import { flashFx as flash, pulseFx as pulse, voiceFx as voice, colourStep, Groove, energyMul } from '../../js/shell/audio/react.js';
@@ -239,34 +240,46 @@ const PACE = { fourwing: 8, leipnik: 8, sprottB: 6, dadras: 4, sprottA: 4, ruckl
 // Rotation & motion (its own group): turning, rocking, tumbling, the camera's zoom and drift, and Slowly change, which
 // sweeps one of the rule's numbers while the points keep moving, so the attractor morphs (maps: only Slowly change)
 const MO = makeMotion3D(S, { spinRow: $('spinRow'), rate: () => 0.175, spinOn: () => st.spin, sweep: { skip: ['speed', 'pathLen', 'count'] } });
-const REC = addRecorder({ stage: canvas.parentElement, name: () => sy().name, bg: () => st.bg });
+const REC = addRecorder({ stage: canvas.parentElement, name: () => sy().name, bg: () => st.bg, loop: {
+  // a seamless loop (js/common/seamless.js): the turning, the colours and a slowly changing number go round whole times;
+  // the path, swarm or map holds still as it is (it never comes back)
+  parts: () => { const go = !st.paused, map = isMap(), r = map ? { parts: MO.sweep.part(), held: [] } : MO.loopParts(go);
+    const parts = go ? [...r.parts, ...colourPart(st.cycleSpeed)] : [], held = [...r.held];
+    if (go) held.push(map ? 'the map filling in' : st.mode === 'swarm' ? 'the swarm' : st.mode === 'butterfly' ? 'the two paths' : 'the path drawing on');
+    return { parts, held }; },
+  step: tick, begin: () => { if (!isMap()) MO.loopBegin(); } } });
 // the Visualizer: a new flow, palette or slowly changing rule every eight bars; when the chorus comes in, a swarm of
 // points takes over from the single path until the next change
 makeVisualizer(MO, { preset: 'mvt=0.2&mvb=0.3&mvd=0.25', shape: () => pickButton('#flowList button'),
   drop: () => { if (isMap()) pickButton('#flowList button'); const was = st.mode; clickData('#mode', 'm', 'swarm'); return () => clickData('#mode', 'm', was === 'swarm' ? 'path' : was); } });
 let running = false, tPrev = 0, frame = 0;
 function loop(now) {
-  if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frame++;
+  if (!running) return; requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; if (LOOP.on) return;   // a seamless loop being made steps the picture itself (js/common/seamless.js)
+  tick(dt);
+}
+/** One frame: move everything by dt seconds and draw. */
+function tick(dt) {
+  frame++;
   setPausedTag(st.paused); const go = !st.paused, s = sy(), P = st.P[st.sys];
   // the music: vocals sway the first number a little (only for the moving point, not the survey); energy sets the pace
   const vo = voice(), Pv = vo && s.params.length ? { ...P, [s.params[0].id]: P[s.params[0].id] * (1 + 0.025 * vo) } : P, pace = st.speed * energyMul();
-  const cs = go ? colourStep(dt) : 0; if ((go && st.cycleSpeed > 0) || cs) { colOff = (colOff + (go ? dt * st.cycleSpeed * 0.06 : 0) + cs) % 1; if (isMap() || (F && F.kind === 'path' && frame % 6 === 0)) recolourPathCheap(); }
+  const cs = go ? colourStep(dt) : 0; if ((go && st.cycleSpeed > 0) || cs) { colOff = (colOff + (go ? dt * loopRate(st.cycleSpeed * 0.06, 1) : 0) + cs) % 1; if (isMap() || (F && F.kind === 'path' && (LOOP.on || frame % 6 === 0))) recolourPathCheap(); }
   if (isMap()) {
     view.step(dt); if (go) MO.sweep.step(dt, true);
-    if (go && M) stepMap(Math.round(120000 * pace), Pv);
+    if (go && M && !LOOP.on) stepMap(Math.round(120000 * pace), Pv);   /* a seamless loop holds the picture as it is */
     const beatNow = [flash(), pulse()], beatMoved = Math.abs(beatNow[0] - mapBeat[0]) + Math.abs(beatNow[1] - mapBeat[1]) > 0.004; mapBeat = beatNow;
     if (M && (go || frame % 10 === 0 || beatMoved)) drawMap();
-    if (go) stepLyap(200);
+    if (go && !LOOP.on) stepLyap(200);
   } else {
     S.step(dt); MO.step(dt, { go, spin: !S.pointers.size });
-    if (go && F) stepFlow(Math.max(1, Math.round((st.mode === 'swarm' ? 2 : st.mode === 'butterfly' ? 4 : 6) * pace * (PACE[st.sys] || 1))), Pv);
-    if (go) stepLyap(120);
+    if (go && F && !LOOP.on) stepFlow(Math.max(1, Math.round((st.mode === 'swarm' ? 2 : st.mode === 'butterfly' ? 4 : 6) * pace * (PACE[st.sys] || 1))), Pv);
+    if (go && !LOOP.on) stepLyap(120);
     S.fit.scale.setScalar(2.6 / (surv ? surv.ext : 1) * (1 + 0.05 * pulse())); if (surv) S.fit.position.set(...surv.rc.map(x => -x * S.fit.scale.x));
     S.setFlash(flash()); S.render();
   }
   if (frame % 15 === 0) stats();
   if (frame % 30 === 0) share.touch();   // keep the link up to date as the view is turned
-  requestAnimationFrame(loop);
 }
 function recolourPathCheap() { if (F && F.kind === 'path' && st.cmode !== 'age') return; if (F && F.kind === 'path') { for (let i = 0; i < F.n; i++) F.col.set(tone(i / F.L), i * 3); obj.geometry.attributes.color.needsUpdate = true; } }
 

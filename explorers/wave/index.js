@@ -9,6 +9,7 @@ import { flashFx as flash, pulseFx as pulse, voiceFx as voice, colourStep, energ
 import { inZen } from '../../js/shell/layout.js';
 import { setPausedTag, drive } from '../../js/shell/keys.js';
 import { parseRoute } from '../../js/shell/route.js';
+import { LOOP, loopRate, colourPart, TAU as LTAU } from '../../js/common/seamless.js';
 import { makeMotion2D, addRecorder } from '../../js/common/motion.js';
 import { makeVisualizer, pickButton, randomSlider } from '../../js/common/visualizer.js';
 import { plateGrid, modeName, SQUARE_MODES, ROUND_MODES, shapedModes, isShaped, PLATE_INFO, MASKS } from './fields.js';
@@ -44,7 +45,15 @@ const MO = makeMotion2D({
   rotate: a => { wa = (wa + a) % (2 * Math.PI); },
   note: 'Drift, zoom and turn move round the pond (Ripples only). Slowly change works in every mode.',
   sweep: { skip: ['speed', 'grains'], every: 40 } });
-const REC = addRecorder({ stage: wc.parentElement, name: () => fileBase(), bg: () => st.bg });
+const REC = addRecorder({ stage: wc.parentElement, name: () => fileBase(), bg: () => st.bg, loop: {
+  // a seamless loop (js/common/seamless.js): the ripples take whole waves, and turning, In & out, a slowly changing
+  // number and the colours go round whole times; the tank, the sand and a plucked string (which dies away) hold still
+  parts: () => { const go = !st.paused, m = st.mode, r = m === 'ripple' ? MO.loopParts(go) : { parts: go ? MO.sweep.part() : [], held: [] }, parts = [...r.parts], held = [...r.held];
+    if (go && m === 'ripple' && ripRun) parts.push({ name: 'Ripples', rate: 4 * st.speed, cycle: LTAU, noun: ['wave', 'waves'] });
+    if (go) parts.push(...colourPart(st.cycleSpeed));
+    if (go) held.push(...({ tank: ['the water'], plate: ['the sand'], string: ['the string'] }[m] || []));
+    return { parts, held }; },
+  step: tick, begin: () => { dirty = true; } } });
 // the Visualizer: something new in this mode every eight bars (a ripple pattern, a tank set-up, a plate pattern, a pluck);
 // a fresh start when the chorus comes in; in the tank, snares splash
 const waveShape = () => ({ ripple: () => pickButton('#ripPre button'), tank: () => pickButton('#tankPre button'), plate: () => randomSlider('pmode'), string: () => randomSlider('pluck', 0.1, 0.9) }[st.mode]());
@@ -352,24 +361,29 @@ function render() {
     g.uniform3f(U('u_bg'), ...hexRGB(st.bg)); g.uniform3fv(U('u_pal'), pu.data); g.uniform1i(U('u_npal'), pu.n); G.draw(null, wc.width, wc.height); }
 }
 function loop(now) {
-  if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frame++;
+  if (!running) return; requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; if (LOOP.on) return;   // a seamless loop being made steps the picture itself (js/common/seamless.js)
+  tick(dt);
+}
+/** One frame: move everything by dt seconds and draw. */
+function tick(dt) {
+  frame++;
   setPausedTag(st.paused); const go = !st.paused, m = st.mode, sp = st.speed * energyMul();
   flashNow = flash(); pulseNow = pulse(); const beat = beats.crossed(); if (beat) beatCount++;
-  const cs = go ? colourStep(dt) : 0; if ((go && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (go ? dt * st.cycleSpeed * 0.06 : 0) + cs) % 1; if (PL && frame % 6 === 0) PL.img = null; }
+  const cs = go ? colourStep(dt) : 0; if ((go && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (go ? dt * loopRate(st.cycleSpeed * 0.06, 1) : 0) + cs) % 1; if (PL && frame % 6 === 0) PL.img = null; }
   const r = fitOverlay();
   if (MO.step(dt, go) && m === 'ripple' && frame % 20 === 0) share.touch();
-  if (m === 'ripple') { const k = drive(); if (k.any) { const cl = x => Math.max(-1, Math.min(1, x)), v = (k.fast ? 3 : 1) * k.scale * dt; pan[0] = clamp(pan[0] + cl(k.slideX + k.turnX) * v, -6, 6); pan[1] = clamp(pan[1] + cl(k.slideY + k.rawY) * v, -6, 6); }
-    if (go && ripRun) ripT += dt * 4 * sp; render(); og.clearRect(0, 0, r.width, r.height);
+  if (m === 'ripple') { const k = drive(); if (k.any && !LOOP.on) { const cl = x => Math.max(-1, Math.min(1, x)), v = (k.fast ? 3 : 1) * k.scale * dt; pan[0] = clamp(pan[0] + cl(k.slideX + k.turnX) * v, -6, 6); pan[1] = clamp(pan[1] + cl(k.slideY + k.rawY) * v, -6, 6); }
+    if (go && ripRun) ripT += dt * loopRate(4 * sp);   /* every source has the same frequency: a loop takes whole waves */ render(); og.clearRect(0, 0, r.width, r.height);
     const ca = Math.cos(wa), sa = Math.sin(wa); for (const s of st.rip.src) { const ax = (s[0] - pan[0]) / wz, ay = (s[1] - pan[1]) / wz, x = r.width / 2 + (ca * ax + sa * ay) * r.height / 2, y = r.height / 2 - (-sa * ax + ca * ay) * r.height / 2; og.fillStyle = '#fff'; og.strokeStyle = 'rgba(0,0,0,.6)'; og.lineWidth = 2; og.beginPath(); og.arc(x, y, 5, 0, 2 * Math.PI); og.fill(); og.stroke(); } }
   else if (m === 'tank') { og.clearRect(0, 0, r.width, r.height);
     if (TK) { if (beat && st.tank.pre === 'splash') TK.splash = [TK.W * (0.15 + 0.7 * Math.random()), TK.H * (0.15 + 0.7 * Math.random()), 1.4];
-      if (go) tankStep(Math.max(1, Math.round(4 * sp))); else if (TK.paint) { medPass(-1, TK.paint); TK.paint = null; } render(); }
+      if (go && !LOOP.on) tankStep(Math.max(1, Math.round(4 * sp))); else if (TK.paint) { medPass(-1, TK.paint); TK.paint = null; } render(); }
     else { og.fillStyle = '#ccc'; og.font = '14px system-ui, sans-serif'; og.fillText('The wave tank needs a graphics card that can draw into float textures.', 20, r.height / 2); } }
-  else if (m === 'plate') { if (go) { if (st.plate.beatMode && beat && beatCount % 8 === 0) setRange('pmode', (st.plate.i + 1) % (+$('pmode').max + 1)); sandStep(dt, st.plate.shake * sp * (1 + 0.6 * pulseNow)); } beatDraw(r, 0.025, 0, () => drawPlate(r)); }
-  else if (m === 'string') { if (go) strT += dt * st.speed * energyMul(); if (beat && reacting() && beatCount % 4 === 0) strT = 0; beatDraw(r, 0, 1, () => drawString(r)); }
+  else if (m === 'plate') { if (go) { if (st.plate.beatMode && beat && beatCount % 8 === 0) setRange('pmode', (st.plate.i + 1) % (+$('pmode').max + 1)); if (!LOOP.on) sandStep(dt, st.plate.shake * sp * (1 + 0.6 * pulseNow)); } beatDraw(r, 0.025, 0, () => drawPlate(r)); }
+  else if (m === 'string') { if (go && !LOOP.on) strT += dt * st.speed * energyMul(); if (beat && reacting() && beatCount % 4 === 0) strT = 0; beatDraw(r, 0, 1, () => drawString(r)); }
   if (frame % 12 === 0) stats();
   if (frame % 30 === 0) share.touch();
-  requestAnimationFrame(loop);
 }
 
 // ---------- 3D print ----------

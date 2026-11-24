@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { drive } from '../shell/keys.js';
 import { sleepThree } from './gl.js';
+import { LOOP } from './seamless.js';
 
 /**
  * A soap-film look: nearly clear where you look straight through, bright at the rim, with the rainbow sheen of a thin film
@@ -88,7 +89,7 @@ export function makeStage3D(canvas, opts={}){
   const up=e=>{ S.pointers.delete(e.pointerId); if (S.pointers.size<2) pinch=0; };
   canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
   canvas.addEventListener('wheel', e=>{ e.preventDefault(); S.zoom(Math.exp(e.deltaY*0.001)); }, { passive:false });
-  S.step=dt=>{ let moved=false;
+  S.step=dt=>{ let moved=false; if (LOOP.on) return false;   /* a seamless loop being made: no glide or keys (js/common/seamless.js) */
     if (!S.pointers.size && Math.abs(S.vel.x)+Math.abs(S.vel.y)>1e-5){ S.turn(S.vel.x,S.vel.y); S.vel.x*=0.93; S.vel.y*=0.93; moved=true; }
     const k=drive(); if (k.any){ const f=(k.fast?3:1)*k.scale;
       if (k.turnX||k.turnY) S.turn(k.turnX*1.3*f*dt, -k.turnY*1.1*f*dt);

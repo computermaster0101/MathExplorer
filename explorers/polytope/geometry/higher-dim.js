@@ -19,12 +19,16 @@ function makeHyper(n){
     UF:Float64Array.from(U.flat().map(x=>x/R)), verts:VN.map(v=>projN(v).map(x=>x/R)), project:v=>projN(v).map(x=>x/R), cells:2*n, tk: n<=6?0.7:n<=8?0.5:n<=10?0.35:0.28, big:n>=15,
     info:`The ${n}-dimensional cube, the ${HD_NAMES[n]}: ${N.toLocaleString()} corners, and every corner has exactly ${n} connections, one along each of the ${n} directions, like a node with ${n} weights. Each extra dimension doubles the corners and gives every corner one more connection, yet any corner is at most ${n} steps from any other. Try Ping. The picture squashes ${n} directions into our 3D view, so some lines cross that don't really meet. With the spin on, it also turns through its higher dimensions.` };
 }
+// extra turn per plane, added while a seamless loop is made (each plane's angle must go round whole times, and a × (1 + 0.37 q)
+// never does); cleared whenever the higher-dimension turn is reset
+export const hdOff=[];
 export function hdProjectAll(sh, a, k, e){   // every corner: optional turn through the higher dimensions (a), optional build stage (k, e), then squash to 4D
   const n=sh.m||sh.n, U=sh.UF, out=new Array(sh.VN.length), r=new Float64Array(n), half=Math.floor(n/2), cs=[], sn=[];
-  for (let q=0;q<half;q++){ const t=a*(1+0.37*q); cs.push(Math.cos(t)); sn.push(Math.sin(t)); }
+  const turn = !!a || (k==null && hdOff.length>0);
+  for (let q=0;q<half;q++){ const t=a*(1+0.37*q)+(k==null ? hdOff[q]||0 : 0); cs.push(Math.cos(t)); sn.push(Math.sin(t)); }
   for (let idx=0; idx<sh.VN.length; idx++){ const v=sh.VN[idx];
     for (let d=0; d<n; d++) r[d] = k==null ? v[d] : (d<k-1 ? v[d] : d===k-1 ? v[d]*e : 0);
-    if (a) for (let q=0;q<half;q++){ const i=q, j=n-1-q, x=r[i], y=r[j]; r[i]=cs[q]*x-sn[q]*y; r[j]=sn[q]*x+cs[q]*y; }
+    if (turn) for (let q=0;q<half;q++){ const i=q, j=n-1-q, x=r[i], y=r[j]; r[i]=cs[q]*x-sn[q]*y; r[j]=sn[q]*x+cs[q]*y; }
     let p0=0,p1=0,p2=0,p3=0; for (let d=0, o=0; d<n; d++, o+=4){ const x=r[d]; p0+=x*U[o]; p1+=x*U[o+1]; p2+=x*U[o+2]; p3+=x*U[o+3]; }
     out[idx]=sh.offset ? [p0-sh.offset[0],p1-sh.offset[1],p2-sh.offset[2],p3-sh.offset[3]] : [p0,p1,p2,p3]; }
   return out; }

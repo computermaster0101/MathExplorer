@@ -6,6 +6,7 @@ import { rampOf, sampleRamp, css, palTitle } from '../../js/common/palettes.js';
 import { makeView2D } from '../../js/common/view2d.js';
 import { saveCanvasPNG, saveFile, fileName } from '../../js/common/save.js';
 import { stlFromTriangles, heightfieldTriangles } from '../../js/common/stl.js';
+import { LOOP, loopRate, colourPart, TAU as LTAU } from '../../js/common/seamless.js';
 import { makeMotion2D, addRecorder } from '../../js/common/motion.js';
 import { makeVisualizer, pickButton } from '../../js/common/visualizer.js';
 import { flashFx as flash, pulseFx as pulse, voiceFx as voice, colourStep, Groove } from '../../js/shell/audio/react.js';
@@ -184,7 +185,21 @@ function resetView() { view.reset(); MO.resetView && MO.resetView(); st.paused =
 // ---------- loop ----------
 const MO = makeMotion2D({ pan: (dx, dy) => view.glide(dx, dy), zoom: f => view.zoomBy(f), rotate: a => view.rotate(a), zoomOpt: true, rotateOpt: true,
   sweep: { skip: ['speed', 'lw', 'pp_N', 'pp_n', 'pp_out'] } });
-const REC = addRecorder({ stage: cv.parentElement, name: () => 'drawing ' + dr().name, bg: () => st.bg });
+const lp = { draw: false, u: 0 };
+const loopsDrawing = () => M.kind === 'pen' && st.loop && !st.build;
+const REC = addRecorder({ stage: cv.parentElement, name: () => 'drawing ' + dr().name, bg: () => st.bg, loop: {
+  // a seamless loop (js/common/seamless.js): with Draw it again and again, whole drawings from empty; the times table's
+  // slide, turning, In & out and the colours go round whole times; drifting, zooming and a pen still drawing hold still
+  parts: () => { if (ownMode) return { block: 'Finish drawing your own first: a loop is made of a drawing the machine draws.' };
+    const go = !st.paused, r = MO.loopParts(go), parts = [...r.parts], held = [...r.held];
+    if (go && loopsDrawing()) parts.push({ name: 'The drawing', rate: 1 / (duration() + 2.4), cycle: 1, noun: ['drawing', 'drawings'] });
+    else if (go && prog < 1) held.push('the pen');
+    if (go && st.build && dr().group === 'epi') held.push('the circles joining');
+    if (go && st.slide && M.kind === 'lines') parts.push({ name: 'Slide', rate: 0.12 * st.speed, cycle: 98, noun: ['time round', 'times round'] });
+    if (go) parts.push(...colourPart(st.cycleSpeed));
+    return { parts, held }; },
+  begin: () => { lp.draw = loopsDrawing() && !st.paused; lp.u = 0; if (lp.draw) rebuild(); },
+  step: tick } });
 // the Visualizer: a new drawing, palette or slow change every eight bars; when the chorus comes in, a drawing from another machine,
 // with the epicycles building up or the times table sliding
 makeVisualizer(MO, { preset: 'mvd=0.15&mvw=1&mvb=0.25&mvn=0.08', shape: () => (ownMode ? false : pickButton('#shapeLists button[data-s]')),
@@ -193,20 +208,33 @@ makeVisualizer(MO, { preset: 'mvd=0.15&mvw=1&mvb=0.25&mvn=0.08', shape: () => (o
   extra: [['a new colour scheme', () => { clickNext('#cmode button', 1); return true; }]] });
 let running = false, tPrev = 0, frameN = 0;
 function loop(now) {
-  if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frameN++;
+  if (!running) return; requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; if (LOOP.on) return;   // a seamless loop being made steps the picture itself (js/common/seamless.js)
+  tick(dt);
+}
+/** One frame: move everything by dt seconds and draw. */
+function tick(dt) {
+  frameN++;
   resize(); setPausedTag(st.paused); const goOn = !st.paused && !ownMode;
   view.step(dt); MO.step(dt, goOn);
   view.beat = 1 - 0.04 * pulse();   // the beat's pulse: the drawing swells a touch
-  if (goOn) {
+  if (goOn && LOOP.on) {
+    // a seamless loop (js/common/seamless.js): the drawing, its hold and its fade take a whole number of turns of the loop,
+    // starting from empty; otherwise the pen holds still where it is
+    if (lp.draw) { const P0 = duration() + 2.4, Pq = 1 / loopRate(1 / P0, 1), hl = Math.min(2.4, Pq - 0.5), dl = Pq - hl;
+      lp.u += dt / Pq; if (lp.u >= 1 - 1e-9) { lp.u -= 1; rebuild(); }
+      const tt = lp.u * Pq; prog = Math.min(1, tt / dl); hold = Math.max(0, tt - dl) * 2.4 / hl; }
+    if (st.slide && M.kind === 'lines') { slideM = 2 + (((slideM - 2) + dt * loopRate(0.12 * st.speed, 98)) % 98); M = machine(); }
+  }
+  else if (goOn) {
     const d = clk.draw.delta(dt, 1 / duration(), 0.5 / duration());   // the pen surges on each beat with the music
     if (prog < 1) prog = Math.min(1, prog + d); else { hold += dt;
       if (st.build && dr().group === 'epi' && hold > 1.2 && (BUILD[lapK + 1] || 0) <= st.P[dr().key].n && BUILD[lapK + 1]) { if (st.keep) ghosts.push({ ...path, k: lapK }); lapK++; rebuild(true, true); }
       else if (st.loop && hold > 2.4 && M.kind === 'pen') { if (st.build) lapK = 0; rebuild(); } }
     if (st.slide && M.kind === 'lines') { slideM = 2 + (((slideM - 2) + dt * 0.12 * st.speed) % 98); M = machine(); if (frameN % 10 === 0) stats(); }
   }
-  const cs = goOn ? colourStep(dt) : 0; if ((goOn && st.cycleSpeed > 0) || cs) st.cycle = (st.cycle + (goOn ? dt * st.cycleSpeed * 0.06 : 0) + cs) % 1;
+  const cs = goOn ? colourStep(dt) : 0; if ((goOn && st.cycleSpeed > 0) || cs) st.cycle = (st.cycle + (goOn ? dt * loopRate(st.cycleSpeed * 0.06, 1) : 0) + cs) % 1;
   frame(); if (frameN % 30 === 0) share.touch();
-  requestAnimationFrame(loop);
 }
 
 // ---------- 3D print: the finished drawing as a raised line on a tile ----------

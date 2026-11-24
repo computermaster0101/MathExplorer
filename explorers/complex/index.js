@@ -11,6 +11,7 @@ import { flashFx as flash, pulseFx as pulse, voiceFx as voice, colourStep, Phase
 import { setPausedTag } from '../../js/shell/keys.js';
 import { parseRoute } from '../../js/shell/route.js';
 import { gamma, zeta, wp, SPECIAL_GLSL } from './special.js';
+import { LOOP, loopRate, colourPart, TAU as LTAU } from '../../js/common/seamless.js';
 import { makeMotion2D, addRecorder } from '../../js/common/motion.js';
 import { makeVisualizer, pickButton, randomSlider } from '../../js/common/visualizer.js';
 
@@ -226,28 +227,42 @@ const MO = makeMotion2D({ rows: $('spinRow'), rotate: a => { if (sph()) st.yaw +
   pan: (dx, dy) => { if (sph()) { st.yaw += 2.5 * dx; st.pitch = clamp(st.pitch - 2.5 * dy, -1.5, 1.5); } else view.glide(dx, dy); dirty = true; },
   zoom: f => { dirty = true; if (!sph()) return view.zoomBy(f); const s = clamp(st.sz * f, 0.35, 2.2), ok = s !== st.sz; st.sz = s; return ok; },
   sweep: { skip: [] } });
-const REC = addRecorder({ stage: cv.parentElement, name: () => fileBase(), bg: () => st.bg });
+const REC = addRecorder({ stage: cv.parentElement, name: () => fileBase(), bg: () => st.bg, loop: {
+  // a seamless loop (js/common/seamless.js): turning, In & out, the sphere's spin, c going round and the colours go round
+  // whole times; drifting, zooming and the steps building up hold still
+  parts: () => { const go = !st.paused, r = MO.loopParts(go), parts = [...r.parts], held = [...r.held];
+    if (go && st.view === 'sphere' && st.spin) parts.push({ name: 'Spin', rate: 0.25, cycle: LTAU });
+    if (go && st.cWander && usesC) parts.push({ name: 'c going round', rate: 0.12, cycle: LTAU, noun: ['time', 'times'] });
+    if (go) parts.push(...colourPart(st.cycleSpeed));
+    if (go && stepsAnim) held.push('the steps building up');
+    return { parts, held }; },
+  step: tick, begin: () => { dirty = true; } } });
 // the Visualizer: a new function, palette or slow change every eight bars; when the chorus comes in, the function is
 // fed back into itself step by step (it grows into a fractal), and goes back to one step at the next change
 makeVisualizer(MO, { preset: 'mvd=0.3&mvw=1&mvb=0.35&mvn=0.15', shape: () => pickButton('#fnList button'),
   drop: () => { go(); return () => { stepsAnim = null; setRange('steps', 1); }; } });
 let running = false, tPrev = 0, wanderT = 0, frame = 0;
 function loop(now) {
-  if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frame++;
+  if (!running) return; requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; if (LOOP.on) return;   // a seamless loop being made steps the picture itself (js/common/seamless.js)
+  tick(dt);
+}
+/** One frame: move everything by dt seconds and draw. */
+function tick(dt) {
+  frame++;
   setPausedTag(st.paused); const go = !st.paused;
   if (st.view === 'plane' && view.step(dt)) dirty = true;
   if (!view.dragging && MO.step(dt, go)) share.touch();
-  if (go && st.view === 'sphere' && st.spin && !view.dragging) { st.yaw += dt * 0.25; dirty = true; }
-  if (go && stepsAnim) { stepsAnim.t += dt; if (stepsAnim.t > 0.45) { stepsAnim.t = 0; if (st.steps < 40) setRange('steps', st.steps + 1); else stepsAnim = null; } }
+  if (go && st.view === 'sphere' && st.spin && !view.dragging) { st.yaw += dt * loopRate(0.25); dirty = true; }
+  if (go && stepsAnim && !LOOP.on) { stepsAnim.t += dt; if (stepsAnim.t > 0.45) { stepsAnim.t = 0; if (st.steps < 40) setRange('steps', st.steps + 1); else stepsAnim = null; } }
   if (go && st.cWander && usesC) { wanderT = clk.wander.step(wanderT, dt, 2 * Math.PI, cycleBeats(4), 0.12); const a = wanderT;
     st.c = [0.7885 * Math.cos(a), 0.7885 * Math.sin(a)]; $('cre').value = st.c[0]; $('cim').value = st.c[1]; showC(); if (frame % 10 === 0) labels(); dirty = true; }
   const vo = voice(); if (vo && usesC) { st.c[1] += vo * 0.0006; dirty = true; }
-  const cs = go ? colourStep(dt) : 0; if ((go && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (go ? dt * st.cycleSpeed * 0.06 : 0) + cs) % 1; dirty = true; }
+  const cs = go ? colourStep(dt) : 0; if ((go && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (go ? dt * loopRate(st.cycleSpeed * 0.06, 1) : 0) + cs) % 1; dirty = true; }
   const fl = flash(); if (fl !== flashNow) { flashNow = fl; dirty = true; }
   const pu = pulse(); if (pu !== pulseNow) { pulseNow = pu; view.beat = 1 - 0.03 * pu; dirty = true; }   // the beat's pulse: a small zoom in, as drawn (markers follow)
   if (dirty) { dirty = false; draw(); }
   if (frame % 20 === 0) share.touch();
-  requestAnimationFrame(loop);
 }
 
 const fileBase = () => 'complex_' + st.fn + (st.steps > 1 ? '_' + st.steps + 'steps' : '');

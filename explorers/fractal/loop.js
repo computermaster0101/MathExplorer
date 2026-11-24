@@ -19,6 +19,7 @@ import { advanceFly, bsSweep, diveUI, endlessWarp, pwAt, syncR4, syncW, twAmp } 
 import { writeHash } from './io/share.js';
 import { BeatGate, Groove, Phase, colourStep, cycleBeats, energyMul, pulseFx as pulse, reacting, voiceFx as voice } from '../../js/shell/audio/react.js';
 import { recFrame } from './io/recorder.js';
+import { LOOP, loopRate, colourPart, TAU } from '../../js/common/seamless.js';
 
 // ---------- loop ----------
 // motion clocks: with the music's tempo locked, periodic motions land their cycles on bar lines and turning surges on each beat
@@ -32,11 +33,11 @@ function advance3D(dt){ const D=st.d3; let moving=ptrs.size>0;
   if (D.shape==='nest' && D.target && !D.aim && !D.warp && nestStraight()){ let g=0;
     while (D.dist<0.4 && Math.hypot(...D.target)<1.2 && g++<8) nestIn();
     while (D.dist>1.0 && (D.nestM||0)>0 && g++<16) nestOut(); }
-  if (!ptrs.size && Math.abs(shared.vel3.x)+Math.abs(shared.vel3.y)>0.05){ D.yaw-=shared.vel3.x*0.008; D.pitch=clamp(D.pitch+shared.vel3.y*0.008,-1.45,1.45); shared.vel3.x*=0.9; shared.vel3.y*=0.9; moving=true; }
+  if (!LOOP.on && !ptrs.size && Math.abs(shared.vel3.x)+Math.abs(shared.vel3.y)>0.05){ D.yaw-=shared.vel3.x*0.008; D.pitch=clamp(D.pitch+shared.vel3.y*0.008,-1.45,1.45); shared.vel3.x*=0.9; shared.vel3.y*=0.9; moving=true; }
   if (st.paused){   // Space: everything holds still; dragging, the keys and re-aiming after them still work
     if (D.needAim){ D.aimT-=dt; if (!ptrs.size || D.aimT<=0){ D.aimT=0.15; D.needAim=false; if (!retarget3()) D.floating=true; } moving=true; }
     return moving; }
-  if (D.turn && !D.target){ D.yaw+=clk.yaw.delta(dt, 0.3*D.turn, 0.15*D.turn); moving=true; }
+  if (D.turn && !D.target){ D.yaw+=clk.yaw.delta(dt, loopRate(0.3*D.turn), 0.15*D.turn); moving=true; }
   if (D.aim){ const A=D.aim; A.t+=dt/0.8; const u=clamp(A.t,0,1), e=smooth(u); moving=true;
     D.target=[0,1,2].map(i=>lerp(A.T0[i],A.T1[i],e)); D.yaw=lerp(A.y0,A.y1,e); D.pitch=lerp(A.p0,A.p1,e); D.dist=Math.exp(lerp(A.l0,A.l1,e));
     if (u>=1){ D.aim=null; if (st.endless || D.dive){ D.dive=true; D.extra=d3Extra(); dive3UI(); } } }
@@ -59,10 +60,10 @@ function advance3D(dt){ const D=st.d3; let moving=ptrs.size>0;
   // Breathe reshapes the whole object, so with music one cycle takes 4× "Slow motions take" (8 bars by default), near its free pace
   if (D.breathe && D.shape==='bulb'){ D.t=clk.breathe.step(D.t, dt, 2*Math.PI/0.22, cycleBeats(4)); D.power=pwAt(Math.sin(D.t*0.22)); $('pw3').value=D.power; $('pw3o').textContent=D.power.toFixed(1); moving=true; }
   if (D.bsBreathe && D.shape==='box'){ D.bsT=clk.box.step(D.bsT, dt, 2*Math.PI/0.3, cycleBeats(4)); { const [c,a]=bsSweep(); D.boxS=c+a*Math.sin(D.bsT*0.3); } $('bs3').value=D.boxS; $('bs3o').textContent=minus(D.boxS.toFixed(2)); moving=true; }
-  if (D.spin3){ const wrap=a=>((a+180)%360+360)%360-180; const g=clk.spin3.delta(dt, 1, 0.5); D.rxy=wrap(D.rxy+g*9); D.rxz=wrap(D.rxz+g*13); D.ryz=wrap(D.ryz+g*6); if (frameN%3===0) syncT3(); moving=true; }
+  if (D.spin3){ const wrap=a=>((a+180)%360+360)%360-180; const g=clk.spin3.delta(dt, 1, 0.5); D.rxy=wrap(D.rxy+g*loopRate(9,360)); D.rxz=wrap(D.rxz+g*loopRate(13,360)); D.ryz=wrap(D.ryz+g*loopRate(6,360)); if (frameN%3===0) syncT3(); moving=true; }
   if (D.twAnim){ D.twT=clk.twist.step(D.twT, dt, 2*Math.PI/0.25, cycleBeats(2)); D.twist=(D.twSg||1)*twAmp()*(1+Math.sin(D.twT*0.25)); $('tw3').value=D.twist; $('tw3o').textContent=D.twist.toFixed(1)+'°'; moving=true; }
   if (D.sweep){ D.wt=clk.sweep.step(D.wt, dt, 2*Math.PI/0.45, cycleBeats(1)); D.w=0.94*Math.sin(D.wt*0.45); syncW(); moving=true; }
-  if (D.spin4){ D.spT+=dt; const wrap=a=>((a+180)%360+360)%360-180, g=clk.spin4.delta(dt, 1, 0.5); D.axw=wrap(D.axw+g*11); D.ayw=wrap(D.ayw+g*7); D.azw=wrap(D.azw+g*4.5); if (frameN%3===0) syncR4(); moving=true; }
+  if (D.spin4){ D.spT+=dt; const wrap=a=>((a+180)%360+360)%360-180, g=clk.spin4.delta(dt, 1, 0.5); D.axw=wrap(D.axw+g*loopRate(11,360)); D.ayw=wrap(D.ayw+g*loopRate(7,360)); D.azw=wrap(D.azw+g*loopRate(4.5,360)); if (frameN%3===0) syncR4(); moving=true; }
   if (reacting()) moving=true;   // the music bends the shape every frame (see render3D)
   return moving; }
 // The driving keys (see drive() in js/shell/keys.js), every frame while held. 3D: arrows turn (round the shape, or in place
@@ -131,8 +132,52 @@ let running=false;
 export function startLoop(){ if (running) return; running=true; tPrev=performance.now(); requestAnimationFrame(loop); }
 export function stopLoop(){ running=false; }
 const diveEnergy=()=>clamp(energyMul(),0.8,1.2);
+// ---------- seamless loops (js/common/seamless.js) ----------
+// Making one, the recorder steps the picture itself (loopTick), every frame drawn sharp at the video's own size; the
+// motions that go round (turntable, breathe, twist, the 3D and 4D spins and slice, c going round the Julia link, a growing
+// fractal's endless zoom, the colours) are rounded to whole turns, and dives, flights and orbits can't loop.
+const D3P=[['turn','Turntable'],['breathe','Breathe'],['bsBreathe','Breathe'],['spin3','Spin'],['twAnim','Twist'],['sweep','4D slice sweep'],['spin4','4D spin']];
+export function loopParts(){
+  const parts=[], held=[], stop={ block:'A dive or a flight never comes back to where it started, so it can’t loop. Stop it first (G).' };
+  if (notAvail()) return { block:'This view can’t be drawn here, so there’s nothing to loop.' };
+  if (st.paused) return { parts, held };
+  if (st.mode==='explore' && (st.fly || st.dive)) return stop;
+  if (st.mode==='d3'){ const D=st.d3; if (D.dive || D.warp || D.aim) return stop;
+    if (D.turn && !D.target) parts.push({ name:'Turntable', rate:0.3*D.turn, cycle:TAU });
+    if (D.breathe && D.shape==='bulb') parts.push({ name:'Breathe', rate:1, cycle:2*Math.PI/0.22, noun:['breath','breaths'] });
+    if (D.bsBreathe && D.shape==='box') parts.push({ name:'Breathe', rate:1, cycle:2*Math.PI/0.3, noun:['breath','breaths'] });
+    if (D.spin3) parts.push({ name:'Spin XY', rate:9, cycle:360 }, { name:'XZ', rate:13, cycle:360 }, { name:'YZ', rate:6, cycle:360 });
+    if (D.twAnim) parts.push({ name:'Twist', rate:1, cycle:2*Math.PI/0.25, noun:['time','times'] });
+    if (D.sweep) parts.push({ name:'4D slice sweep', rate:1, cycle:2*Math.PI/0.45, noun:['sweep','sweeps'] });
+    if (D.spin4) parts.push({ name:'4D spin XW', rate:11, cycle:360 }, { name:'YW', rate:7, cycle:360 }, { name:'ZW', rate:4.5, cycle:360 }); }
+  if (st.mode==='link' && st.link.auto) parts.push({ name:'c going round', rate:0.15, cycle:TAU, noun:['time','times'] });
+  if (st.mode==='grow'){ const sh=GROW[st.grow.shape]; if (st.grow.zoom && sh.zoom) parts.push({ name:'Endless zoom', rate:0.35, cycle:1, noun:['step','steps'] }); else if (st.grow.playing) held.push('the growing'); }
+  if (st.mode==='orbit' && st.orbit.playing) held.push('the orbit');
+  if (st.mode==='explore' && TYPES[st.type].cpu) held.push('the picture building up');
+  parts.push(...colourPart(st.cycleSpeed));
+  return { parts, held };
+}
+const lpq={ q:1, qMove:0 };
+export function loopBegin(L, H){ lpq.q=st.q; lpq.qMove=st.qMove; shared.loopH=H; st.prog=null; dropFence(); shared.vel3.x=shared.vel3.y=0; }
+export function loopEnd(){ shared.loopH=0; st.q=lpq.q; st.qMove=lpq.qMove; shared.hqShown=false; touch(); }
+/** One frame of a loop: move by dt and draw the sharp picture. */
+export function loopTick(dt){
+  setPausedTag(st.paused); const go=!st.paused;
+  if (go && st.cycleSpeed>0) st.cycle=(st.cycle+dt*loopRate(st.cycleSpeed*0.06,1))%1;
+  if (go && st.mode==='link' && st.link.auto && !notAvail()){ st.link.t=clk.link.step(st.link.t, dt, 2*Math.PI, cycleBeats(4), 0.15); const c=pathC(st.link.t); st.jc=[c[0], c[1]]; }
+  if (go && st.mode==='grow'){ const sh=GROW[st.grow.shape]; if (st.grow.zoom && sh.zoom){ st.grow.zph=(st.grow.zph+dt*loopRate(0.35,1))%1; } }
+  if (st.mode==='d3') advance3D(dt);
+  st.q=1; st.prog=null; sizeBuffers(); shared.dirty=true;
+  if (!ctxLost){
+    if (notAvail() || st.mode==='grow'){ const b=hexRGB(st.bg); gl.viewport(0,0,glc.width,glc.height); gl.clearColor(b[0],b[1],b[2],1); gl.clear(gl.COLOR_BUFFER_BIT); }
+    else if (st.mode==='d3') render3D(true); else render2DAll(true); }
+  octx.setTransform(ovScale,0,0,ovScale,0,0);
+  if (st.mode==='grow') drawGrow(); else { octx.clearRect(0,0,cssW,cssH); if (!notAvail() && st.mode==='link') drawLink(); }
+  shared.hqShown=true; frameN++;
+}
 export function loop(now){
   if (!running) return;
+  if (LOOP.on){ tPrev=now; pace.lastDraw=now; requestAnimationFrame(loop); return; }   // a seamless loop being made steps the picture itself
   { const gap=now-pace.lastRaf; pace.lastRaf=now; if (gap>4 && gap<25) pace.vsync+=(gap-pace.vsync)*0.05; }
   if (pace.every===2 && now-pace.lastDraw < pace.vsync*1.5){ requestAnimationFrame(loop); return; }   // skip this refresh
   overrun(now, now-pace.lastDraw); work.prev='';

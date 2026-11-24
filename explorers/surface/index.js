@@ -6,6 +6,7 @@ import { rampOf, sampleRamp, sampleMirror, palTitle } from '../../js/common/pale
 import { makeStage3D, makeFinishes } from '../../js/common/three-stage.js';
 import { saveCanvasPNG, saveFile, fileName } from '../../js/common/save.js';
 import { stlFromTriangles } from '../../js/common/stl.js';
+import { LOOP, loopRate, colourPart, TAU as LTAU } from '../../js/common/seamless.js';
 import { makeMotion3D, addRecorder } from '../../js/common/motion.js';
 import { makeVisualizer, pickButton, randomSlider } from '../../js/common/visualizer.js';
 import { flashFx as flash, pulseFx as pulse, voiceFx as voice, colourStep, Groove, Phase, cycleBeats, energyMul } from '../../js/shell/audio/react.js';
@@ -282,29 +283,41 @@ const clk = { morph: new Phase() };
 // Rotation & motion (its own group): turning, rocking, tumbling, the camera's zoom and drift, and Slowly change (any shape slider)
 const MO = makeMotion3D(S, { spinRow: $('spin').closest('label'), speedRow: $('speed').closest('.row'), rate: () => 0.35, spinOn: () => st.spin, speed: () => st.speed,
   sweep: { skip: ['speed', 'walkSpeed', 'detail'] } });
-const REC = addRecorder({ stage: canvas.parentElement, name: () => sh().name, bg: () => st.bg });
+const REC = addRecorder({ stage: canvas.parentElement, name: () => sh().name, bg: () => st.bg, loop: {
+  // a seamless loop (js/common/seamless.js): the turning, the morph and the colours go round whole times
+  parts: () => { if (walk.on) return { block: 'A walk on the surface never comes back to where it started, so it can’t loop. Stop walking first (G).' };
+    const go = !st.paused, P = st.P[st.shape], r = MO.loopParts(go), parts = [...r.parts], held = [...r.held];
+    if (go && st.anim.on && sh().band) held.push('the band cut'); else if (go && st.anim.on && 'mo' in P) parts.push({ name: 'Morph', rate: 0.6, cycle: LTAU, noun: ['time', 'times'] });
+    if (go) parts.push(...colourPart(st.cycleSpeed));
+    return { parts, held }; },
+  step: tick, begin: () => MO.loopBegin() } });
 // the Visualizer: a new surface, palette or slow change every eight bars; when the chorus comes in, a new surface
 // with one of its own numbers slowly changing
 makeVisualizer(MO, { preset: 'mvt=0.25&mvb=0.35&mvd=0.3', shape: () => (walk.on ? false : pickButton('#shapeLists button')),
   drop: () => { if (walk.on) return; pickButton('#shapeLists button'); const ids = MO.sweep.list().filter(id => id.startsWith('pp_')); if (ids.length) MO.sweep.pick(ids[Math.floor(Math.random() * ids.length)]); } });
 let running = false, tPrev = 0, frame = 0;
 function loop(now) {
-  if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frame++;
+  if (!running) return; requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; if (LOOP.on) return;   // a seamless loop being made steps the picture itself (js/common/seamless.js)
+  tick(dt);
+}
+/** One frame: move everything by dt seconds and draw. */
+function tick(dt) {
+  frame++;
   setPausedTag(st.paused); const goOn = !st.paused;
   const s = sh(), P = st.P[st.shape];
   if (goOn && st.anim.on) {
-    if (s.band) { st.anim.t += dt / 1.6; const u = Math.min(1, st.anim.t), e = u * u * (3 - 2 * u); st.gap = 0.22 * (st.anim.close ? 1 - e : e); if (u >= 1) { st.anim.on = false; if (st.anim.close) st.gap = 0; } build(); labels(); }
+    if (s.band) { if (!LOOP.on) st.anim.t += dt / 1.6;   /* the band cut never comes back: it holds still in a seamless loop */ const u = Math.min(1, st.anim.t), e = u * u * (3 - 2 * u); st.gap = 0.22 * (st.anim.close ? 1 - e : e); if (u >= 1) { st.anim.on = false; if (st.anim.close) st.gap = 0; } build(); labels(); }
     else if ('mo' in P) { st.anim.t = clk.morph.step(st.anim.t, dt * energyMul(), 2 * Math.PI, cycleBeats(2), 0.6); P.mo = 0.5 - 0.5 * Math.cos(st.anim.t); const el = $('pp_mo'); if (el) { el.value = P.mo; $('pp_moo').textContent = P.mo.toFixed(2); } build(); labels(); }
   }
   if (walk.on) { MO.step(dt, { away: true, go: goOn }); stepWalk(dt); }
   else { S.step(dt); MO.step(dt, { go: goOn, spin: !S.pointers.size }); }
   // the music: vocals sway the soap film's bend a little; beats flash or pulse; colour drifts
   const vo = voice(); if (vo && 'mo' in P && !st.anim.on && !walk.on) { const keep = P.mo; P.mo = clamp(keep + 0.06 * vo, 0, 1); build(); P.mo = keep; }
-  const cs = goOn ? colourStep(dt) : 0; if ((goOn && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (goOn ? dt * st.cycleSpeed * 0.06 : 0) + cs) % 1; recolour(); }
+  const cs = goOn ? colourStep(dt) : 0; if ((goOn && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (goOn ? dt * loopRate(st.cycleSpeed * 0.06, 1) : 0) + cs) % 1; recolour(); }
   S.fit.scale.setScalar(2.6 / ext * (walk.on ? 1 : 1 + 0.05 * pulse())); S.setFlash(flash());
   if (st.slice && !walk.on) { clip.normal.set(0, 0, -1).applyQuaternion(S.pivot.quaternion); clip.constant = st.sliceAt * 1.3; }
   S.render(); if (walk.on && frame % 10 === 0) labels(); if (frame % 30 === 0) share.touch();   // keep the link up to date as the view is turned
-  requestAnimationFrame(loop);
 }
 
 // ---------- 3D print ----------

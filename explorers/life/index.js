@@ -9,6 +9,7 @@ import { flashFx as flash, pulseFx as pulse, voiceFx as voice, colourStep, energ
 import { inZen } from '../../js/shell/layout.js';
 import { setPausedTag, drive } from '../../js/shell/keys.js';
 import { parseRoute } from '../../js/shell/route.js';
+import { LOOP, loopRate, colourPart, TAU as LTAU } from '../../js/common/seamless.js';
 import { makeMotion2D, addRecorder } from '../../js/common/motion.js';
 import { makeVisualizer, pickButton, randomSlider } from '../../js/common/visualizer.js';
 
@@ -333,7 +334,13 @@ const MO = makeMotion2D({
   zoom: f => { const z = clamp(lz / f, 1, 8), ok = z !== lz; lz = z; dirty = true; return ok; },
   rotate: a => { la = (la + a) % (2 * Math.PI); dirty = true; },
   sweep: { skip: ['speed', 'dens', 'bsize', 'cell'], far: 0.06 } });
-const REC = addRecorder({ stage: lc.parentElement, name: () => fileBase(), bg: () => st.bg });
+const REC = addRecorder({ stage: lc.parentElement, name: () => fileBase(), bg: () => st.bg, loop: {
+  // a seamless loop (js/common/seamless.js): turning, In & out, a slowly changing number and the colours go round whole
+  // times; the simulation itself never comes back, so it holds still while the loop is made
+  parts: () => { const go = !st.paused, r = MO.loopParts(go), parts = [...r.parts, ...(go ? colourPart(st.cycleSpeed) : [])], held = [...r.held];
+    if (go) held.unshift('the simulation');
+    return { parts, held }; },
+  step: tick, begin: () => { dirty = true; } } });
 // the Visualizer: a new kind of Lenia or reaction-diffusion recipe (or, for Life, a new start) every eight bars; a fresh
 // start when the chorus comes in; in Lenia and reaction-diffusion, kicks drop seeds
 makeVisualizer(MO, { preset: 'mvd=0.25&mvw=1&mvb=0.3&mvn=0.1', shape: () => (st.mode === 'lenia' ? pickButton('#leniaList button') : st.mode === 'rd' ? pickButton('#rdList button') : (renew(), true)),
@@ -342,22 +349,27 @@ lc.addEventListener('wheel', e => { e.preventDefault(); lz = clamp(lz * Math.exp
 let running = false, tPrev = 0, frame = 0, dirty = true, flashNow = 0, pulseNow = 0, voiceNow = 0, acc = 0;
 G.onWake(() => { dirty = true; });   // back from sleep (js/common/gl.js): draw again
 function loop(now) {
-  if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frame++;
+  if (!running) return; requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; if (LOOP.on) return;   // a seamless loop being made steps the picture itself (js/common/seamless.js)
+  tick(dt);
+}
+/** One frame: move everything by dt seconds and draw. */
+function tick(dt) {
+  frame++;
   setPausedTag(st.paused); const go = !st.paused;
   const fl = flash(), pu = pulse(), vo = voice(); if (fl !== flashNow || pu !== pulseNow || Math.abs(vo - voiceNow) > 0.005) { flashNow = fl; pulseNow = pu; voiceNow = vo; dirty = true; }
-  const cs = go ? colourStep(dt) : 0; if ((go && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (go ? dt * st.cycleSpeed * 0.06 : 0) + cs) % 1; dirty = true; }
-  if (S && go) {
+  const cs = go ? colourStep(dt) : 0; if ((go && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (go ? dt * loopRate(st.cycleSpeed * 0.06, 1) : 0) + cs) % 1; dirty = true; }
+  if (S && go && !LOOP.on) {   /* the simulation never comes back: it holds still in a seamless loop */
     if (st.beatSeed && beats.crossed()) paintAt(Math.random() * W, Math.random() * H, false, st.mode === 'life' ? 5 : st.mode === 'lenia' ? 12 : 6);
     const per = st.mode === 'life' ? 12 : st.mode === 'lenia' ? 30 : 600;   // steps per second at 1×
     acc += dt * per * st.speed * energyMul(); let n = Math.min(Math.floor(acc), st.mode === 'rd' ? 40 : 8); acc -= Math.floor(acc); if (acc > 4) acc = 0;
     for (let i = 0; i < n; i++) step(); if (n) dirty = true;
   }
-  if (scroll(dt)) dirty = true;
+  if (!LOOP.on && scroll(dt)) dirty = true;
   if (!painting) MO.step(dt, go);
   if (dirty) { dirty = false; show(); }
   if (frame % 30 === 0) { count(); stats(); }
   if (frame % 60 === 0) share.touch();
-  requestAnimationFrame(loop);
 }
 
 // ---------- 3D print ----------

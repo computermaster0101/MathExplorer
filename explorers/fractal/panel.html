@@ -246,7 +246,11 @@
   </div>
   <div class="sec">
     <div class="lbl">Record video <b id="recTime"></b></div>
-    <div class="seg" id="recLen"><button data-s="0" class="on">Until I stop</button><button data-s="10">10 s</button><button data-s="30">30 s</button></div>
+    <div class="seg" id="recKind"><button data-k="live" class="on">As it plays</button><button data-k="loop">Seamless loop</button></div>
+    <div class="seg" id="recLen" style="margin-top:6px"><button data-s="0" class="on">Until I stop</button><button data-s="10">10 s</button><button data-s="30">30 s</button></div>
+    <div id="recLoopSec" hidden>
+      <div class="seg" id="recLoopLen" style="margin-top:6px"><button data-l="0" class="on">Best fit</button><button data-l="6">6 s</button><button data-l="12">12 s</button><button data-l="24">24 s</button></div>
+      <div class="seg" id="recShape" style="margin-top:6px"><button data-a="screen" class="on">Screen</button><button data-a="wide">Wide</button><button data-a="tall">Tall</button><button data-a="square">Square</button></div></div>
     <div class="seg" id="recRes" style="margin-top:6px"><button data-r="0" class="on">Screen size</button><button data-r="720">720p</button><button data-r="1080">1080p</button></div>
     <div class="btns" style="margin-top:8px"><button class="btn" id="recBtn">● Record</button></div>
     <p class="note" id="recNote">Records whatever is moving (an endless dive, a 3D breathe, a growing fractal) as a video file, with the music if it's playing.</p>

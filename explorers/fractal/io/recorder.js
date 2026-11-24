@@ -6,6 +6,7 @@ import { glc, ovc } from '../render/webgl.js';
 import { cssH, cssW, touch } from '../view.js';
 import { segClick } from '../ui/controls.js';
 import { fileBase, saveBlob } from './save-image.js';
+import { wireLoop } from '../../../js/common/loopmaker.js';
 
 // ---------- video recorder: the picture (and the music) straight to a file ----------
 const rec={mr:null, chunks:[], cv:document.createElement('canvas'), t0:0, limit:0, res:0, mime:'', ext:'webm'};
@@ -18,11 +19,17 @@ function recStart(){ const mime=recMime(); if (!mime || !rec.cv.captureStream){ 
   tracks.push(...recordTracks());
   try { rec.mr=new MediaRecorder(new MediaStream(tracks), {mimeType:mime, videoBitsPerSecond: rec.cv.height>=1000 ? 12e6 : 7e6}); } catch(e){ $('recNote').textContent='Couldn\'t start recording here.'; rec.mr=null; return; }
   rec.mime=mime; rec.ext=mime.startsWith('video/mp4')?'mp4':'webm'; rec.chunks=[]; rec.mr.ondataavailable=e=>{ if (e.data && e.data.size) rec.chunks.push(e.data); };
-  rec.mr.onstop=()=>{ const blob=new Blob(rec.chunks,{type:rec.mime.split(';')[0]}); rec.chunks=[]; $('recBtn').textContent='● Record'; $('recBtn').classList.remove('on'); $('recTime').textContent='';
+  rec.mr.onstop=()=>{ const blob=new Blob(rec.chunks,{type:rec.mime.split(';')[0]}); rec.chunks=[]; $('recBtn').classList.remove('on'); if (LP) LP.label(); $('recTime').textContent='';
     if (blob.size) saveBlob(`${fileBase()}-${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.${rec.ext}`, blob, $('recNote')); else $('recNote').textContent='Nothing was recorded.'; };
   rec.mr.start(1000); rec.t0=performance.now(); shared.recCapH=rec.res||0; touch(); $('recBtn').textContent='■ Stop recording'; $('recBtn').classList.add('on');
   $('recNote').textContent=`Recording ${rec.cv.width}×${rec.cv.height} ${rec.ext.toUpperCase()}${tracks.length>1?' with sound':''}. The panel and captions aren't included.`; }
 function recStop(){ shared.recCapH=0; touch(); if (rec.mr && rec.mr.state!=='inactive'){ const mr=rec.mr; rec.mr=null; mr.stop(); } }
-$('recBtn').addEventListener('click', ()=>{ if (rec.mr) recStop(); else recStart(); });
+// Seamless loop (js/common/loopmaker.js): the hooks come from loop.js, which is loaded later (setLoopHooks in index.js)
+let LP=null;
+export function setLoopHooks(loop){ LP=wireLoop({ stage:glc.parentElement, layers:()=>[glc, ovc], bg:()=>st.bg, loop, sec:$('recBtn').closest('.sec'), res:()=>rec.res,
+  save:(blob, tag, ext)=>saveBlob(`${fileBase()}${tag}-${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.${ext}`, blob, $('recNote')) }); }
+/** Leaving the explorer stops a loop being made. */
+export function loopCancel(){ if (LP && LP.making()) LP.cancel(); }
+$('recBtn').addEventListener('click', ()=>{ if (LP && LP.making()) LP.cancel(); else if (rec.mr) recStop(); else if (LP && LP.kind()==='loop') LP.make(); else recStart(); });
 segClick('recLen', d=>{ rec.limit=+d.s; });
 segClick('recRes', d=>{ rec.res=+d.r; });

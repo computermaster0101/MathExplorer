@@ -40,12 +40,14 @@ import { newOrbit } from './modes/orbit.js';
 import { buildPlaces, d3Rows, flyTo, juliaAvail, juliaSwap, resetView, setMode, typeChanged } from './ui/controls.js';
 import { TYPES } from './fractals/types.js';
 import { applyState, applyView, decodeState, encodeState, getState, parseView, readView, showView, viewCode, writeHash } from './io/share.js';
-import { pace, startLoop, stopLoop } from './loop.js';
+import { pace, startLoop, stopLoop, loopParts, loopTick, loopBegin, loopEnd } from './loop.js';
+import { setLoopHooks, loopCancel } from './io/recorder.js';
 import { onKey } from './input/keyboard.js';
 export { moving } from './input/keyboard.js';   /* the picture's play icon shows while nothing moves */
 import { parseRoute } from '../../js/shell/route.js';
 
 new ResizeObserver(()=>touch()).observe(glc.parentElement);
+setLoopHooks({ parts: loopParts, step: loopTick, begin: (L, W, H) => loopBegin(L, H), end: loopEnd });   // Record video's Seamless loop
 
 sizeBuffers(); resetViews(); buildPlaces(); typeChanged(); d3Rows(); setMode('explore');
 { const h=parseRoute().code, S=h?readView(h):null; if (S){ shared.lastHash=h; applyView(S); } writeHash(true); }
@@ -53,7 +55,7 @@ window.__fx={st, pace, render3D, nestIn, nestOut, nestReset, render2DAll, refSlo
 
 // ---------- lifecycle (see js/main.js) ----------
 export function start(){ touch(); writeHash(true); startLoop(); }
-export function stop(){ stopLoop(); drop3(); }   // leaving the explorer lets the 3D program go; it's rebuilt when needed
+export function stop(){ loopCancel(); stopLoop(); drop3(); }   // leaving the explorer lets the 3D program go; it's rebuilt when needed
 export const reset = resetView;
 export const layoutChanged = touch;
 export { onKey, showView };

@@ -5,7 +5,7 @@ import { st } from '../state.js';
 import { PALETTES, css } from '../render/colour.js';
 import { colourControls } from '../../../js/common/colours.js';
 import { SHAPES } from '../geometry/polytopes.js';
-import { HD_MAX } from '../geometry/higher-dim.js';
+import { HD_MAX, hdOff } from '../geometry/higher-dim.js';
 import { FINISH, HOME, canvas, mainLayer, pingLayer, pivot, renderer, sliceLayer } from '../render/scene.js';
 import { renderView } from '../render/stereo.js';
 import { capsFor, kissOK } from '../render/packing.js';
@@ -97,7 +97,7 @@ function syncHdRow(){ const sh=SHAPES[st.shape]; $('hdRow').hidden=!sh.highD; if
   $('hd').max=HD_MAX[st.shape]; $('hd').value=sh.n; $('hdo').textContent=sh.n+'D'; $('hdnote').textContent=sh.note; }
 export function togglePlay(){ st.spin=!st.spin; st.turnHold=!st.spin; $('play').textContent=st.spin?'Pause spin':'Resume spin'; }
 export function sliceHome(){   // Slice always starts the same way: no 4D turn, the home camera angle, and the knife at the end that meets the shape first
-  st.hdA=0; for (const k of ['xy','xw','yw','zw']) st[k]=0; syncAngles(); pivot.quaternion.setFromEuler(HOME); vel.x=vel.y=0;
+  st.hdA=0; hdOff.length=0; for (const k of ['xy','xw','yw','zw']) st[k]=0; syncAngles(); pivot.quaternion.setFromEuler(HOME); vel.x=vel.y=0;
   st.sweepT=Math.PI/2; st.knifeU=1; $('knife').value=100; shared.sliceCen=null; panelFit.slice=null; shared.fitScale=null; }
 
 $('flyBtn').addEventListener('click', ()=>{ toggleFly(); st.paused=false; });   // the same as G

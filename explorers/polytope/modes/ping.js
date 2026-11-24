@@ -4,7 +4,7 @@ import { BASE_R, st } from '../state.js';
 import { colorOf, wColor } from '../render/colour.js';
 import { cross, dot3, dotN, nrm, shapeCtx, smooth, subN, topo } from '../geometry/common.js';
 import { SHAPES } from '../geometry/polytopes.js';
-import { axisHue, hdProjectAll } from '../geometry/higher-dim.js';
+import { axisHue, hdProjectAll, hdOff } from '../geometry/higher-dim.js';
 import { facePolys } from '../geometry/faces.js';
 import { mulM, project, rot4 } from '../math/rotate4d.js';
 import { LINE_LIMIT, drawSource, faceFill, fit, mainLayer, mainLines, makeFrames, pingLayer, pingLines, sliceFill, sliceLayer } from '../render/scene.js';
@@ -103,7 +103,7 @@ export function getSource(){
   if (st.mode==='build') return buildSource();
   if (st.mode==='unfold') return unfoldSource();
   const sh=shapeCtx(SHAPES[st.shape]), KA=st.mode==='slice' ? knifeMatrix(SHAPES[st.shape]) : null, M=KA ? mat4mul(KA, rot4()) : rot4();
-  const V4 = sh.highD && sh.n>4 && st.hdA ? hdProjectAll(sh, st.hdA) : sh.verts;
+  const V4 = sh.highD && sh.n>4 && (st.hdA || hdOff.length) ? hdProjectAll(sh, st.hdA) : sh.verts;
   const src={ O:sh.verts, V:V4.map(v=>mulM(M,v)), edges:sh.edges, fam:sh.fam, amax:sh.amax, wmax:sh.wmax, tk:sh.tk,
     proj: roundView(sh) ? 'stereo' : st.mode==='slice' && st.proj==='stereo' ? 'persp' : st.proj, curved: (st.mode==='explore' || st.mode==='ping') && st.edges==='curved' && !sh.noCurve };
   if (sh.edgeColor && st.mode!=='ping') src.edgeCol=sh.edgeColor;
