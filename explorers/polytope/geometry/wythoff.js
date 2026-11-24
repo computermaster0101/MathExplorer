@@ -5,13 +5,13 @@ import { COUSIN } from './cousins3d.js';
 // Each family (5-cell, tesseract/16-cell, 24-cell, 600-cell/120-cell) is a set of mirrors. Put a point somewhere between
 // the mirrors, reflect it in every way the mirrors allow, and the copies are the corners. Two corners are joined when one
 // mirror swaps them. Moving the point slides smoothly through the whole family.
-const WY_FAM = {
+export const WY_FAM = {
   a4:{ m:[3,3,3], label:'5-cell family' },
   b4:{ m:[4,3,3], label:'Tesseract / 16-cell family' },
   f4:{ m:[3,4,3], label:'24-cell family' },
   h4:{ m:[5,3,3], label:'120-cell / 600-cell family' },
 };
-function wyGroup(fk){
+export function wyGroup(fk){
   const F=WY_FAM[fk]; if (F.G) return F;
   const M=[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]].map(r=>r.slice());   // Gram matrix of the mirror normals
   for (let i=0;i<4;i++) for (let j=0;j<4;j++) M[i][j] = i===j ? 1 : Math.abs(i-j)===1 ? -Math.cos(Math.PI/F.m[Math.min(i,j)]) : 0;
@@ -34,7 +34,7 @@ function wyGroup(fk){
       if (!seen.has(kk)){ seen.set(kk,mats.length); mats.push(h); } } }
   F.A=A; F.W=W; F.G=Float64Array.from(mats.flat()); F.order=mats.length;
   return F; }
-function wythoff(fk, w, tiltT=0){   // w = how far the point sits from each of the 4 mirrors
+export function wythoff(fk, w, tiltT=0){   // w = how far the point sits from each of the 4 mirrors
   const F=wyGroup(fk), G=F.G, N=F.order, p=[0,1,2,3].map(i=>F.W.reduce((s,ww,k)=>s+w[k]*ww[i],0)), pl=Math.hypot(...p);
   const pn=p.map(x=>x/pl), refl=F.A.map(a=>{ const d=2*dot4(a,pn); return pn.map((x,i)=>x-d*a[i]); });
   const act=(g,v)=>{ const o=g*16; return [G[o]*v[0]+G[o+1]*v[1]+G[o+2]*v[2]+G[o+3]*v[3], G[o+4]*v[0]+G[o+5]*v[1]+G[o+6]*v[2]+G[o+7]*v[3],

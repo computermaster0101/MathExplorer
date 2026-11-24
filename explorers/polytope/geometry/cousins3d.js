@@ -39,6 +39,8 @@ const POLY3 = {
   gsd:['Great stellated dodecahedron', ()=>{ const V=[...signedPerms3([1,1,1]), ...signedPerms3([0,1/PHI,PHI],true)], c=3, E=[];
     for (let i=0;i<V.length;i++) for (let j=i+1;j<V.length;j++){ const d=dot3(V[i],V[j])/c; if (Math.abs(d+Math.sqrt(5)/3)<1e-6) E.push([i,j]); } return {verts:V, edges:E}; }],
   idd:['Icosidodecahedron', ()=>[...signedPerms3([0,0,PHI],true), ...signedPerms3([0.5,PHI/2,PHI*PHI/2],true)]],
+  rid:['Rhombicosidodecahedron', ()=>[...signedPerms3([1,1,PHI**3],true), ...signedPerms3([PHI**2,PHI,2*PHI],true), ...signedPerms3([2+PHI,0,PHI**2],true)]],
+  grid:['Truncated icosidodecahedron', ()=>[...signedPerms3([1/PHI,1/PHI,3+PHI],true), ...signedPerms3([2/PHI,PHI,1+2*PHI],true), ...signedPerms3([1/PHI,PHI**2,3*PHI-1],true), ...signedPerms3([2*PHI-1,2,2+PHI],true), ...signedPerms3([PHI,3,2*PHI],true)]],
 };
 const COUSIN_NAME_EXTRA={};
 export const COUSIN = {sph4:'sph',duocyl:'cyl',spherinder:'cyl',cubinder:'cyl',5:'tet',8:'cube',16:'oct',120:'dod',600:'ico',rt:'cubo',tt:'tcube',bt:'toct',ot:'tco',r5:'oct',ru5:'cubo',o5:'toct',d:'prism',
