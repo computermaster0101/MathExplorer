@@ -7,6 +7,7 @@ import { rampOf, sampleRamp, sampleMirror, palTitle } from '../../js/common/pale
 import { makeStage3D, makeFinishes } from '../../js/common/three-stage.js';
 import { saveCanvasPNG, saveFile, fileName } from '../../js/common/save.js';
 import { stlFromTriangles, tubeTriangles } from '../../js/common/stl.js';
+import { LOOP, loopRate, colourPart, TAU as LTAU } from '../../js/common/seamless.js';
 import { makeMotion3D, addRecorder } from '../../js/common/motion.js';
 import { makeVisualizer, pickButton } from '../../js/common/visualizer.js';
 import { flashFx as flash, pulseFx as pulse, voiceFx as voice, colourStep, Groove } from '../../js/shell/audio/react.js';
@@ -267,23 +268,34 @@ export function moving() { return fly.on || !!live || st.spin || st.cycleSpeed >
 // ---------- loop ----------
 const MO = makeMotion3D(S, { spinRow: $('spin').closest('label'), speedRow: $('speed').closest('.row'), rate: () => 0.3, spinOn: () => st.spin, speed: () => st.speed,
   sweep: { skip: ['speed', 'flySpeed', 'amount', 'pp_n', 'pp_k'], every: 90 } });
-const REC = addRecorder({ stage: canvas.parentElement, name: () => fm().file || fm().name, bg: () => st.bg });
+const REC = addRecorder({ stage: canvas.parentElement, name: () => fm().file || fm().name, bg: () => st.bg, loop: {
+  // a seamless loop (js/common/seamless.js): the turning and the colours go round whole times
+  parts: () => { if (fly.on) return { block: 'A flight through the foam never comes back to where it started, so it can’t loop. Stop flying first (G).' };
+    const go = !st.paused, r = MO.loopParts(go), parts = [...r.parts, ...(go ? colourPart(st.cycleSpeed) : [])], held = [...r.held];
+    if (live && go) held.push('settling');
+    return { parts, held }; },
+  step: tick, begin: () => MO.loopBegin() } });
 // the Visualizer: a new foam, palette or slow change every eight bars, sometimes the bubbles pulled apart; when the chorus comes in, fly through
 makeVisualizer(MO, { preset: 'mvt=0.2&mvb=0.3&mvd=0.25', shape: () => (fly.on ? false : pickButton('#shapeLists button')),
   drop: () => { if (fm().exact) { pickButton('#shapeLists button:not([data-s="double"])'); } if (!fly.on) startFly(); return () => endFly(); },
   extra: [['the bubbles pulled apart, or put back', () => { setRange('explode', st.explode > 0.1 ? 0 : 0.25 + 0.4 * Math.random()); return true; }], ['another way of drawing it', () => { pickButton('#drawMode button:not(.on)'); return true; }]] });
 let running = false, tPrev = 0, frame = 0;
 function loop(now) {
-  if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frame++;
+  if (!running) return; requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; if (LOOP.on) return;   // a seamless loop being made steps the picture itself (js/common/seamless.js)
+  tick(dt);
+}
+/** One frame: move everything by dt seconds and draw. */
+function tick(dt) {
+  frame++;
   setPausedTag(st.paused); const goOn = !st.paused;
   if (fly.on) { MO.step(dt, { away: true, go: goOn }); stepFly(dt); }
   else { S.step(dt); MO.step(dt, { go: goOn, spin: !S.pointers.size }); }
-  if (live) stepSettle(dt);
-  const cs = goOn ? colourStep(dt) : 0; if ((goOn && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (goOn ? dt * st.cycleSpeed * 0.06 : 0) + cs) % 1; recolour(); }
+  if (live && !LOOP.on) stepSettle(dt);   /* settling never comes back: it holds still in a seamless loop */
+  const cs = goOn ? colourStep(dt) : 0; if ((goOn && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (goOn ? dt * loopRate(st.cycleSpeed * 0.06, 1) : 0) + cs) % 1; recolour(); }
   S.fit.scale.setScalar(2.4 / ext * (fly.on ? 1 : 1 + 0.05 * pulse())); S.setFlash(flash());
   S.fit.rotation.z = fly.on ? 0 : 0.12 * voice();   // vocals and melody sway the foam gently from side to side
   S.render(); if (frame % 30 === 0) share.touch();
-  requestAnimationFrame(loop);
 }
 
 // ---------- 3D print ----------

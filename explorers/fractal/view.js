@@ -19,6 +19,7 @@ export function sizeBuffers(){
   const r=glc.parentElement.getBoundingClientRect(); cssW=Math.max(1,r.width); cssH=Math.max(1,r.height);
   const b=baseDpr(); let s= st.mode==='grow' ? 1 : (st.mode==='d3' ? Math.min(b,1.5) : b)*st.q;
   if (shared.recCapH && st.mode!=='grow') s=Math.min(s, shared.recCapH/cssH);   // recording at 720p/1080p: no need to draw more pixels than the video keeps
+  if (shared.loopH && st.mode!=='grow') s=shared.loopH/cssH;   // making a seamless loop: exactly the video's pixels, in 3D too
   const w=Math.max(1,Math.round(cssW*s)), h=Math.max(1,Math.round(cssH*s));
   if (glc.width!==w || glc.height!==h){ glc.width=w; glc.height=h; shared.dirty=true; hqDone=false; }
   bufScale=glc.width/cssW;

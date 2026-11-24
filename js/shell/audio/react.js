@@ -20,6 +20,7 @@
 //   new Director()  step(dt) returns 'phrase' every eight bars (about every 20 s without a steady beat), 'drop' or 'calm'
 //                   when the song changes section, otherwise null: the Visualizer changes the scene on these
 import * as engine from './engine.js';
+import { LOOP, loopRate } from '../../common/seamless.js';
 const { player } = engine;
 
 const KEY = 'mathexplorer.sound';
@@ -29,7 +30,7 @@ try { Object.assign(settings, JSON.parse(localStorage.getItem(KEY) || '{}')); } 
 export function saveSettings() { try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch (e) { /* not saved */ } }
 
 const f = () => engine.features;   // the live object (re-created when the audio context first starts)
-const live = () => settings.on && player.playing;
+const live = () => settings.on && player.playing && !LOOP.on;   // a seamless loop being made ignores the music (js/common/seamless.js)
 const amt = () => settings.amount;
 
 export const reacting = () => live();
@@ -110,6 +111,7 @@ export function colourStep(dt) {
 export class Phase {
   constructor() { this.v = null; }
   step(value, dt, period, beatsPerCycle, rate = 1) {
+    if (LOOP.on) return value + dt * loopRate(rate, period);   // a seamless loop: exactly whole cycles, no easing
     const locked = tempoLocked();
     const base = locked ? period * (bpm() / 60) / beatsPerCycle : rate * energyMul();
     if (this.v === null || dt > 0.5) this.v = base;   // first step, or back after a pause

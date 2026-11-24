@@ -39,7 +39,7 @@ import './io/share.js';
 import { setZoomZ } from './input/orbit.js';
 import { setMode } from './ui/controls.js';
 import { applyMorph, resetAll } from './ui/learn.js';
-import { resize, startLoop, stopLoop } from './loop.js';
+import { resize, startLoop, stopLoop, tick, loopParts, loopBegin } from './loop.js';
 import { applyView, showView } from './io/share.js';
 import { onKey } from './input/keyboard.js';
 export { moving } from './input/keyboard.js';   /* the picture's play icon shows while nothing moves */
@@ -55,7 +55,7 @@ setMode('explore'); setZoomZ(8.5); resize();
 // ---------- lifecycle (see js/main.js) ----------
 export function start(){ resize(); startLoop(); }
 // Record video (the 3D view and any insets on screen), with the music
-const REC = addRecorder({ stage: document.getElementById('c').parentElement, name: () => (st.mode === 'explore' || st.mode === 'slice' ? SHAPES[st.shape].name : 'tesseract-' + st.mode), bg: () => st.bg });
+const REC = addRecorder({ stage: document.getElementById('c').parentElement, name: () => (st.mode === 'explore' || st.mode === 'slice' ? SHAPES[st.shape].name : 'tesseract-' + st.mode), bg: () => st.bg , loop: { parts: loopParts, step: tick, begin: loopBegin } });
 export function stop(){ stopLoop(); REC.stop(); }
 export const reset = resetAll;
 export const layoutChanged = resize;

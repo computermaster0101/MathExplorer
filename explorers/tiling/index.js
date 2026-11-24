@@ -14,6 +14,7 @@ import { parseRoute } from '../../js/shell/route.js';
 import { tiling, direction, PHI, SHARED } from './penrose.js';
 import { wythoff, KINDS, vertexConfig, tilingName } from './wythoff.js';
 import { PATTERNS, WALLPAPER } from './patterns.js';
+import { LOOP, loopRate, colourPart, TAU as LTAU } from '../../js/common/seamless.js';
 import { makeMotion2D, addRecorder } from '../../js/common/motion.js';
 import { makeVisualizer, pickButton, randomSlider } from '../../js/common/visualizer.js';
 
@@ -360,28 +361,41 @@ const MO = makeMotion2D({ rows: $('glideSec'),
   zoom: f => { if (flat2d()) return pview.zoomBy(f); const z = st.zoom, flat = geo.K === 0 && st.model === 'plane'; zoomBy(f); return flat || st.zoom !== z; },
   rotate: a => { if (flat2d()) pview.rotate(a); else turn(a); dirty = true; },
   sweep: { skip: ['speed'], every: 60 } });
-const REC = addRecorder({ stage: tc.parentElement, name: () => fileBase(), bg: () => st.bg });
+const REC = addRecorder({ stage: tc.parentElement, name: () => fileBase(), bg: () => st.bg, loop: {
+  // a seamless loop (js/common/seamless.js): turning, In & out and the colours go round whole times; a glide or a drift
+  // holds still (it never comes back to where it started)
+  parts: () => { const go = !st.paused, r = MO.loopParts(go), parts = [...r.parts], held = [...r.held];
+    if (go && !flat2d() && st.spin) parts.push({ name: 'Turn', rate: 0.15 * st.speed, cycle: LTAU });
+    if (go && !flat2d() && st.gliding) held.push('the glide');
+    if (go) parts.push(...colourPart(st.cycleSpeed));
+    return { parts, held }; },
+  step: tick, begin: () => { dirty = true; } } });
 // the Visualizer: a new tiling, kind (Wythoff's construction), palette or slow change every eight bars; when the chorus
 // comes in, a {p, q} world starts gliding until the next change (a flat pattern gets a fresh random one)
 makeVisualizer(MO, { preset: 'mvd=0.25&mvw=1&mvb=0.3&mvn=0.12', shape: () => pickButton('#hypList button, #uniList button, #sphList button, #qcList button, #wallList button, #truList button, #archList button'),
   drop: () => { if (flat2d()) { renew(); return; } if (st.gliding) return; go(); return () => { if (st.gliding) go(); }; }, extra: [['a new kind of tiling', () => !flat2d() && pickButton('#wyKind button')]] });
 const clk = { glide: new Groove(), spin: new Groove() };
 function loop(now) {
-  if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frame++;
+  if (!running) return; requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; if (LOOP.on) return;   // a seamless loop being made steps the picture itself (js/common/seamless.js)
+  tick(dt);
+}
+/** One frame: move everything by dt seconds and draw. */
+function tick(dt) {
+  frame++;
   setPausedTag(st.paused); const go = !st.paused;
   if (MO.step(dt, go && !pview.dragging && !drag)) share.touch();
   if (flat2d()) { if (pview.step(dt)) dirty = true; }
   else {
-    const d = drive(); if (d.any) { const k = dt * 0.9 * d.scale * (d.fast ? 3 : 1); slide((d.turnX + d.slideX) * k, (d.turnY + d.slideY) * k); dirty = true; }
+    const d = drive(); if (d.any && !LOOP.on) { const k = dt * 0.9 * d.scale * (d.fast ? 3 : 1); slide((d.turnX + d.slideX) * k, (d.turnY + d.slideY) * k); dirty = true; }
     // glide and turn surge on each beat with the music, like every other motion (and follow its energy)
-    if (go && st.gliding) { const k = clk.glide.delta(dt, 0.18 * st.speed, 0.09 * st.speed); slide(Math.cos(glideDir) * k, Math.sin(glideDir) * k); dirty = true; }
-    if (go && st.spin) { turn(clk.spin.delta(dt, 0.15 * st.speed, 0.075 * st.speed)); dirty = true; }
+    if (go && st.gliding && !LOOP.on) { const k = clk.glide.delta(dt, 0.18 * st.speed, 0.09 * st.speed); slide(Math.cos(glideDir) * k, Math.sin(glideDir) * k); dirty = true; }
+    if (go && st.spin) { turn(clk.spin.delta(dt, loopRate(0.15 * st.speed), 0.075 * st.speed)); dirty = true; }
   }
-  const cs = go ? colourStep(dt) : 0; if ((go && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (go ? dt * st.cycleSpeed * 0.06 : 0) + cs) % 1; if (st.kind === 'pq' || frame % 4 === 0) dirty = true; }
+  const cs = go ? colourStep(dt) : 0; if ((go && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (go ? dt * loopRate(st.cycleSpeed * 0.06, 1) : 0) + cs) % 1; if (st.kind === 'pq' || frame % 4 === 0) dirty = true; }
   const fl = flash(), pu = pulse(), vo = voice(); if (fl !== flashNow || pu !== pulseNow || Math.abs(vo - voiceNow) > 0.01) { flashNow = fl; pulseNow = pu; voiceNow = vo; if (st.kind === 'pq' || frame % 3 === 0) dirty = true; }
   if (dirty) { dirty = false; if (flat2d()) drawCanvas(); else draw(null); }
   if (frame % 30 === 0) share.touch();
-  requestAnimationFrame(loop);
 }
 
 // ---------- 3D print: the view as a coaster with raised lines ----------

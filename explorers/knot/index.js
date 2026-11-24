@@ -6,6 +6,7 @@ import { rampOf, sampleRamp, sampleMirror, palTitle } from '../../js/common/pale
 import { makeStage3D, makeFinishes } from '../../js/common/three-stage.js';
 import { saveCanvasPNG, saveFile, fileName } from '../../js/common/save.js';
 import { stlFromTriangles, tubeTriangles } from '../../js/common/stl.js';
+import { LOOP, loopRate, colourPart, TAU as LTAU } from '../../js/common/seamless.js';
 import { makeMotion3D, addRecorder } from '../../js/common/motion.js';
 import { makeVisualizer, pickButton, randomSlider } from '../../js/common/visualizer.js';
 import { flashFx as flash, pulseFx as pulse, voiceFx as voice, colourStep, Groove, Phase, cycleBeats, tempoLocked, bpm } from '../../js/shell/audio/react.js';
@@ -213,21 +214,35 @@ export function moving() { return ride.on || st.spin || st.cycleSpeed > 0 || MO.
 // Rotation & motion (its own group): turning, rocking, tumbling, the camera's zoom and drift, and Slowly change
 const MO = makeMotion3D(S, { spinRow: $('spin').closest('label'), speedRow: $('speed').closest('.row'), rate: () => 0.35, spinOn: () => st.spin, speed: () => st.speed,
   sweep: { skip: ['speed', 'rideSpeed', 'detail'] } });
-const REC = addRecorder({ stage: canvas.parentElement, name: () => sh().name, bg: () => st.bg });
+const REC = addRecorder({ stage: canvas.parentElement, name: () => sh().name, bg: () => st.bg, loop: {
+  // a seamless loop (js/common/seamless.js): the turning and the colours go round whole times, and a ride round one ring
+  // takes whole laps
+  parts: () => { const go = !st.paused, col = go ? colourPart(st.cycleSpeed) : [];
+    if (ride.on) {
+      if (rideTrack && rideTrack.length > 1 && st.hop) return { block: 'Riding a link hops from ring to ring, so it never comes back to where it started. Turn off “Links: hop” to loop the ride round one ring, or stop riding.' };
+      const t = rideTrack && rideTrack[ride.comp], lapSec = t ? t.len / (0.55 * st.rideSpeed) * (2.6 / ext) / 1.3 : 0;
+      return { parts: [...(go && lapSec ? [{ name: 'Ride', rate: 1 / lapSec, cycle: 1, noun: ['lap', 'laps'] }] : []), ...col], held: [] }; }
+    const r = MO.loopParts(go); return { parts: [...r.parts, ...col], held: r.held }; },
+  step: tick, begin: () => { MO.loopBegin(); ride.yaw = ride.pitch = 0; } } });
 // the Visualizer: a new knot, palette or slow change every eight bars; when the chorus comes in, ride the knot until the next change
 makeVisualizer(MO, { preset: 'mvt=0.25&mvb=0.35&mvd=0.3', shape: () => (ride.on ? false : pickButton('#shapeLists button')),
   drop: () => { if (!ride.on) startRide(); return () => endRide(); } });
 let running = false, tPrev = 0, frame = 0;
 function loop(now) {
-  if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frame++;
+  if (!running) return; requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; if (LOOP.on) return;   // a seamless loop being made steps the picture itself (js/common/seamless.js)
+  tick(dt);
+}
+/** One frame: move everything by dt seconds and draw. */
+function tick(dt) {
+  frame++;
   setPausedTag(st.paused); const goOn = !st.paused;
   if (ride.on) { MO.step(dt, { away: true, go: goOn }); stepRide(dt); }
   else { S.step(dt); MO.step(dt, { go: goOn, spin: !S.pointers.size }); }
-  const cs = goOn ? colourStep(dt) : 0; if ((goOn && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (goOn ? dt * st.cycleSpeed * 0.06 : 0) + cs) % 1; recolour(); }
+  const cs = goOn ? colourStep(dt) : 0; if ((goOn && st.cycleSpeed > 0) || cs) { st.cycle = (st.cycle + (goOn ? dt * loopRate(st.cycleSpeed * 0.06, 1) : 0) + cs) % 1; recolour(); }
   S.fit.scale.setScalar(2.6 / ext * (ride.on ? 1 : 1 + 0.05 * pulse())); S.setFlash(flash());
   S.fit.rotation.z = ride.on ? 0 : 0.12 * voice();   // vocals and melody sway the knot gently from side to side
   S.render(); if (frame % 15 === 0 && ride.on) stats(); if (frame % 30 === 0) share.touch();
-  requestAnimationFrame(loop);
 }
 
 // ---------- 3D print ----------

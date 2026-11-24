@@ -172,7 +172,7 @@ function refresh() {
   // the share menu: share sheet where the browser has one; print where this view can be printed; recording shows a dot
   $('shSheet').hidden = !navigator.share; $('shPrint').hidden = !printBtn();
   const rec = $('recBtn') && $('recBtn').classList.contains('on'); $('tbShare').classList.toggle('rec', !!rec);
-  $('shRec').textContent = rec ? '■ Stop recording' : '● Record video';
+  $('shRec').textContent = rec ? ($('recBtn').dataset.stop || '■ Stop recording') : ($('recBtn') && $('recBtn').dataset.menu) || '● Record video';   /* the panel says which kind: as it plays, or a seamless loop */
 }
 setInterval(refresh, 400);
 

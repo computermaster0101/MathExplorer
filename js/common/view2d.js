@@ -1,5 +1,6 @@
 // Panning and zooming a flat picture: drag to move, wheel or pinch to zoom where the pointer is, and the driving keys
 // (arrows and W A S D, at the shared Navigation speed). Used by Complex Functions, Tilings and Strange Attractors (Waves and Growing Patterns scroll with their own offsets).
+import { LOOP } from './seamless.js';
 import { drive } from '../shell/keys.js';
 
 /**
@@ -36,7 +37,7 @@ export function makeView2D(canvas, opts = {}) {
   // the home view fits the shorter side, so on a phone held upright it isn't cut off at the left and right
   v.reset = () => { const r = rect(), k = r.width > 0 && r.height > r.width ? r.height / r.width : 1; Object.assign(v, { cx: v.home.cx, cy: v.home.cy, scale: v.home.scale * k, rot: 0 }); changed(); };
   v.set = (cx, cy, scale) => { Object.assign(v, { cx, cy, scale: Math.min(maxS, Math.max(minS, scale)) }); changed(); };
-  v.step = dt => {
+  v.step = dt => { if (LOOP.on) return false;   /* a seamless loop being made: keys don't move it (js/common/seamless.js) */
     const k = drive(); if (!k.any || !v.enabled) return false;
     const cl = x => Math.max(-1, Math.min(1, x)), x = cl(k.slideX + k.turnX), y = cl(k.slideY + k.rawY); if (!x && !y) return false;
     const px = 0.5 * rect().height * (k.fast ? 3 : 1) * k.scale * dt; v.pan(-x * px, y * px); return true;

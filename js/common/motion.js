@@ -11,6 +11,8 @@ import { $ } from './kit.js';
 import { Groove, Phase, cycleBeats } from '../shell/audio/react.js';
 import { recordTracks } from '../shell/audio/engine.js';
 import { saveFile, fileName } from './save.js';
+import { LOOP, loopRate } from './seamless.js';
+import { wireLoop, LOOP_HTML, LOOP_OPTS_HTML } from './loopmaker.js';
 
 const TAU = 2 * Math.PI;
 const r6 = x => +(+x).toPrecision(6);
@@ -70,7 +72,7 @@ function makeSweep(opts, changed) {
     if (sw.centre == null) { sw.centre = +el.value; aim(el); }
     sw.t = sw.phase.step(sw.t, dt, TAU, cycleBeats(4), TAU / sw.len);
     const st = +el.step || 0, raw = sw.mid + sw.half * Math.sin(sw.t), v = st ? Math.round(raw / st) * st : raw, now = performance.now();
-    if (Math.abs(v - +el.value) < 1e-9 || now - sw.last < (opts.every || 0)) return true;
+    if (Math.abs(v - +el.value) < 1e-9 || (!LOOP.on && now - sw.last < (opts.every || 0))) return true;
     sw.last = now; el.value = v; el.dispatchEvent(new Event('input')); return true; };
   sw.encode = p => { if (!sw.id) return; p.set('mvx', sw.id); if (sw.centre != null) p.set('mvc', r6(sw.centre)); if (sw.far !== FAR) p.set('mvf', sw.far); if (sw.len !== 16) p.set('mvh', sw.len); };
   sw.decode = p => { setSlider('mvFar', p.get('mvf') ?? FAR, amount); setSlider('mvLen', p.get('mvh') ?? 16, v => v + ' s');
@@ -78,6 +80,8 @@ function makeSweep(opts, changed) {
     if (el && p.has('mvc')) { el.value = +p.get('mvc'); el.dispatchEvent(new Event('input')); }
     fill(); };
   sw.moving = () => !!sw.id;
+  /** As a seamless loop's part (js/common/seamless.js), while a slider is being swept. */
+  sw.part = () => { const el = sw.id && $(sw.id); return el && !el.closest('[hidden]') ? [{ name: 'Slowly change (' + labelOf(el) + ')', rate: TAU / sw.len, cycle: TAU, noun: ['sweep', 'sweeps'] }] : []; };
   /** The sliders that can be swept here, and choosing one (for the Visualizer). */
   sw.list = () => candidates().map(el => el.id);
   sw.pick = id => { fill(); sel.value = id; choose(id); changed(); };
@@ -130,15 +134,39 @@ export function makeMotion3D(S, opts) {
   const clk = { spin: new Groove(), tumble: new Groove(), rock: new Phase(), breathe: new Phase(), drift: new Phase() }; let tr = 0, tb = 0, td = 0;
   M.sweep = makeSweep(opts.sweep || {}, changed);
   const turn = opts.turn || (a => S.turn(a, 0));
+  // ---- seamless loops (js/common/seamless.js) ----
+  const lp = { q0: S.pivot.quaternion.clone(), qx: S.pivot.quaternion.clone(), qy: S.pivot.quaternion.clone(), X: new S.THREE.Vector3(1, 0, 0), Y: new S.THREE.Vector3(0, 1, 0), yaw: 0, tum: 0, rock0: 0, yawDone: 0, tumDone: 0 };
+  /** Start of a loop: remember the pose the turning is measured from. */
+  M.loopBegin = () => { S.vel.x = S.vel.y = 0; lp.q0.copy(S.pivot.quaternion); lp.yaw = lp.tum = lp.yawDone = lp.tumDone = 0; lp.rock0 = rockA; w = 1; };
+  /** What this group would move in a loop (nothing while paused, or in a first-person view). */
+  M.loopParts = (go = true, away = false) => { const parts = [], held = [];
+    if (!go) return { parts, held };
+    const rate = opts.rate() * (opts.speed ? opts.speed() : M.spd);
+    if (!away && opts.spinOn() && rate) {
+      parts.push(M.style === 'round' ? { name: 'Keep turning', rate, cycle: TAU } : { name: 'Rock to and fro', rate: Math.abs(rate) * 0.9, cycle: TAU, noun: ['swing', 'swings'] });
+      if (M.tumble) parts.push({ name: 'Tumble', rate: 0.6 * rate * M.tumble, cycle: TAU }); }
+    if (!away && M.breathe) parts.push({ name: 'In & out', rate: TAU / 14, cycle: TAU, noun: ['time', 'times'] });
+    if (!away && M.drift) parts.push({ name: 'Drift', rate: TAU / 23, cycle: TAU, noun: ['time round', 'times round'] });
+    parts.push(...M.sweep.part());
+    return { parts, held }; };
   let frame = 0, wasOn = false;
   const syncZoom = () => { if (frame % 10 || zoomBusy) return; zs.value = Math.min(3, Math.max(0.3, z0 * fz / cam.z)); $('mvZoomo').textContent = times(zs.value); };
   M.step = (dt, { go = true, away = false, spin = true } = {}) => {
     frame++; if (M.viz) M.viz.step(dt, go);
     if (away) { if (wasOn) undo(); wasOn = false; w = 0; if (go) M.sweep.step(dt, true); return false; }
     wasOn = true; syncZoom(); if (!go) return false;
-    w += (1 - w) * (1 - Math.exp(-dt / 0.8));
+    w += (1 - w) * (1 - Math.exp(-dt / 0.8)); if (LOOP.on) w = 1;
     const rate = opts.rate() * (opts.speed ? opts.speed() : M.spd), spinning = spin && opts.spinOn();
-    if (spinning) {
+    if (spinning && LOOP.on) {
+      // a seamless loop: the turn and the tumble each go round whole times; with the default turn the pose is worked out
+      // from the two angles (turning and tumbling a step at a time doesn't come back to where it started)
+      let yaw;
+      if (M.style === 'round') yaw = (lp.yaw += loopRate(rate) * dt);
+      else { tr = clk.rock.step(tr, dt, TAU, cycleBeats(1), Math.abs(rate) * 0.9); rockA = 0.7 * Math.sin(tr) * Math.sign(rate || 1); yaw = rockA - lp.rock0; }
+      if (M.tumble) lp.tum += loopRate(0.6 * rate * M.tumble) * dt;
+      if (opts.turn) { turn(yaw - lp.yawDone); lp.yawDone = yaw; if (M.tumble) { S.turn(0, lp.tum - lp.tumDone); lp.tumDone = lp.tum; } }
+      else S.pivot.quaternion.copy(lp.qx.setFromAxisAngle(lp.X, lp.tum)).multiply(lp.qy.setFromAxisAngle(lp.Y, yaw)).multiply(lp.q0);
+    } else if (spinning) {
       if (M.style === 'round') turn(clk.spin.delta(dt, rate, rate * 0.5));
       else { tr = clk.rock.step(tr, dt, TAU, cycleBeats(1), Math.abs(rate) * 0.9); const a = 0.7 * Math.sin(tr) * Math.sign(rate || 1); turn(a - rockA); rockA = a; }
       if (M.tumble) S.turn(0, clk.tumble.delta(dt, 0.6 * rate * M.tumble, 0.3 * rate * M.tumble));
@@ -199,19 +227,27 @@ export function makeMotion2D(opts) {
   M.step = (dt, on) => {
     if (M.viz) M.viz.step(dt, on);
     if (!on) return false; let moved = false;
-    if (M.drift) {
+    if (M.drift && !LOOP.on) {
       if (M.wander) { tw = clk.wander.step(tw, dt, TAU, cycleBeats(16), TAU / 40); }
       const a = (M.head * Math.PI / 180) + (M.wander ? 1.4 * Math.sin(tw) + 0.5 * Math.sin(2.3 * tw) : 0), d = clk.drift.delta(dt, 0.12 * M.drift, 0.06 * M.drift);
       if (d) { opts.pan(d * Math.cos(a), d * Math.sin(a)); moved = true; }
     }
-    if (opts.zoom && M.zoom) { const d = clk.zoom.delta(dt, 0.35 * Math.abs(M.zoom), 0.18 * Math.abs(M.zoom)); if (d && opts.zoom(Math.exp(-d * Math.sign(M.zoom) * zdir)) === false) zdir = -zdir; moved = true; }
+    if (opts.zoom && M.zoom && !LOOP.on) { const d = clk.zoom.delta(dt, 0.35 * Math.abs(M.zoom), 0.18 * Math.abs(M.zoom)); if (d && opts.zoom(Math.exp(-d * Math.sign(M.zoom) * zdir)) === false) zdir = -zdir; moved = true; }
     if (opts.zoom && M.breathe) { tb = clk.breathe.step(tb, dt, TAU, cycleBeats(4), TAU / 14); const b = 0.6 * M.breathe * Math.sin(tb); opts.zoom(Math.exp(lastB - b)); lastB = b; moved = true; }
     else if (lastB) { opts.zoom(Math.exp(lastB)); lastB = 0; moved = true; }
-    if (opts.rotate && M.turn) { const d = clk.turn.delta(dt, 0.25 * M.turn, 0.13 * M.turn); if (d) { opts.rotate(d); moved = true; } }
+    if (opts.rotate && M.turn) { const d = clk.turn.delta(dt, loopRate(0.25 * M.turn), 0.13 * M.turn); if (d) { opts.rotate(d); moved = true; } }
     if (M.sweep.step(dt, true)) moved = true;
     return moved;
   };
   M.moving = () => !!(M.drift || M.zoom || M.breathe || M.turn || M.sweep.moving());
+  /** What this group would move in a seamless loop, and what holds still (drifting and zooming never come back). */
+  M.loopParts = (go = true) => { const parts = [], held = [];
+    if (!go) return { parts, held };
+    if (opts.rotate && M.turn) parts.push({ name: 'Turn', rate: 0.25 * M.turn, cycle: TAU });
+    if (opts.zoom && M.breathe) parts.push({ name: 'In & out', rate: TAU / 14, cycle: TAU, noun: ['time', 'times'] });
+    parts.push(...M.sweep.part());
+    if (M.drift) held.push('Drift'); if (opts.zoom && M.zoom) held.push('Zoom');
+    return { parts, held }; };
   /** Forget the In & out offset (after the view is reset, so it doesn't jump back). */
   M.resetView = () => { lastB = 0; };
   M.encode = p => { if (M.drift) p.set('mvd', M.drift); if (M.head !== 30) p.set('mva', M.head); if (M.wander) p.set('mvw', 1); if (M.zoom) p.set('mvz', M.zoom); if (M.breathe) p.set('mvb', M.breathe); if (M.turn) p.set('mvn', M.turn); M.sweep.encode(p); };
@@ -230,38 +266,47 @@ function recMime() { if (!window.MediaRecorder) return ''; for (const m of ['vid
 /**
  * A Record video section at the end of the explorer's Save & share group. stage: the element holding the explorer's
  * canvases (every visible one is drawn, in page order, as it sits on screen); name(): the file name's start;
- * bg(): the background colour behind the canvases. Records at 30 frames a second, with the music if it's playing.
+ * bg(): the background colour behind the canvases. "As it plays" records at 30 frames a second, with the music if it's
+ * playing. "Seamless loop" (when the explorer gives loop) makes a video that plays round and round without a seam
+ * (js/common/loopmaker.js): loop = { parts(): { parts, held, block } (js/common/seamless.js), step(dt): one frame of the
+ * explorer's loop, drawn; begin(L, W, H), end(): optional }.
  */
-export function addRecorder({ stage, name, bg }) {
+export function addRecorder({ stage, name, bg, loop }) {
   const box = $('g-share').querySelector('.gb'), sec = document.createElement('div'); sec.className = 'sec';
   sec.innerHTML = `<div class="lbl">Record video <b id="recTime"></b></div>
-    <div class="seg" id="recLen"><button data-s="0" class="on">Until I stop</button><button data-s="10">10 s</button><button data-s="30">30 s</button></div>
+    ${loop ? LOOP_HTML : ''}
+    <div class="seg" id="recLen" style="margin-top:6px"><button data-s="0" class="on">Until I stop</button><button data-s="10">10 s</button><button data-s="30">30 s</button></div>
+    ${loop ? LOOP_OPTS_HTML : ''}
     <div class="seg" id="recRes" style="margin-top:6px"><button data-r="0" class="on">Screen size</button><button data-r="720">720p</button><button data-r="1080">1080p</button></div>
     <div class="btns" style="margin-top:8px"><button class="btn" id="recBtn">● Record</button></div>
     <p class="note" id="recNote">Records whatever is moving as a video file, with the music if it's playing. Set things moving under Rotation &amp; motion (or Motion) first.</p>`;
   box.appendChild(sec);
+  const btn = $('recBtn'), noteEl = $('recNote'), timeEl = $('recTime');   /* held: the panel may be off the page when a recording ends */
   const rec = { mr: null, chunks: [], cv: document.createElement('canvas'), t0: 0, limit: 0, res: 0, mime: '', raf: 0 };
-  const seg = (id, fn) => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(id).querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); fn(b.dataset); });
+  const seg = (id, fn) => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b || (LP && LP.making())) return; $(id).querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); fn(b.dataset); });
   seg('recLen', d => { rec.limit = +d.s; }); seg('recRes', d => { rec.res = +d.r; });
   const layers = () => [...stage.querySelectorAll('canvas')].filter(c => c.width && c.height && !c.closest('[hidden]') && getComputedStyle(c).display !== 'none' && getComputedStyle(c).visibility !== 'hidden');
+  const LP = loop ? wireLoop({ stage, layers, bg, loop, sec, res: () => rec.res,
+    save: (blob, tag, ext) => saveFile(`${fileName(name())}${tag}-${new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')}.${ext}`, blob, noteEl) }) : null;
+  const label = () => { if (LP) LP.label(); else btn.textContent = '● Record'; };
   const frame = () => { if (!rec.mr) return; rec.raf = requestAnimationFrame(frame);
     const g = rec.cv.getContext('2d'), W = rec.cv.width, H = rec.cv.height, R = stage.getBoundingClientRect(), k = W / Math.max(1, R.width);
     g.fillStyle = (bg && bg()) || '#0b0d12'; g.fillRect(0, 0, W, H);
     for (const c of layers()) { const r = c.getBoundingClientRect(); try { g.drawImage(c, (r.left - R.left) * k, (r.top - R.top) * k, r.width * k, r.height * k); } catch (e) { /* a canvas that can't be read */ } }
-    const t = (performance.now() - rec.t0) / 1000; $('recTime').textContent = `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}` + (rec.limit ? ` / 0:${String(rec.limit).padStart(2, '0')}` : '');
+    const t = (performance.now() - rec.t0) / 1000; timeEl.textContent = `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}` + (rec.limit ? ` / 0:${String(rec.limit).padStart(2, '0')}` : '');
     if (rec.limit && t >= rec.limit) stopRec(); };
-  const start = () => { const mime = recMime(); if (!mime || !rec.cv.captureStream) { $('recNote').textContent = 'This browser can\'t record video from the page. Recent Chrome, Edge, Firefox and Safari can.'; return; }
+  const start = () => { const mime = recMime(); if (!mime || !rec.cv.captureStream) { noteEl.textContent = 'This browser can\'t record video from the page. Recent Chrome, Edge, Firefox and Safari can.'; return; }
     const R = stage.getBoundingClientRect(), dpr = Math.min(2, devicePixelRatio || 1); let w, h;
     if (!rec.res) { const k = Math.min(1, 1920 / (R.width * dpr)); w = R.width * dpr * k; h = R.height * dpr * k; } else { h = rec.res; w = h * R.width / Math.max(1, R.height); }
     rec.cv.width = Math.round(w / 2) * 2; rec.cv.height = Math.round(h / 2) * 2;
     const tracks = [...rec.cv.captureStream(30).getVideoTracks(), ...recordTracks()];
-    try { rec.mr = new MediaRecorder(new MediaStream(tracks), { mimeType: mime, videoBitsPerSecond: rec.cv.height >= 1000 ? 12e6 : 7e6 }); } catch (e) { $('recNote').textContent = 'Couldn\'t start recording here.'; rec.mr = null; return; }
+    try { rec.mr = new MediaRecorder(new MediaStream(tracks), { mimeType: mime, videoBitsPerSecond: rec.cv.height >= 1000 ? 12e6 : 7e6 }); } catch (e) { noteEl.textContent = 'Couldn\'t start recording here.'; rec.mr = null; return; }
     rec.mime = mime; const ext = mime.startsWith('video/mp4') ? 'mp4' : 'webm'; rec.chunks = []; rec.mr.ondataavailable = e => { if (e.data && e.data.size) rec.chunks.push(e.data); };
-    rec.mr.onstop = () => { const blob = new Blob(rec.chunks, { type: rec.mime.split(';')[0] }); rec.chunks = []; $('recBtn').textContent = '● Record'; $('recBtn').classList.remove('on'); $('recTime').textContent = '';
-      if (blob.size) saveFile(`${fileName(name())}-${new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')}.${ext}`, blob, $('recNote')); else $('recNote').textContent = 'Nothing was recorded.'; };
-    rec.mr.start(1000); rec.t0 = performance.now(); frame(); $('recBtn').textContent = '■ Stop recording'; $('recBtn').classList.add('on');
-    $('recNote').textContent = `Recording ${rec.cv.width}×${rec.cv.height} ${ext.toUpperCase()}${tracks.length > 1 ? ' with sound' : ''}. The panel and captions aren't included.`; };
+    rec.mr.onstop = () => { const blob = new Blob(rec.chunks, { type: rec.mime.split(';')[0] }); rec.chunks = []; btn.classList.remove('on'); label(); timeEl.textContent = '';
+      if (blob.size) saveFile(`${fileName(name())}-${new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')}.${ext}`, blob, noteEl); else noteEl.textContent = 'Nothing was recorded.'; };
+    rec.mr.start(1000); rec.t0 = performance.now(); frame(); btn.textContent = '■ Stop recording'; btn.classList.add('on');
+    noteEl.textContent = `Recording ${rec.cv.width}×${rec.cv.height} ${ext.toUpperCase()}${tracks.length > 1 ? ' with sound' : ''}. The panel and captions aren't included.`; };
   const stopRec = () => { cancelAnimationFrame(rec.raf); if (rec.mr && rec.mr.state !== 'inactive') { const mr = rec.mr; rec.mr = null; mr.stop(); } else rec.mr = null; };
-  $('recBtn').addEventListener('click', () => { if (rec.mr) stopRec(); else start(); });
-  return { stop: stopRec, recording: () => !!rec.mr };
+  btn.addEventListener('click', () => { if (LP && LP.making()) LP.cancel(); else if (rec.mr) stopRec(); else if (LP && LP.kind() === 'loop') LP.make(); else start(); });
+  return { stop: () => { stopRec(); if (LP && LP.making()) LP.cancel(); }, recording: () => !!rec.mr || !!(LP && LP.making()) };
 }

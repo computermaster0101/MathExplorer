@@ -6,6 +6,7 @@ import { rampOf, sampleRamp, sampleMirror, palTitle } from '../../js/common/pale
 import { makeStage3D, makeFinishes } from '../../js/common/three-stage.js';
 import { saveCanvasPNG, saveFile, fileName } from '../../js/common/save.js';
 import { stlFromTriangles, heightfieldTriangles } from '../../js/common/stl.js';
+import { LOOP, loopRate, colourPart, TAU as LTAU } from '../../js/common/seamless.js';
 import { makeMotion3D, addRecorder } from '../../js/common/motion.js';
 import { makeVisualizer, pickButton, randomSlider } from '../../js/common/visualizer.js';
 import { flashFx as flash, pulseFx as pulse, voiceFx as voice, colourStep, Groove, BeatGate, energyMul } from '../../js/shell/audio/react.js';
@@ -563,27 +564,41 @@ const MO = makeMotion3D(S, { spinRow: $('spin').closest('label'), rate: () => (s
   turn: a => { if (st.kind === 'classic') orbit.rotation.y += a; else S.turn(a, 0); },
   sweep: { skip: ['flySpeed', 'mLevel', 'mLoops', 'cRings', 'detail'], every: 120 } });
 motionFor(st.kind);
-const REC = addRecorder({ stage: canvas.parentElement, name: () => fileBase(), bg: () => st.bg });
+const REC = addRecorder({ stage: canvas.parentElement, name: () => fileBase(), bg: () => st.bg, loop: {
+  // a seamless loop (js/common/seamless.js) of the outside view: the turning, the colours and the wall pattern's drift go
+  // round whole times (the pattern repeats every 2 in its own units, mirrored or not)
+  parts: () => { const outside = !fly.on && !ffly.on && !walkL.on && (st.kind !== 'maze' || !maze || mz.over);
+    if (!outside) return { block: 'Flying, walking and the maze are seen from inside, and never come back to where they started, so they can’t loop. A loop can be made of the outside view.' };
+    const go = !st.paused, r = MO.loopParts(go), parts = [...r.parts];
+    if (go) parts.push(...colourPart(st.cycleSpeed));
+    if (go && st.wpMove && st.wpat !== 'none') parts.push({ name: 'Pattern drift', rate: 0.025, cycle: 2, noun: ['repeat', 'repeats'] });
+    return { parts, held: r.held }; },
+  step: tick, begin: () => MO.loopBegin() } });
 // the Visualizer: a new labyrinth, foam or ancient labyrinth every so often; when the chorus comes in, fly through an
 // endless labyrinth until the next change
 makeVisualizer(MO, { preset: 'mvt=0.2&mvb=0.3&mvd=0.25', shape: () => (fpOn ? false : pickButton('#tpmsList button, #foamList button, #classicList button:not([data-c="random"])')),
   drop: () => { if (fly.on) return; if (st.kind !== 'tpms') pickButton('#tpmsList button'); startFly(); return () => endFly(); },
   extra: [['a new wall pattern', () => { if (st.kind === 'foam') return false; const o = WALL_PATTERNS.filter(q => q[0] !== st.wpat && q[0] !== 'none'), k = o[Math.floor(Math.random() * o.length)][0]; $('wallPat').value = k; $('wallPat').dispatchEvent(new Event('change')); if (!st.wpGlow) setRange('patGlow', 0.8); return true; }, 2]] });
 function loop(now) {
-  if (!running) return; const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; frame++;
+  if (!running) return; requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - tPrev) / 1000); tPrev = now; if (LOOP.on) return;   // a seamless loop being made steps the picture itself (js/common/seamless.js)
+  tick(dt);
+}
+/** One frame: move everything by dt seconds and draw. */
+function tick(dt) {
+  frame++;
   setPausedTag(st.paused); const goOn = !st.paused;
   const outside = !fly.on && !ffly.on && !walkL.on && (st.kind !== 'maze' || !maze || mz.over);
   MO.step(dt, outside ? { go: goOn, spin: !S.pointers.size } : { away: true, go: goOn });
   if (fly.on) stepFly(dt); else if (ffly.on) stepFoamFly(dt); else if (walkL.on) stepWalkL(dt); else if (st.kind === 'maze' && maze) stepMaze(dt);
   else S.step(dt);
-  const cs = goOn ? colourStep(dt) : 0; if (((goOn && st.cycleSpeed > 0) || cs) && frame % 6 === 0) { st.cycle = (st.cycle + (goOn ? dt * 6 * st.cycleSpeed * 0.06 : 0) + cs * 6) % 1; recolourAll(true); }
+  const cs = goOn ? colourStep(dt) : 0; if (((goOn && st.cycleSpeed > 0) || cs) && (LOOP.on || frame % 6 === 0)) { st.cycle = (st.cycle + (goOn ? dt * (LOOP.on ? 1 : 6) * loopRate(st.cycleSpeed * 0.06, 1) : 0) + cs * 6) % 1; recolourAll(true); }
   // on each beat the outside view pulses (pivot is free here: the fit group's scale is set by each build), and vocals sway it
   const showing = outside && st.kind !== 'maze'; S.pivot.scale.setScalar(showing ? 1 + 0.05 * pulse() : 1); S.fit.rotation.z = showing ? 0.1 * voice() : 0;
   S.setFlash(flash());
-  WT.u_wtGlow.value = st.wpGlow * (1 + 1.6 * flash() + 0.8 * pulse()); if (st.wpMove && !st.paused && st.wpat !== 'none') { WT.u_wtShift.value.x += dt * 0.025; WT.u_wtShift.value.y += dt * 0.011; }   // the pattern's glow follows the beat
+  WT.u_wtGlow.value = st.wpGlow * (1 + 1.6 * flash() + 0.8 * pulse()); if (st.wpMove && !st.paused && st.wpat !== 'none') { WT.u_wtShift.value.x += dt * loopRate(0.025, 2); WT.u_wtShift.value.y += dt * loopRate(0.011, 2); }   // the pattern's glow follows the beat
   if (capTimer > 0) { capTimer -= dt; if (capTimer <= 0) { $('stageCap').style.display = 'none'; } }
   S.render(); if (frame % 15 === 0) stats(); if (frame % 30 === 0) share.touch();
-  requestAnimationFrame(loop);
 }
 
 // ---------- 3D print ----------
