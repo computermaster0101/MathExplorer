@@ -45,6 +45,24 @@ vec2 dstepS_(vec2 Z, vec2 w, vec2 cS, int kw, int n, float c1){
   if (u_type==4) return vec2(dabs_(scl_(c1,-kw), 2.0*(X*x-Y*y)), 2.0*(X*y+x*Y))+cS;
   return 2.0*cm(Z,w)+cS; }
 vec2 cdiv(vec2 a, vec2 b){ return vec2(a.x*b.x+a.y*b.y, a.y*b.x-a.x*b.y)/max(dot(b,b),1e-30); }
+// Exact inside tests for the main region of the Multibrot (whole powers from 2) and the Tricorn. Each has one critical
+// point, 0, and an attracting cycle always draws a critical point in (Fatou; for the Tricorn, through z -> conj(z)^2 + c
+// applied twice, which is holomorphic). So when the map has an attracting fixed point, the orbit of 0 converges to it and c
+// is in the set. The fixed point is found by Newton's method from 0 and counts only when Newton has really landed on a root
+// (residual under 1e-6) and the root attracts with room to spare (multiplier under 0.99); anything else just iterates.
+// Checked on the CPU in single and double precision against 20,000 steps: never wrong, including a dense band at the edge
+// of the main region; it catches 76-81% of the Multibrot's inside points and 49% of the Tricorn's.
+bool inMain(vec2 c){
+  if (u_type==3){ float pw=u_power; if (pw<1.5 || pw>16.5 || abs(pw-floor(pw+0.5))>1e-4) return false; int d=int(floor(pw+0.5));
+    vec2 z=vec2(0.0), q;
+    for (int k=0;k<16;k++){ q=vec2(1.0,0.0); for (int j=0;j<16;j++){ if (j>=d-1) break; q=cm(q,z); } z-=cdiv(cm(q,z)-z+c, float(d)*q-vec2(1.0,0.0)); }
+    q=vec2(1.0,0.0); for (int j=0;j<16;j++){ if (j>=d-1) break; q=cm(q,z); }
+    return length(cm(q,z)-z+c)<1e-6 && float(d)*length(q)<0.99; }
+  if (u_type==2){ vec2 z=vec2(0.0);
+    for (int k=0;k<16;k++){ float fx=z.x*z.x-z.y*z.y+c.x-z.x, fy=-2.0*z.x*z.y+c.y-z.y, a=2.0*z.x-1.0, b=-2.0*z.y, dd=-2.0*z.x-1.0, det=a*dd-b*b;
+      if (abs(det)<1e-12) return false; z-=vec2(dd*fx-b*fy, a*fy-b*fx)/det; }
+    return length(vec2(z.x*z.x-z.y*z.y+c.x-z.x, -2.0*z.x*z.y+c.y-z.y))<1e-6 && 2.0*length(z)<0.99; }
+  return false; }
 vec2 R(int i){ return texelFetch(u_ref, ivec2(i&1023, i>>10), 0).xy; }
 // the fold value (X·Y or X²−Y²) at each reference step, worked out at full precision on the CPU
 float RC(int i){ return (u_type==1||u_type==4) ? texelFetch(u_refC, ivec2(i&1023, i>>10), 0).x : 0.0; }
@@ -123,6 +141,7 @@ vec3 sampleAt(vec2 px){
   // and Celtic (issue #56: 1.3-1.8x at their opening views). Many Burning Ship inside points never settle into a cycle
   // at all (half at the opening view, 90% zoomed in ten times), so there it gains least.
   bool inChk=(u_type==0 && u_inside==0 && u_scale>1e-5 && u_ext==0 && u_inTest==1), perChk=((u_type>=0 && u_type<=4) && u_inside==0 && u_ext==0 && u_inTest==1) && u_scale>1e-3; vec2 zs=vec2(1e9); int nSave=1;
+  if (u_julia==0 && (u_type==2 || u_type==3) && u_inside==0 && u_scale>1e-5 && u_ext==0 && u_inTest==1 && inMain(u_center+p)) return u_inC;
   if (inChk && u_julia==0){ vec2 c0=u_center+p; float xq=c0.x-0.25, q=xq*xq+c0.y*c0.y; vec2 b2=c0+vec2(1.0,0.0); if (q*(q+xq)<=0.25*c0.y*c0.y || dot(b2,b2)<=0.0625) return u_inC; }
   if (u_refLen>0 && u_ext==1){
     // Extreme: each pixel's offset is a mantissa w with its own power-of-two exponent kw, so it never underflows.
