@@ -13,6 +13,19 @@ import { orbitIdx } from '../modes/orbit.js';
 
 // ---------- insets ----------
 const in1=$('in1'), in2=$('in2'), caches={};
+// Folding (issue #55): a tap on a panel (or a click on its title bar) folds it down to just the title bar, and again opens it.
+// Remembered on this device; each of the two places has its own.
+const FOLD_KEY='mathexplorer.fractal.fold', FOLD_H=26;
+const fold=(()=>{ try { return { in1:false, in2:false, ...JSON.parse(localStorage.getItem(FOLD_KEY)||'{}') }; } catch (e) { return { in1:false, in2:false }; } })();
+export const isFolded=cv=>!!fold[cv.id];
+export function toggleFold(cv){ fold[cv.id]=!fold[cv.id]; try { localStorage.setItem(FOLD_KEY, JSON.stringify(fold)); } catch (e) { /* not remembered */ } drawInsets(); }
+/** True when (x, y), relative to the panel, is on its title bar. */
+export const onTitleBar=(cv,y)=>y<FOLD_H;
+// the folded panel: its title and a mark saying it opens again
+function strip(cv, title){ const P=panel(cv); if (!P) return; const g=P.g; g.fillStyle=P.txt; g.font=`600 ${P.small?10:11}px Inter, sans-serif`;
+  g.fillText(title, 9, 17, P.W-30); g.fillStyle=P.mute; g.font='12px Inter, sans-serif'; g.fillText('▾', P.W-18, 17); }
+// an open panel's mark for folding, at the right of its title bar
+function foldMark(P){ const g=P.g; g.fillStyle=P.mute; g.font='12px Inter, sans-serif'; g.fillText('▴', P.W-18, 16); }
 // the Julia panel swaps with the main view (ui/controls.js); its subtitle says how
 const SWAP=back=>(matchMedia('(pointer: coarse)').matches ? 'double-tap' : 'click')+(back?' to go back':' to swap');
 function panel(cv){
@@ -24,7 +37,7 @@ function panel(cv){
 }
 function panelTitle(P, big, foot, imgBehind){
   const g=P.g; if (imgBehind){ g.fillStyle=P.light?'rgba(255,255,255,0.7)':'rgba(11,13,18,0.62)'; g.fillRect(0,0,P.W,24); if (foot && !P.small) g.fillRect(0,P.H-20,P.W,20); }
-  g.fillStyle=P.txt; g.font=`600 ${P.small?10:11}px Inter, sans-serif`; g.fillText(big, 9, 16);
+  g.fillStyle=P.txt; g.font=`600 ${P.small?10:11}px Inter, sans-serif`; g.fillText(big, 9, 16, P.W-30); foldMark(P);
   if (foot && !P.small){ g.font='10.5px Inter, sans-serif'; g.fillStyle=P.mute; g.fillText(foot, 9, P.H-6); }
 }
 function roundClip(P){ const g=P.g; g.save(); g.beginPath(); g.roundRect ? g.roundRect(0,0,P.W,P.H,11) : g.rect(0,0,P.W,P.H); g.clip(); }
@@ -54,11 +67,14 @@ function drawHypTiling(P){ const g=P.g, k=st.d3.hyp||'534', [p,r]= k==='353' ? [
   g.drawImage(hypImg, cx-R, cy-R);
   panelTitle(P, `2D cousin: {${p},${r}} tiling`, k==='353' ? 'triangles, seven round each corner' : `${({3:'triangles',4:'squares',5:'pentagons'})[p]}, ${r} round each corner`); }
 export function drawInsets(){
-  const show=(cv,on)=>{ cv.style.display=on?'block':'none'; return on; }, T=TYPES[st.type], na=notAvail();
+  const T=TYPES[st.type], na=notAvail();
+  // shown and open: true means draw the panel; a folded one is drawn here as its title bar alone
+  const show=(cv,on,title)=>{ cv.style.display=on?'block':'none'; if (!on) return false; const f=isFolded(cv);
+    cv.style.aspectRatio=f?'auto':''; cv.style.height=f?FOLD_H+'px':''; if (f){ strip(cv, title||''); return false; } return true; };
   if (na){ show(in1,false); show(in2,false); return; }
   if (st.mode==='explore'){
     const jv=st.julia||T.juliaOnly;
-    if (show(in1, st.mapInset)){ const P=panel(in1); if (P){ const jw=T.jview||[0,0,1.5], ov=jv&&!T.juliaOnly ? [jw[0],jw[1],jw[2]*1.07,T.view[3]] : [T.view[0],T.view[1],T.view[2]*1.15,T.view[3]];
+    if (show(in1, st.mapInset, 'Map')){ const P=panel(in1); if (P){ const jw=T.jview||[0,0,1.5], ov=jv&&!T.juliaOnly ? [jw[0],jw[1],jw[2]*1.07,T.view[3]] : [T.view[0],T.view[1],T.view[2]*1.15,T.view[3]];
       const d={x:0,y:0,w:P.W,h:P.H,v:{cx:ov[0],cy:ov[1],scale:ov[2],rot:ov[3]}};
       const img=cachedAux('map', ['m',st.type,jv,st.jc.join(),st.lyaSeq,styleKey()].join('|'), P, {cx:ov[0],cy:ov[1],scale:ov[2],rot:ov[3],type:T.cpu?0:st.type,julia:jv,c:T.juliaOnly?PHX:st.jc,iter:T.newton?60:220});
       roundClip(P); P.g.drawImage(img,0,0,P.W,P.H);
@@ -68,7 +84,7 @@ export function drawInsets(){
       else { const c=toScreen(d,st.vE.cx,st.vE.cy); g.beginPath(); g.arc(c[0],c[1],6,0,7); g.moveTo(c[0]-12,c[1]); g.lineTo(c[0]-4,c[1]); g.moveTo(c[0]+4,c[1]); g.lineTo(c[0]+12,c[1]); g.moveTo(c[0],c[1]-12); g.lineTo(c[0],c[1]-4); g.moveTo(c[0],c[1]+4); g.lineTo(c[0],c[1]+12); g.stroke(); }
       g.restore(); panelTitle(P, 'Map', `you are here · ×${fmtBig(st.vE.def/st.vE.scale)}`, true); } }
     const canPrev=T.julia;
-    if (show(in2, st.prevInset && canPrev)){ const P=panel(in2); if (P){ roundClip(P);
+    if (show(in2, st.prevInset && canPrev, st.julia ? 'Where c sits on the map' : 'Julia set')){ const P=panel(in2); if (P){ roundClip(P);
       if (!st.julia){ const md=viewDescs()[0], w=st.hover ? toWorld(md,st.hover[0],st.hover[1]) : [st.vE.cx,st.vE.cy], c=toMath(st.type,w), dg=cDigits(), jw=T.jview||[0,0,1.55];
         const img=cachedAux('prev', ['p',st.type,c[0].toFixed(dg),c[1].toFixed(dg),styleKey()].join('|'), P, {cx:jw[0],cy:jw[1],scale:jw[2],type:st.type,julia:true,c,iter:200});
         P.g.drawImage(img,0,0,P.W,P.H); P.g.restore(); panelTitle(P, st.hover?'Julia set at your pointer':st.centreMark?'Julia set at the + mark':'Julia set at the middle', 'c = '+fmtC(c,dg)+' · '+SWAP(), true); }
@@ -78,10 +94,10 @@ export function drawInsets(){
         P.g.restore(); panelTitle(P, 'Where c sits on the map', 'c = '+fmtC(st.jc)+' · '+SWAP(true), true); } } }
   } else if (st.mode==='orbit'){
     show(in2,false);
-    if (show(in1, st.chartInset && st.orbit.data)){ const P=panel(in1); if (P) drawChart(P); }
+    if (show(in1, st.chartInset && st.orbit.data, st.orbit.data && st.orbit.data.kind==='newton' ? 'Distance to nearest root' : '|z| at each step')){ const P=panel(in1); if (P) drawChart(P); }
   } else if (st.mode==='d3'){
     show(in2,false);
-    if (show(in1, st.cousinInset)){ const P=panel(in1); if (P) drawCousin(P); }
+    if (show(in1, st.cousinInset, '2D cousin')){ const P=panel(in1); if (P) drawCousin(P); }
   } else { show(in1,false); show(in2,false); }
 }
 function drawChart(P){

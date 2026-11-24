@@ -11,6 +11,7 @@ import { inZen, toggleZen } from '../../../js/shell/layout.js';
 import { glc, octx, ovc, refSlots } from '../render/webgl.js';
 import { cssH, cssW, effIter, minScale, recolour, resetViews, toWorld, touch, viewDescs } from '../view.js';
 import { notAvail } from './notice.js';
+import { isFolded, onTitleBar, toggleFold } from './insets.js';
 import { d3Bound, drop3, prog3, snapGap, f3Ready, is4, isKifs, knifeVal, nestReset, r4c, setDive3, start3Warp, syncT3 } from '../modes/fractal3d.js';
 import { GROW, GROW_EXT, GROW_HOLD, fern } from '../modes/grow.js';
 import { newOrbit, orbitIdx } from '../modes/orbit.js';
@@ -86,11 +87,16 @@ export function juliaBack(){ if (!st.julia) return; st.dive=false; st.endlessRun
 /** Swap the main view with what the Julia panel shows. */
 export function juliaSwap(){ if (!juliaAvail()) return; if (st.julia){ juliaBack(); return; }
   const d=viewDescs()[0], p=st.hover || [d.x+d.w/2, d.y+d.h/2]; juliaAt(p[0], p[1]); }
-// the panel itself: a click (or a double tap) swaps
-{ const in2=$('in2'); let lastTap=0;
-  in2.addEventListener('pointerup', e=>{ if (!juliaAvail()) return;
-    if (e.pointerType!=='touch'){ juliaSwap(); return; }
-    const now=performance.now(); if (now-lastTap<400){ lastTap=0; juliaSwap(); } else lastTap=now; }); }
+// the panels over the picture: a click on the Julia panel (or a double tap) swaps; a tap on either panel, or a click on its
+// title bar, folds it down to the title bar and opens it again (issue #55). On the Julia panel a tap waits a moment, in
+// case it is the first of a double tap.
+{ const in2=$('in2'), in1=$('in1'); let lastTap=0, tapT=null;
+  in2.addEventListener('pointerup', e=>{
+    if (e.pointerType!=='touch'){ if (onTitleBar(in2, e.offsetY) || isFolded(in2)) toggleFold(in2); else if (juliaAvail() && st.mode==='explore') juliaSwap(); return; }
+    const now=performance.now(); clearTimeout(tapT);
+    if (now-lastTap<400 && !isFolded(in2)){ lastTap=0; if (juliaAvail() && st.mode==='explore') juliaSwap(); return; }
+    lastTap=now; tapT=setTimeout(()=>{ lastTap=0; toggleFold(in2); }, isFolded(in2) ? 0 : 400); });
+  in1.addEventListener('pointerup', e=>{ if (e.pointerType==='touch' || onTitleBar(in1, e.offsetY) || isFolded(in1)) toggleFold(in1); }); }
 // Julia link → the Julia set for the c chosen, on its own in Explore (where it can dive and drive), full screen
 $('linkOpen').addEventListener('click', ()=>{ st.link.auto=false; $('linkAuto').checked=false; setMode('explore');
   if (!st.julia) setCheck('juliaChk', 1); else { resetViews(); touch(); updateLabels(); } if (!inZen()) toggleZen(); });
