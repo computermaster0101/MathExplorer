@@ -119,7 +119,10 @@ vec3 sampleAt(vec2 px){
   // visited earlier (saved at steps 1, 2, 4, 8…) has settled into a cycle and never escapes (only while 1e-6 is under a
   // pixel, scale > 1e-3: deeper, it marked a few hundred escaping pixels inside). Inside points ran every step: in Elephant
   // Valley they did about 93% of the work.
-  bool inChk=(u_type==0 && u_inside==0 && u_scale>1e-5 && u_ext==0 && u_inTest==1), perChk=inChk && u_scale>1e-3; vec2 zs=vec2(1e9); int nSave=1;
+  // The cycle check works for any step that depends on z alone, so it also runs for the Burning Ship, Tricorn, Multibrot
+  // and Celtic (issue #56: 1.3-1.8x at their opening views). Many Burning Ship inside points never settle into a cycle
+  // at all (half at the opening view, 90% zoomed in ten times), so there it gains least.
+  bool inChk=(u_type==0 && u_inside==0 && u_scale>1e-5 && u_ext==0 && u_inTest==1), perChk=((u_type>=0 && u_type<=4) && u_inside==0 && u_ext==0 && u_inTest==1) && u_scale>1e-3; vec2 zs=vec2(1e9); int nSave=1;
   if (inChk && u_julia==0){ vec2 c0=u_center+p; float xq=c0.x-0.25, q=xq*xq+c0.y*c0.y; vec2 b2=c0+vec2(1.0,0.0); if (q*(q+xq)<=0.25*c0.y*c0.y || dot(b2,b2)<=0.0625) return u_inC; }
   if (u_refLen>0 && u_ext==1){
     // Extreme: each pixel's offset is a mantissa w with its own power-of-two exponent kw, so it never underflows.
