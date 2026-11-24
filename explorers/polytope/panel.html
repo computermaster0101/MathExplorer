@@ -34,25 +34,67 @@
     <div class="btns" style="margin-top:6px"><button class="btn" id="morphPrev">◀ Stop</button><button class="btn" id="morphPlay">Animate</button><button class="btn" id="morphNext">Stop ▶</button></div>
     <p class="note" id="morphNote"></p>
   </div>
-  <div class="lbl" style="margin-top:12px">Tesseract family</div>
-  <div class="seg shapes g2">
-    <button data-s="rt">Rectified</button>
-    <button data-s="tt">Truncated</button>
-    <button data-s="bt">Bitruncated</button>
-    <button data-s="ot">Omnitruncated</button>
-    <button data-s="ru8">Runcinated</button>
-    <button data-s="ca8">Cantellated</button>
+  <div class="lbl" style="margin-top:12px">Every uniform shape <span style="color:var(--mute);font-weight:400">(all 47)</span></div>
+  <div class="seg g3" id="uniFam"><button data-u="a4">5-cell</button><button data-u="b4" class="on">Tesseract</button><button data-u="f4">24-cell</button><button data-u="h4">120 / 600-cell</button><button data-u="other">Others</button></div>
+  <div class="seg shapes g2 uniList" data-u="a4" data-note="The 5-cell’s mirrors make 9 shapes (its diagram reads the same backwards, so the other 6 choices repeat these)." style="margin-top:6px" hidden>
+    <button data-alias="5">5-cell</button>
+    <button data-s="r5">Rectified 5-cell</button>
+    <button data-s="t5">Truncated 5-cell</button>
+    <button data-s="bt5">Bitruncated 5-cell</button>
+    <button data-s="ca5">Cantellated 5-cell</button>
+    <button data-s="ru5">Runcinated 5-cell</button>
+    <button data-s="ct5">Cantitruncated 5-cell</button>
+    <button data-s="rt5">Runcitruncated 5-cell</button>
+    <button data-s="o5">Omnitruncated 5-cell</button>
+  </div>
+  <div class="seg shapes g2 uniList" data-u="b4" data-note="These mirrors make 15 shapes. Three of them are 24-cell-family shapes too, listed under 24-cell: the 24-cell itself (the rectified 16-cell), the rectified 24-cell (the cantellated 16-cell) and the truncated 24-cell (the cantitruncated 16-cell)." style="margin-top:6px">
+    <button data-alias="8">Tesseract</button>
+    <button data-alias="16">16-cell</button>
+    <button data-s="rt">Rectified tesseract</button>
+    <button data-s="tt">Truncated tesseract</button>
     <button data-s="t16">Truncated 16-cell</button>
+    <button data-s="bt">Bitruncated tesseract</button>
+    <button data-s="ca8">Cantellated tesseract</button>
+    <button data-s="ru8">Runcinated tesseract</button>
+    <button data-s="ct8">Cantitruncated tesseract</button>
+    <button data-s="rt8">Runcitruncated tesseract</button>
+    <button data-s="rt16">Runcitruncated 16-cell</button>
+    <button data-s="ot">Omnitruncated tesseract</button>
   </div>
-  <div class="lbl" style="margin-top:12px">5-cell family</div>
-  <div class="seg shapes g3">
-    <button data-s="r5">Rectified</button>
-    <button data-s="ru5">Runcinated</button>
-    <button data-s="o5">Omnitruncated</button>
-    <button data-s="t5">Truncated</button>
-    <button data-s="bt5">Bitruncated</button>
-    <button data-s="ca5">Cantellated</button>
+  <div class="seg shapes g2 uniList" data-u="f4" data-note="The 24-cell’s mirrors make 9 shapes (its diagram reads the same backwards). The snub 24-cell is the one made another way: every other corner of the truncated 24-cell taken away." style="margin-top:6px" hidden>
+    <button data-alias="24">24-cell</button>
+    <button data-s="r24">Rectified 24-cell</button>
+    <button data-s="t24">Truncated 24-cell</button>
+    <button data-s="bt24">Bitruncated 24-cell</button>
+    <button data-s="ca24">Cantellated 24-cell</button>
+    <button data-s="ru24">Runcinated 24-cell</button>
+    <button data-s="ct24">Cantitruncated 24-cell</button>
+    <button data-s="rt24">Runcitruncated 24-cell</button>
+    <button data-s="o24">Omnitruncated 24-cell</button>
+    <button data-s="s24">Snub 24-cell</button>
   </div>
+  <div class="seg shapes g2 uniList" data-u="h4" data-note="The biggest family: 15 shapes, from the 120-cell’s 600 corners up to the omnitruncated 120-cell’s 14,400. The big ones take a moment to build." style="margin-top:6px" hidden>
+    <button data-alias="120">120-cell</button>
+    <button data-alias="600">600-cell</button>
+    <button data-s="r120">Rectified 120-cell</button>
+    <button data-s="r600">Rectified 600-cell</button>
+    <button data-s="t120">Truncated 120-cell</button>
+    <button data-s="t600">Truncated 600-cell</button>
+    <button data-s="bt120">Bitruncated 120-cell</button>
+    <button data-s="ca120">Cantellated 120-cell</button>
+    <button data-s="ca600">Cantellated 600-cell</button>
+    <button data-s="ru120">Runcinated 120-cell</button>
+    <button data-s="ct120">Cantitruncated 120-cell</button>
+    <button data-s="ct600">Cantitruncated 600-cell</button>
+    <button data-s="rt120">Runcitruncated 120-cell</button>
+    <button data-s="rt600">Runcitruncated 600-cell</button>
+    <button data-s="o120">Omnitruncated 120-cell</button>
+  </div>
+  <div class="seg shapes g2 uniList" data-u="other" data-note="The grand antiprism, found by John Conway and Michael Guy with a computer search in 1965: the only convex uniform 4D shape that comes from none of the mirror families." style="margin-top:6px" hidden>
+    <button data-s="ga">Grand antiprism</button>
+  </div>
+  <div id="uniDia" hidden style="margin-top:6px"></div>
+  <p class="note" id="uniNote">These mirrors make 15 shapes. Three of them are 24-cell-family shapes too, listed under 24-cell: the 24-cell itself (the rectified 16-cell), the rectified 24-cell (the cantellated 16-cell) and the truncated 24-cell (the cantitruncated 16-cell).</p>
   <div class="lbl" style="margin-top:12px">Prisms &amp; pyramids</div>
   <div class="seg shapes g2">
     <button data-s="ptet">Tetrahedral prism</button>
@@ -63,20 +105,6 @@
     <button data-s="yoct">Octahedral pyramid</button>
     <button data-s="ydod">Dodecahedral pyramid</button>
     <button data-s="yico">Icosahedral pyramid</button>
-  </div>
-  <div class="lbl" style="margin-top:12px">24-cell family</div>
-  <div class="seg shapes g2">
-    <button data-s="r24">Rectified 24-cell</button>
-    <button data-s="t24">Truncated 24-cell</button>
-    <button data-s="bt24">Bitruncated 24-cell</button>
-  </div>
-  <div class="lbl" style="margin-top:12px">600-cell family (giants)</div>
-  <div class="seg shapes g2">
-    <button data-s="r600">Rectified 600-cell</button>
-    <button data-s="r120">Rectified 120-cell</button>
-    <button data-s="t600">Truncated 600-cell</button>
-    <button data-s="t120">Truncated 120-cell</button>
-    <button data-s="bt120">Bitruncated 120-cell</button>
   </div>
   <div>
     <div class="lbl" style="margin-top:12px">Higher dimensions</div>
@@ -125,10 +153,8 @@
     <button data-s="c8and16">Tesseract + 16-cell</button>
     <button data-s="c2x8">Two tesseracts</button>
   </div>
-  <div class="lbl" style="margin-top:12px">Exotic</div>
+  <div class="lbl" style="margin-top:12px">Duoprisms</div>
   <div class="seg shapes g3">
-    <button data-s="s24">Snub 24-cell</button>
-    <button data-s="ga">Grand antiprism</button>
     <button data-s="d">Duoprism</button>
   </div>
   <div id="duo" hidden style="margin-top:8px">
@@ -379,6 +405,14 @@
     <p><strong>Truncated</strong>: each corner sliced off. <strong>Rectified</strong>: cut so deep the cuts meet at the middle of every edge. <strong>Bitruncated</strong>: halfway between a shape and its dual. <strong>Cantellated</strong>: the edges shaved down too. <strong>Runcinated</strong>: the cells pushed apart and the gaps filled. <strong>Omnitruncated</strong>: every corner, edge and face cut at once.</p>
     <p>All of these come from one trick, <strong>Wythoff's construction</strong>. Set up four mirrors, put a point between them, and let the mirrors copy it. Where the point sits decides which shape you get. That's exactly how the morph works.</p>
     <div class="btns"><button class="btn try" data-try="morph|explore|f4">Try it: morph the 24-cell family</button></div>
+  </details>
+  <details class="topic"><summary>Every uniform shape: rings on a diagram</summary>
+    <p>A shape is <strong>uniform</strong> when every corner looks the same as every other and every cell is a regular or uniform polyhedron (or a prism). In 4D there are exactly 47 that bulge outward everywhere, plus two endless families: prisms on the 3D ones, and the duoprisms. John Conway and Michael Guy listed them in 1965, and Marco Möller proved in 2004 that none is missing. They're all under <b>Every uniform shape</b> in Shapes.</p>
+    <p>Wythoff's construction draws them from four mirrors in a row. Neighbouring mirrors meet at a half turn divided by a whole number, and those numbers are the Schläfli symbol: the tesseract's mirrors are 4, 3, 3 (written o–4–o–3–o–3–o). Now <strong>ring</strong> some of the mirrors. The point sits on every mirror that isn't ringed and one step away from every one that is. Its reflection in a ringed mirror is a neighbouring corner, two steps away, and since every step is the same size, every edge comes out the same length. That's why all of them are uniform.</p>
+    <p>Which mirrors are ringed gives the name. The first alone is the regular shape, and the last alone its dual. The first two: truncated. The second alone: rectified. The middle two: bitruncated. The first and third: cantellated. The first and last: runcinated. The first three: cantitruncated. The first, second and last: runcitruncated. All four: omnitruncated. The small diagram under the list shows the current shape's rings.</p>
+    <p>The cells come from the diagram too. Leave out one mirror. If every piece of what's left still has a ring, those mirrors build one kind of cell: three in a row make a polyhedron, and a pair with a lone mirror make a prism. There are as many of that cell as the whole family of mirror copies is bigger than the copies those three can make on their own: 120 copies for the 5-cell's mirrors, 384 for the tesseract's, 1,152 for the 24-cell's and 14,400 for the 120-cell's.</p>
+    <p>Four families of 15 choices make 60, but the 5-cell's and the 24-cell's diagrams read the same backwards, so only 9 of each are different, and three of the tesseract's are 24-cell shapes. That leaves 45. The last two are made another way: the snub 24-cell takes away every other corner of the truncated 24-cell, and the grand antiprism, which Conway and Guy found with a computer, comes from none of the families at all.</p>
+    <div class="btns"><button class="btn try" data-try="rt8|explore">Try it: the runcitruncated tesseract</button><button class="btn try" data-try="o24|explore">Try it: the omnitruncated 24-cell</button></div>
   </details>
   <details class="topic"><summary>Schläfli symbols: {4,3,3} and friends</summary>
     <p>A regular shape can be named with a short list of numbers. {4} is a square. {4,3} is a cube: squares, 3 around each corner. {4,3,3} is the tesseract: cubes, 3 around each edge. The 600-cell is {3,3,5}: tetrahedra, 5 around each edge.</p>

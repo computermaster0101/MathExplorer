@@ -68,8 +68,25 @@ segClick('spinstyle', d=>{ st.spinStyle=d.y;
 $('snap').addEventListener('click', ()=>{ if (!downloads) return; renderView();
   canvas.toBlob(async blob=>{ try { await downloads.save({ filename:`${(st.mode==='explore'||st.mode==='slice'?SHAPES[st.shape].name:'tesseract-'+st.mode).toLowerCase().replace(/\W+/g,'-')}.png`, data:blob }); }
     catch(e){ if (!e || e.code!=='declined') dlNote.textContent='Couldn\'t save the image.'; } }, 'image/png'); });
-export const shapeBtns=[...document.querySelectorAll('.shapes button')];
-shapeBtns.forEach(b=>b.addEventListener('click', ()=>{ st.shape=b.dataset.s; shapeBtns.forEach(x=>x.classList.toggle('on', x===b));
+export const shapeBtns=[...document.querySelectorAll('.shapes button[data-s]')];
+// Every uniform shape: one list per family of mirrors, chosen by the tabs; the regular shapes there stand in for their
+// buttons at the top (data-alias), and the tab follows whatever shape is chosen, however it was chosen
+const uniTab=f=>{ document.querySelectorAll('#uniFam button').forEach(x=>x.classList.toggle('on', x.dataset.u===f));
+  document.querySelectorAll('.uniList').forEach(l=>{ l.hidden = l.dataset.u!==f; if (!l.hidden) $('uniNote').textContent=l.dataset.note; }); };
+$('uniFam').addEventListener('click', e=>{ const b=e.target.closest('button'); if (b) uniTab(b.dataset.u); });
+document.querySelectorAll('.uniList [data-alias]').forEach(a=>a.addEventListener('click', ()=>document.querySelector(`.shapes button[data-s="${a.dataset.alias}"]`).click()));
+// the current shape's mirror diagram: four mirrors in a row, the angles between neighbours (3 is left unwritten, as usual),
+// and a ring round each mirror the point stands off from
+const UNI_M={ a4:[3,3,3], b4:[4,3,3], f4:[3,4,3], h4:[5,3,3] };
+function uniDiagram(){ const sh=SHAPES[st.shape], el=$('uniDia'), u=sh && sh.uni; el.hidden=!u; if (!u) return;
+  const m=UNI_M[u.fk], R=[...u.rings].map(Number), x=i=>22+i*56;
+  el.innerHTML=`<svg viewBox="0 0 212 40" width="212" height="40" role="img" aria-label="Mirror diagram ${m.join(', ')}, ringed: ${R.map((r,i)=>r?i+1:0).filter(Boolean).join(', ')}" style="display:block;color:var(--text)">`
+    +m.map((k,i)=>`<line x1="${x(i)}" y1="24" x2="${x(i+1)}" y2="24" stroke="currentColor" stroke-width="1.5"/>${k!==3?`<text x="${(x(i)+x(i+1))/2}" y="17" fill="currentColor" font-size="12" text-anchor="middle">${k}</text>`:''}`).join('')
+    +R.map((r,i)=>`<circle cx="${x(i)}" cy="24" r="4.5" fill="currentColor"/>${r?`<circle cx="${x(i)}" cy="24" r="9" fill="none" stroke="var(--accent)" stroke-width="2"/>`:''}`).join('')+'</svg>'; }
+function uniSync(){ document.querySelectorAll('.uniList [data-alias]').forEach(a=>a.classList.toggle('on', a.dataset.alias===st.shape)); uniDiagram();
+  const b=document.querySelector(`.uniList [data-s="${st.shape}"], .uniList [data-alias="${st.shape}"]`); if (b) uniTab(b.closest('.uniList').dataset.u); }
+uniSync();
+shapeBtns.forEach(b=>b.addEventListener('click', ()=>{ st.shape=b.dataset.s; shapeBtns.forEach(x=>x.classList.toggle('on', x===b)); uniSync();
   $('duo').hidden = st.shape!=='d'; $('morphRow').hidden = st.shape!=='morph'; syncRoundRow(); syncHdRow(); syncDrawAs(); shapeChanged(); }));
 function syncRoundRow(){ const sh=SHAPES[st.shape]; $('roundRow').hidden=!sh.round; if (!sh.round) return; $('rdet').value=sh.detail||3; $('rdeto').textContent=sh.detail||3;
   $('packView').hidden=!sh.packing; $('packView').querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.pv===st.packView));
