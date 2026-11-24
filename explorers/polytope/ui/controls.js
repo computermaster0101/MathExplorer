@@ -5,6 +5,8 @@ import { st } from '../state.js';
 import { PALETTES, css } from '../render/colour.js';
 import { colourControls } from '../../../js/common/colours.js';
 import { SHAPES } from '../geometry/polytopes.js';
+import { STAR_LIST } from '../geometry/star-list.js';
+import { STAR_SYM } from '../geometry/ustar.js';
 import { HD_MAX } from '../geometry/higher-dim.js';
 import { FINISH, HOME, canvas, mainLayer, pingLayer, pivot, renderer, sliceLayer } from '../render/scene.js';
 import { renderView } from '../render/stereo.js';
@@ -78,16 +80,33 @@ document.querySelectorAll('.uniList [data-alias]').forEach(a=>a.addEventListener
 // the current shape's mirror diagram: four mirrors in a row, the angles between neighbours (3 is left unwritten, as usual),
 // and a ring round each mirror the point stands off from
 const UNI_M={ a4:[3,3,3], b4:[4,3,3], f4:[3,4,3], h4:[5,3,3] };
-function uniDiagram(){ const sh=SHAPES[st.shape], el=$('uniDia'), u=sh && sh.uni; el.hidden=!u; if (!u) return;
-  const m=UNI_M[u.fk], R=[...u.rings].map(Number), x=i=>22+i*56;
-  el.innerHTML=`<svg viewBox="0 0 212 40" width="212" height="40" role="img" aria-label="Mirror diagram ${m.join(', ')}, ringed: ${R.map((r,i)=>r?i+1:0).filter(Boolean).join(', ')}" style="display:block;color:var(--text)">`
-    +m.map((k,i)=>`<line x1="${x(i)}" y1="24" x2="${x(i+1)}" y2="24" stroke="currentColor" stroke-width="1.5"/>${k!==3?`<text x="${(x(i)+x(i+1))/2}" y="17" fill="currentColor" font-size="12" text-anchor="middle">${k}</text>`:''}`).join('')
-    +R.map((r,i)=>`<circle cx="${x(i)}" cy="24" r="4.5" fill="currentColor"/>${r?`<circle cx="${x(i)}" cy="24" r="9" fill="none" stroke="var(--accent)" stroke-width="2"/>`:''}`).join('')+'</svg>'; }
+const PAIRS=[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
+function uniDiagram(){ const sh=SHAPES[st.shape], el=$('uniDia'), u=sh && sh.uni, d=sh && st.shape==='ustar' ? sh.dia : null; el.hidden=!u && !d; if (el.hidden) return;
+  const lab = d ? d.lab : (m=>[m[0],2,2,m[1],2,m[2]].map(String))(UNI_M[u.fk]), R=[...(d ? d.rings : u.rings)].map(Number);
+  const links=PAIRS.map((p,k)=>[p,lab[k]]).filter(([,x])=>x!=='2'), deg=[0,1,2,3].map(i=>links.filter(([p])=>p.includes(i)).length);
+  let pos;
+  if (links.length===3 && Math.max(...deg)<=2){ const order=[deg.indexOf(1)]; while (order.length<4){ const a=order[order.length-1], n=links.map(([p])=>p).find(p=>p.includes(a) && !order.includes(p[0]+p[1]-a)); order.push(n[0]+n[1]-a); }
+    pos=[]; order.forEach((n,i)=>{ pos[n]=[22+i*56, 30]; }); }
+  else pos=[[40,14],[172,14],[172,52],[40,52]];
+  const H=pos.some(p=>p[1]>40) ? 62 : 44, ring=R.map((r,i)=>r?i+1:0).filter(Boolean);
+  el.innerHTML=`<svg viewBox="0 0 212 ${H}" width="212" height="${H}" role="img" aria-label="Mirror diagram: ${links.map(([p,x])=>`mirrors ${p[0]+1} and ${p[1]+1} at ${x}`).join(', ')}; ringed: ${ring.join(', ')}" style="display:block;color:var(--text)">`
+    +links.map(([[a,b],x])=>{ const [x1,y1]=pos[a], [x2,y2]=pos[b], mx=(x1+x2)/2, my=(y1+y2)/2, ly = y1===y2 ? my-7 : my, lx = y1===y2 ? mx : mx+(x1===x2 ? 12 : 0);
+      return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="currentColor" stroke-width="1.5"/>${x!=='3'?`<text x="${lx}" y="${ly}" fill="currentColor" font-size="12" text-anchor="middle" dominant-baseline="${y1===y2?'auto':'middle'}" paint-order="stroke" stroke="var(--panel)" stroke-width="4">${x}</text>`:''}`; }).join('')
+    +R.map((r,i)=>`<circle cx="${pos[i][0]}" cy="${pos[i][1]}" r="4.5" fill="currentColor"/>${r?`<circle cx="${pos[i][0]}" cy="${pos[i][1]}" r="9" fill="none" stroke="var(--accent)" stroke-width="2"/>`:''}`).join('')+'</svg>'; }
+// the star uniform shapes: one shape ("ustar") stepped through the list, optionally only those with one symmetry
+let ustarSym=0;
+const ustarIdx=()=>STAR_LIST.map((r,i)=>[r,i]).filter(([r])=>!ustarSym || r[2]===ustarSym).map(([,i])=>i);
+function ustarShow(){ const L=ustarIdx(), k=L.indexOf(st.ustar); $('ustarPos').textContent = k<0 ? `${L.length} shapes` : `${k+1} of ${L.length}${ustarSym ? ` with the ${STAR_SYM[ustarSym]}\u2019s symmetry` : ''}`; }
+function ustarSet(i){ st.ustar=i; ustarShow(); if (st.shape==='ustar'){ shapeChanged(true); uniDiagram(); } }
+function ustarStep(d){ const L=ustarIdx(); if (!L.length) return; const k=L.indexOf(st.ustar); ustarSet(L[k<0 ? 0 : (k+d+L.length)%L.length]); }
+$('ustarPrev').addEventListener('click', ()=>ustarStep(-1)); $('ustarNext').addEventListener('click', ()=>ustarStep(1));
+$('ustarSym').addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return; ustarSym=+b.dataset.y; $('ustarSym').querySelectorAll('button').forEach(x=>x.classList.toggle('on', x===b));
+  if (!ustarIdx().includes(st.ustar)) ustarStep(0); else ustarShow(); });
 function uniSync(){ document.querySelectorAll('.uniList [data-alias]').forEach(a=>a.classList.toggle('on', a.dataset.alias===st.shape)); uniDiagram();
   const b=document.querySelector(`.uniList [data-s="${st.shape}"], .uniList [data-alias="${st.shape}"]`); if (b) uniTab(b.closest('.uniList').dataset.u); }
 uniSync();
 shapeBtns.forEach(b=>b.addEventListener('click', ()=>{ st.shape=b.dataset.s; shapeBtns.forEach(x=>x.classList.toggle('on', x===b)); uniSync();
-  $('duo').hidden = st.shape!=='d'; $('morphRow').hidden = st.shape!=='morph'; syncRoundRow(); syncHdRow(); syncDrawAs(); shapeChanged(); }));
+  $('duo').hidden = st.shape!=='d'; $('morphRow').hidden = st.shape!=='morph'; $('ustarRow').hidden = st.shape!=='ustar'; if (st.shape==='ustar') ustarShow(); syncRoundRow(); syncHdRow(); syncDrawAs(); shapeChanged(); }));
 function syncRoundRow(){ const sh=SHAPES[st.shape]; $('roundRow').hidden=!sh.round; if (!sh.round) return; $('rdet').value=sh.detail||3; $('rdeto').textContent=sh.detail||3;
   $('packView').hidden=!sh.packing; $('packView').querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.pv===st.packView));
   $('rdetNote').textContent = sh.packing ? `${sh.gens} round${sh.gens===1?'':'s'} of filling: ${sh.verts.length.toLocaleString()} balls touching at ${sh.edges.length.toLocaleString()} points. Always shown in stereographic projection, the only one that keeps balls round.`

@@ -14,7 +14,7 @@ const r2=(x,d=2)=>+(+x).toFixed(d);
 function viewCode(){ const sh=SHAPES[st.shape], q=pivot.quaternion, P=new URLSearchParams();
   P.set('s',st.shape); P.set('m',st.mode);
   if (sh.highD) P.set('n',sh.n); if (st.shape==='d'){ P.set('dp',$('dp').value); P.set('dq',$('dq').value); }
-  if (st.shape==='morph'){ P.set('mf',morphFam); P.set('ms',$('morphS').value); } if (sh.round) P.set('dt',sh.detail||3); if (sh.packing && st.packView!=='balls') P.set('pv',st.packView); if (st.drawAs!=='edges') P.set('da',st.drawAs);
+  if (st.shape==='morph'){ P.set('mf',morphFam); P.set('ms',$('morphS').value); } if (st.shape==='ustar') P.set('us',st.ustar); if (sh.round) P.set('dt',sh.detail||3); if (sh.packing && st.packView!=='balls') P.set('pv',st.packView); if (st.drawAs!=='edges') P.set('da',st.drawAs);
   P.set('pal',st.palette); if (st.palRev) P.set('rev',1); if (st.cycleSpeed) P.set('cyc',r2(st.cycleSpeed)); if (st.density!==1) P.set('dn',r2(st.density)); P.set('cm',st.cmode); P.set('fin',st.finish); P.set('bg',st.bg.replace('#','')); P.set('pr',st.proj); P.set('ed',st.edges);
   if (st.faceFill) P.set('ff',1);
   P.set('ss',st.spinStyle); P.set('sp',st.spin?1:0); P.set('spd',r2(st.speed)); P.set('tt',r2(st.turn)); P.set('th',r2(st.thk));
@@ -27,6 +27,7 @@ function viewCode(){ const sh=SHAPES[st.shape], q=pivot.quaternion, P=new URLSea
 
 export function applyView(code){
   const P=new URLSearchParams(codeFromText(code)), g=k=>P.get(k); if (!g('s') || !SHAPES[g('s')]) return false;
+  if (g('us') && isFinite(+g('us'))) st.ustar=+g('us');   // which star uniform shape (geometry/star-list.js)
   document.querySelector(`.shapes [data-s="${g('s')}"]`).click();
   if (g('n') && SHAPES[st.shape].highD) setRange('hd', g('n'));
   if (g('dp')){ $('dp').value=g('dp'); setRange('dq', g('dq')); }
