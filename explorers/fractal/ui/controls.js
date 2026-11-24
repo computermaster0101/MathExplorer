@@ -54,7 +54,8 @@ export function advanceFly(dt){ const F=st.fly, v=st.vE; F.t+=dt; const u=clamp(
   if (w>=1){ v.cx=F.b.cx; v.lx=F.b.lx; v.cy=F.b.cy; v.ly=F.b.ly; v.bx=F.b.bx; v.by=F.b.by; } else { v.cx=lerp(F.a.cx,F.b.cx,w); v.cy=lerp(F.a.cy,F.b.cy,w); v.lx=v.ly=0; v.bx=dblToFix(v.cx); v.by=dblToFix(v.cy); }
   if (u>=1){ v.scale=Math.exp(F.b.ls); st.fly=null; if (F.then) F.then(); } touch(); }
 // ---- endless dive: when the digits run out (or it's stuck in black), fly back to the top and dive somewhere new ----
-export function diveUI(){ const on=st.dive||st.endlessRun; $('diveBtn').classList.toggle('on',on); $('diveBtn').textContent=on?'Stop diving':'Dive in'; }
+export function diveUI(){ const on=st.dive||st.endlessRun, out=on && st.diveDir<0; $('diveBtn').classList.toggle('on',on && !out); $('diveBtn').textContent=on && !out?'Stop diving':'Dive in';
+  $('diveOutBtn').classList.toggle('on',out); $('diveOutBtn').textContent=out?'Stop':'Dive out'; }
 // the whole picture an endless dive flies back to: the fractal's, or on a Julia set the Julia set's (issue: a reset while
 // diving into a Julia set flew to the fractal's home and its places, the wrong spot)
 const juliaShown=()=>st.julia && !TYPES[st.type].juliaOnly;
@@ -69,10 +70,18 @@ export function endlessWarp(why){ const T=TYPES[st.type], v=st.vE; st.dive=false
   const msg = why==='reset' ? '<b>Starting a new trip.</b> Flying back to the top to pick a fresh spot on the edge.'
     : why==='inside' ? `<b>Landed inside the set at ×${fmtBig(mag)}</b>, where it's black all the way down. Flying back to the top to dive somewhere new.`
     : `<b>Out of digits at ×${fmtBig(mag)}.</b> This is as deep as the numbers go here, so it's flying back to the top to dive somewhere new.`;
+  st.diveDir=1;
+  // "Dive back out the way it came" (issue #68): at the end of a dive (not on a reset) it dives out in reverse to the top,
+  // then picks a new spot (the loop calls endlessNewSpot when it gets there)
+  if (st.endlessBack && why!=='reset'){ st.dive=true; st.diveDir=-1; st.backWhy=why; st.backMag=mag; diveUI(); return; }
   const home=homeView();
-  startFly('the top', [home.cx,0], [home.cy,0], home.scale, ()=>{ const sp=pickSpot();
-    startFly('a new spot', sp[0], sp[1], home.scale*0.12, ()=>{ if (st.endlessRun){ st.dive=true; st.trip++; st.vel=[0,0]; shared.gridJob=null; } }, '<b>Picking a new spot on the edge…</b>'); }, msg);
+  startFly('the top', [home.cx,0], [home.cy,0], home.scale, endlessNewSpot, msg);
   diveUI(); }
+/** At the top of an endless dive: fly to a new spot on the edge and dive in. */
+export function endlessNewSpot(){ const home=homeView(), sp=pickSpot(); st.dive=false; st.diveDir=1; diveUI();
+  startFly('a new spot', sp[0], sp[1], home.scale*0.12, ()=>{ if (st.endlessRun){ st.dive=true; st.diveDir=1; st.trip++; st.vel=[0,0]; shared.gridJob=null; diveUI(); } }, '<b>Picking a new spot on the edge…</b>'); }
+/** How far out a dive out goes: the whole picture. */
+export const topScale=()=>homeView().scale;
 function buildPresets(id){ $(id).innerHTML=JPRESETS.map((p,i)=>`<button data-i="${i}">${p[0]}</button>`).join(''); }
 buildPresets('jPresets'); buildPresets('jPresets2');
 for (const id of ['jPresets','jPresets2']) $(id).addEventListener('click', e=>{ const b=e.target.closest('button'); if (!b) return; st.jc=JPRESETS[+b.dataset.i][1].slice();
@@ -110,10 +119,16 @@ $('juliaChk').addEventListener('change', e=>{ st.julia=e.target.checked; if (st.
 export function setSteer(on){ st.steer=!!on; st.steerTo=null; $('steerChk').checked=st.steer; $('steer3Chk').checked=st.steer; }
 $('steerChk').addEventListener('change', e=>setSteer(e.target.checked));
 $('steer3Chk').addEventListener('change', e=>setSteer(e.target.checked));
-$('endlessChk').addEventListener('change', e=>{ st.endless=e.target.checked; $('endless3Chk').checked=st.endless; });
+$('endlessChk').addEventListener('change', e=>{ st.endless=e.target.checked; $('endless3Chk').checked=st.endless; $('endlessBackChk').disabled=!st.endless; });
+$('endlessBackChk').addEventListener('change', e=>{ st.endlessBack=e.target.checked; });
+// Dive out (issue #68): zooms steadily out at the dive speed, the way a dive goes in, until the whole picture is back
+$('diveOutBtn').addEventListener('click', ()=>{ if ((st.dive||st.endlessRun) && st.diveDir<0){ st.dive=false; st.endlessRun=false; st.diveDir=1; st.fly=null; diveUI(); touch(); return; }
+  if (st.vE.scale>=topScale()*0.999) return;
+  st.dive=true; st.diveDir=-1; st.endlessRun=false; st.steerTo=null; st.vel=[0,0]; shared.gridJob=null; st.fly=null; diveUI(); touch(); });
 $('endless3Chk').addEventListener('change', e=>{ st.endless=e.target.checked; $('endlessChk').checked=st.endless; });
-$('diveBtn').addEventListener('click', ()=>{ if (st.dive||st.endlessRun){ st.dive=false; st.endlessRun=false; st.fly=null; st.steerTo=null; diveUI(); touch(); return; }
-  st.dive=true; st.endlessRun=st.endless; st.trip=1; st.insideT=0; st.steerCentreIn=false; st.steerPref=Math.random()*2*Math.PI; st.manualT=0; st.steerTo=null; st.vel=[0,0]; shared.gridJob=null; st.fly=null; diveUI(); touch(); });
+$('diveBtn').addEventListener('click', ()=>{ if ((st.dive||st.endlessRun) && st.diveDir<0){ st.diveDir=1; st.dive=true; st.endlessRun=st.endless && st.endlessRun; st.fly=null; diveUI(); touch(); return; }
+  if (st.dive||st.endlessRun){ st.dive=false; st.endlessRun=false; st.fly=null; st.steerTo=null; diveUI(); touch(); return; }
+  st.dive=true; st.diveDir=1; st.endlessRun=st.endless; st.trip=1; st.insideT=0; st.steerCentreIn=false; st.steerPref=Math.random()*2*Math.PI; st.manualT=0; st.steerTo=null; st.vel=[0,0]; shared.gridJob=null; st.fly=null; diveUI(); touch(); });
 $('diveSpd').addEventListener('input', e=>syncDiveSpd(+e.target.value));
 // Reset view puts the current mode back to how it starts: camera, knife, turns, motion and shape settings (not the fractal or colours)
 function resetSettings(){ const m=st.mode;
@@ -129,7 +144,7 @@ function resetSettings(){ const m=st.mode;
 export function resetView(){ const wasPaused=st.paused; st.paused=false; resetSettings();
   if (st.mode==='explore' && st.endlessRun && !wasPaused){ endlessWarp('reset'); return; }
   if (st.mode==='d3' && (st.d3.dive||st.d3.warp) && st.endless && !wasPaused){ start3Warp('reset'); return; }
-  st.endlessRun=false; if (st.mode==='grow'){ st.grow.gv={ox:0,oy:0,z:1}; } else if (st.mode==='d3'){ nestReset(); st.d3.target=null; setDive3(false); st.d3.dist=d3Bound()*3.4; st.d3.yaw=0.7; st.d3.pitch=0.32; } else resetViews(); st.dive=false; diveUI(); touch(); }
+  st.endlessRun=false; if (st.mode==='grow'){ st.grow.gv={ox:0,oy:0,z:1}; } else if (st.mode==='d3'){ nestReset(); st.d3.target=null; setDive3(false); st.d3.dist=d3Bound()*3.4; st.d3.yaw=0.7; st.d3.pitch=0.32; } else resetViews(); st.dive=false; st.diveDir=1; diveUI(); touch(); }
 $('resetView').addEventListener('click', resetView);
 // grow
 function buildGenChips(){ const sh=GROW[st.grow.shape]; $('genChips').innerHTML=[...Array(sh.max+1)].map((_,k)=>`<button data-k="${k}">${k}</button>`).join('');
