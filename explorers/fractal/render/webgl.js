@@ -12,7 +12,7 @@ const FS2=`#version 300 es
 precision highp float; precision highp int;
 uniform vec2 u_res, u_org, u_center, u_c, u_refOff;
 uniform float u_scale, u_rot, u_power, u_density, u_cycle, u_flash;
-uniform int u_iter, u_type, u_julia, u_cmode, u_inside, u_aa, u_refLen, u_dim, u_seq, u_seqLen, u_ext, u_scaleE;
+uniform int u_inTest; uniform int u_iter, u_type, u_julia, u_cmode, u_inside, u_aa, u_refLen, u_dim, u_seq, u_seqLen, u_ext, u_scaleE;
 uniform float u_scaleM, u_bail; uniform vec2 u_refOffS;
 uniform int u_blaOn, u_blaL; uniform int u_blaOff[18]; uniform sampler2D u_blaAB, u_blaR;
 uniform sampler2D u_ref, u_refC;
@@ -114,6 +114,13 @@ vec3 sampleAt(vec2 px){
   int pn=int(u_power+0.5);
   vec2 z=vec2(0.0), der=vec2(0.0); bool esc=false; int it=0; float trap=1e20, sa=0.0, sp=0.0; bool hasDer=(u_type==0);
   vec2 dadd=(u_julia==1)?vec2(0.0):vec2(1.0,0.0);
+  // Inside tests (z² + c only, with the plain inside colour): points in the main cardioid or the big bulb are inside without
+  // iterating (while a float can still place c, scale > 1e-5), and an orbit that comes back to within 1e-6 of a point it
+  // visited earlier (saved at steps 1, 2, 4, 8…) has settled into a cycle and never escapes (only while 1e-6 is under a
+  // pixel, scale > 1e-3: deeper, it marked a few hundred escaping pixels inside). Inside points ran every step: in Elephant
+  // Valley they did about 93% of the work.
+  bool inChk=(u_type==0 && u_inside==0 && u_scale>1e-5 && u_ext==0 && u_inTest==1), perChk=inChk && u_scale>1e-3; vec2 zs=vec2(1e9); int nSave=1;
+  if (inChk && u_julia==0){ vec2 c0=u_center+p; float xq=c0.x-0.25, q=xq*xq+c0.y*c0.y; vec2 b2=c0+vec2(1.0,0.0); if (q*(q+xq)<=0.25*c0.y*c0.y || dot(b2,b2)<=0.0625) return u_inC; }
   if (u_refLen>0 && u_ext==1){
     // Extreme: each pixel's offset is a mantissa w with its own power-of-two exponent kw, so it never underflows.
     // Once the offset grows big enough to hold in a plain float, it carries on as usual.
@@ -151,6 +158,7 @@ vec3 sampleAt(vec2 px){
     for (int s=0;s<u_iter;s++){ if (i>=u_iter) break;
       vec2 Z=R(ri); z=Z+dz;
       if (dot(z,z)>BAIL){ esc=true; it=i; break; }
+      if (perChk && i>0){ vec2 d=z-zs; if (dot(d,d)<1e-12) break; if (i>=nSave){ zs=z; nSave*=2; } }
       if (u_blaOn==1 && ri>0){ int l=blaFind(ri, log2(max(max(abs(dz.x),abs(dz.y)),1e-37)));
         if (l>0){ vec4 ab=BAB(u_blaOff[l]+(ri>>l)); dz=cm(ab.xy,dz)+cm(ab.zw,dc); ri+=1<<l; i+=1<<l; continue; } }
       trap=min(trap,min(abs(z.x),abs(z.y)));
@@ -171,6 +179,7 @@ vec3 sampleAt(vec2 px){
     vec2 zp=vec2(0.0), zl=z; der=(u_julia==1)?vec2(1.0,0.0):vec2(0.0); float B2=(u_type==11)?u_bail*u_bail:BAIL;
     for (int i=0;i<u_iter;i++){
       if (dot(z,z)>B2){ esc=true; it=i; break; }
+      if (perChk && i>0){ vec2 d=z-zs; if (dot(d,d)<1e-12) break; if (i>=nSave){ zs=z; nSave*=2; } }
       if (u_type==11 && (isnan(z.x)||isnan(z.y)||isinf(z.x)||isinf(z.y))){ esc=true; it=i; z=zl; break; }
       zl=z;
       trap=min(trap,min(abs(z.x),abs(z.y)));
@@ -554,7 +563,7 @@ export function draw2D(C, vp, o){
   g.uniform2f(P.u('u_center'),o.cx,o.cy); g.uniform1f(P.u('u_scale'),o.scale); g.uniform1f(P.u('u_rot'),o.rot);
   g.uniform2f(P.u('u_c'),o.c[0],o.c[1]); g.uniform1f(P.u('u_power'),o.power!=null?o.power:st.power);
   g.uniform1i(P.u('u_iter'),o.iter); g.uniform1i(P.u('u_type'),o.type); g.uniform1i(P.u('u_julia'),o.julia?1:0);
-  g.uniform1i(P.u('u_cmode'),st.cmode); g.uniform1i(P.u('u_inside'),st.inside); g.uniform1i(P.u('u_aa'),o.aa||1);
+  g.uniform1i(P.u('u_cmode'),st.cmode); g.uniform1i(P.u('u_inside'),st.inside); g.uniform1i(P.u('u_inTest'),shared.noInsideTest?0:1); g.uniform1i(P.u('u_aa'),o.aa||1);
   const ex=o.ext; g.uniform1i(P.u('u_ext'),ex?1:0); if (ex){ g.uniform1f(P.u('u_scaleM'),ex.M); g.uniform1i(P.u('u_scaleE'),ex.E); g.uniform2f(P.u('u_refOffS'),ex.offS[0],ex.offS[1]); }
   g.uniform2f(P.u('u_refOff'),(o.refOff||[0,0])[0],(o.refOff||[0,0])[1]); g.uniform1i(P.u('u_refLen'),o.refLen||0); g.uniform1i(P.u('u_dim'),o.dim?1:0);
   g.uniform1f(P.u('u_density'),effDensity()); g.uniform1f(P.u('u_cycle'),st.cycle); g.uniform1f(P.u('u_flash'),flash());
