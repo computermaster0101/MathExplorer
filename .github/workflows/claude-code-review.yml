@@ -3,6 +3,12 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
+  # claude-issue.yml starts this for the pull requests it opens: a PR opened with the Actions token starts no workflows
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Pull request number"
+        required: true
     # Optional: Only run on specific file changes
     # paths:
     #   - "src/**/*.ts"
@@ -13,7 +19,7 @@ on:
 jobs:
   claude-review:
     # Pull requests from forks get no secrets, so review only branches in this repository.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
@@ -32,6 +38,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 1
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/pull/{0}/head', inputs.pr) || '' }}
 
       - name: Run Claude Code Review
         id: claude-review
@@ -40,8 +47,11 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'
+          prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number || inputs.pr }}'
+          # Started by hand there's no pull request in the event, so inline comments may not reach it: then one PR comment
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+            --append-system-prompt "If inline comments can't be posted, post the findings (or that none were found) as one comment on pull request ${{ github.event.pull_request.number || inputs.pr }} with gh pr comment."
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
 

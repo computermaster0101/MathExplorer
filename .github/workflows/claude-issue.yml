@@ -28,7 +28,7 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
-      actions: read
+      actions: write   # to start the code review on the new pull request
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -67,21 +67,19 @@ jobs:
             --allowedTools "Read,Edit,Write,Glob,Grep,Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue list:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git checkout -b:*),Bash(git switch -c:*),Bash(git add:*),Bash(git commit:*),Bash(git push -u origin fix/:*),Bash(git push origin fix/:*),Bash(node --check:*),Bash(ls:*),Bash(grep:*)"
             --disallowedTools "WebFetch,WebSearch,Bash(gh pr merge:*),Bash(git push origin main:*),Bash(git push -u origin main:*),Bash(curl:*),Bash(wget:*)"
 
-      # The action leaves its branch and a "Create PR" link, so open the pull request here. The Claude app's token is
-      # used when it is still valid, so the PR runs claude-code-review.yml (a PR opened with GITHUB_TOKEN starts no
-      # workflows); otherwise the job's own token. The issue title goes in through env, never into the script text.
+      # The action leaves its branch and a "Create PR" link, so open the pull request here, with the job's own token
+      # (the action has revoked the Claude app's token by now; Settings > Actions allows Actions to create pull
+      # requests). A PR opened that way starts no workflows, so the code review is started by hand afterwards. The
+      # issue title goes in through env, never into the script text.
       - name: Open the pull request
         if: always() && steps.claude.outputs.branch_name != ''
         env:
-          APP_TOKEN: ${{ steps.claude.outputs.github_token }}
-          JOB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
           BRANCH: ${{ steps.claude.outputs.branch_name }}
           N: ${{ github.event.issue.number }}
           TITLE: ${{ github.event.issue.title }}
           REPO: ${{ github.repository }}
         run: |
-          export GH_TOKEN="$APP_TOKEN"
-          gh api "repos/$REPO" --jq .id >/dev/null 2>&1 || export GH_TOKEN="$JOB_TOKEN"
           ahead=$(gh api "repos/$REPO/compare/main...$BRANCH" --jq .ahead_by 2>/dev/null || echo 0)
           if [ "${ahead:-0}" -eq 0 ]; then echo "No changes on $BRANCH, so no pull request."; exit 0; fi
           if [ -n "$(gh pr list --repo "$REPO" --head "$BRANCH" --state all --json number --jq '.[].number')" ]; then echo "A pull request already exists."; exit 0; fi
@@ -92,4 +90,6 @@ jobs:
             gh api "repos/$REPO/compare/main...$BRANCH" --jq '.commits[].commit.message' | sed 's/^/> /'
             echo; echo "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
           } > "$RUNNER_TEMP/body.md"
-          gh pr create --repo "$REPO" --base main --head "$BRANCH" --title "Fix #$N: $TITLE" --body-file "$RUNNER_TEMP/body.md"
+          url=$(gh pr create --repo "$REPO" --base main --head "$BRANCH" --title "Fix #$N: $TITLE" --body-file "$RUNNER_TEMP/body.md")
+          echo "Opened $url"
+          gh workflow run claude-code-review.yml --repo "$REPO" -f pr="${url##*/}"
