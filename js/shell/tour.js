@@ -5,6 +5,7 @@
 // rather than the tour on top of it; nothing appears in full screen.
 import { inZen, panelHidden, togglePanel } from './layout.js';
 import { track } from './analytics.js';
+import { revealGroup, showSheet, sheetMode } from './sheet.js';
 
 const TOUR = 'mathexplorer.tour', TOUR_V = '1', CARD = 'mathexplorer.card.';
 const mem = {}, store = {
@@ -32,20 +33,20 @@ const CARDS = {
 // Steps on a panel group open it while they're shown (and close it again after, if it was closed); a group an explorer
 // hides in its current mode is left out.
 const STEPS = () => [
-  { el: '#switcher', title: 'Welcome to Math Explorer', text: 'Twelve ways to see mathematics, all running live in your browser. Pick an explorer here. Play freely: you can\'t break anything.' },
+  { el: '#switcher', title: 'Welcome to Math Explorer', text: 'Twelve ways to see mathematics, all running live in your browser. Pick an explorer here, or press <b>All 12</b> to see them all as pictures. Play freely: you can\'t break anything.' },
   { el: '#stage', title: 'The picture', text: touch()
       ? 'Drag to move or turn it, pinch to zoom. Tap to dive in (tap again to pause or play), press and hold to start afresh.'
       : 'Drag to move or turn it, scroll to zoom. On the keyboard the arrows and W A S D move you, G dives or flies, Space pauses and R starts afresh.' },
   { el: '#stageBtns', title: 'Buttons on the picture', text: touch()
-      ? 'Press and hold any of them to see its name. In the middle, like a music player: back (zoom out), slower, play or pause, faster, forward (zoom in). Then go (dive, fly, ride…). The others fold away: the view buttons (full screen: nothing but the picture, ready for a screenshot), and ⋯ for music, sharing and saving, and <b>?</b> for help and this tour.'
-      : 'Point at any of them to see its name and key. In the middle, like a music player: back (zoom out), slower, play or pause (Space), faster, forward (zoom in); then go: dive, fly, ride… (G) and, where something can, steer itself (T). On the left, hide the panel (H), full screen (F) and reset (R); on the right, ♫ music and the Visualizer, ⇪ share, save or record, and <b>?</b> for help and this tour. The small arrows fold groups away.' },
-  { el: '#panel', title: 'The panel', text: 'Choose a shape at the top, then open any group to change how it moves, how it looks and its colours. Every explorer\'s panel is laid out in the same order.' },
+      ? 'Each one is named underneath; press and hold for more. Like a music player: zoom out, slower, play or pause, faster, zoom in, then go (dive, fly, ride…). <b>More</b> opens the rest: the panel, full screen (nothing but the picture, ready for a screenshot), reset, music, and sharing and saving. <b>Help</b> at the top has this tour and more.'
+      : 'Each one is named underneath; point at it for its key. In the middle, like a music player: zoom out, slower, play or pause (Space), faster, zoom in; then go: dive, fly, ride… (G) and, where something can, steer itself (T). On the left, hide the panel (H), full screen (F) and reset (R); on the right, music and the Visualizer, and share, save or record. The small arrows fold groups away. <b>Help</b> at the top has this tour and more.' },
+  { el: '#panel', title: 'The panel', text: () => (sheetMode() ? 'Its tabs along the bottom: <b>Shapes</b> to choose what you see, <b>Colours</b>, <b>Music</b>, and <b>Settings</b> for how it moves and how it\'s drawn. Tap the open tab again to fold it away.' : 'Choose a shape at the top, then open any group to change how it moves, how it looks and its colours.') + ' Every explorer\'s panel is laid out in the same order.' },
   { el: '#g-sound', open: true, title: 'Music', text: 'Play a song from your device, use the microphone, or listen to another tab. Every explorer moves with the beat; ♫ Visualizer changes the picture with the song as well.' },
   { el: '#g-share', open: true, title: 'Save and share', text: 'Save a picture of exactly what you see, or record a video with the music. <b>Copy link</b> gives a link that reopens this very view (shape, colours and angle) for anyone you send it to; paste one under <b>Load a view</b> to open it here.' },
   { el: '#g-print', open: true, title: '3D print', text: 'Download what you\'re looking at as an STL file, ready for a 3D printer, at the size you choose.' },
-  { el: '#g-keys', open: true, title: 'Keys and help', text: (touch() ? 'With a keyboard, every key for this explorer is listed here. ' : 'Every key for this explorer is listed here; Keyboard shortcuts in the <b>?</b> menu opens it any time. ')
-      + '<b>Navigation speed</b> sets how fast you move. To see this tour again, read about the explorer you\'re in, or report a problem, press <b>?</b> on the picture.' },
-].filter(s => { if (!s.open) return true; const el = document.querySelector(s.el); return el && !el.hidden && el.offsetParent !== null; });
+  { el: '#g-keys', open: true, title: 'Keys and help', text: (touch() ? 'With a keyboard, every key for this explorer is listed here. ' : 'Every key for this explorer is listed here; Keyboard shortcuts in the <b>Help</b> menu opens it any time. ')
+      + '<b>Navigation speed</b> sets how fast you move. To see this tour again, read about the explorer you\'re in, or report a problem, press <b>Help</b> at the top.' },
+].filter(s => { if (!s.open) return true; const el = document.querySelector(s.el); return el && !el.closest('[hidden]'); });   /* (on a phone a group can sit in a folded sheet: still there) */
 let T = null;   // the open tour: { i, root, spot, tip }
 function startTour(from) {
   if (T) return; hideBar(); hideCard();
@@ -57,8 +58,9 @@ function startTour(from) {
 function step(i) {
   const S = STEPS(); T.i = i; const s = S[i], el = document.querySelector(s.el);
   shut(); if (s.open && el && !el.open) { el.open = true; T.opened = el; }   // open this step's group (shut() closes the last one again)
+  if (sheetMode()) { if (s.open && el) revealGroup(el); else showSheet(s.el === '#panel', 'shapes'); }   // phones: the sheet opens on the step's tab, and folds for the picture's steps
   if (el) { const r = el.getBoundingClientRect(); if (r.top < 0 || r.bottom > room()) el.scrollIntoView({ block: r.height > innerHeight * 0.8 ? 'start' : 'center' }); }   // bring it into view (on a phone the panel is below the picture)
-  T.tip.innerHTML = `<div class="ttStep">${i + 1} of ${S.length}</div><h3>${s.title}</h3><p>${s.text}</p>
+  T.tip.innerHTML = `<div class="ttStep">${i + 1} of ${S.length}</div><h3>${s.title}</h3><p>${typeof s.text === 'function' ? s.text() : s.text}</p>
     <div class="ttBtns"><button class="sbtn" id="ttSkip">${i === S.length - 1 ? 'Close' : 'Skip'}</button><span></span>${i ? '<button class="sbtn" id="ttBack">Back</button>' : ''}<button class="sbtn on" id="ttNext">${i === S.length - 1 ? 'Done' : 'Next'}</button></div>`;
   T.tip.querySelector('#ttNext').onclick = next; T.tip.querySelector('#ttSkip').onclick = () => endTour(i === S.length - 1 ? 'tour_complete' : 'tour_skip');
   const b = T.tip.querySelector('#ttBack'); if (b) b.onclick = () => step(i - 1);
@@ -85,7 +87,7 @@ function place() {
 function tourKey(e) { if (!T || e.key === 'Tab' || (e.target.closest && e.target.closest('#consentBar,.modalBack'))) return;   /* the consent bar and privacy note keep their own keys */ if (e.key === 'Escape') endTour('tour_skip'); else if (e.key === 'Enter' || e.key === 'ArrowRight') next(); else if (e.key === 'ArrowLeft' && T.i) step(T.i - 1); e.preventDefault(); e.stopPropagation(); }
 const shut = () => { if (T && T.opened) { T.opened.open = false; T.opened = null; } };
 function endTour(how) {
-  if (!T) return; track(how, { step: T.i + 1 }); store.set(TOUR, TOUR_V); shut();
+  if (!T) return; track(how, { step: T.i + 1 }); store.set(TOUR, TOUR_V); shut(); showSheet(false);
   const pn = $('panel'); if (pn) pn.scrollTop = 0; scrollTo(0, 0);   // back to the top, where the shapes are
   window.removeEventListener('keydown', tourKey, true); window.removeEventListener('resize', place); T.root.remove(); T = null; document.body.classList.remove('touring');
   if (current && !store.get(CARD + current.name)) showCard(current.name, current.title);   // then this explorer's own card
@@ -96,7 +98,7 @@ function laterHint() {
   const hb = $('helpBtn'), sw = hb && hb.getBoundingClientRect().width ? hb : document.querySelector('.tbGroup[data-group="more"] .tbHandle'); if (!sw) return; const old = $('tourHint'); if (old) old.remove();
   const r = sw.getBoundingClientRect(), seen = r.width > 0 && r.top >= 0 && r.bottom <= innerHeight;
   const h = document.createElement('div'); h.id = 'tourHint'; h.setAttribute('role', 'status');
-  h.innerHTML = sw === hb ? 'You can take the tour any time from the <b>?</b> button.' : 'You can take the tour any time: open <b>⋯</b>, then <b>?</b>.';
+  h.innerHTML = 'You can take the tour any time from <b>Help</b>.';
   document.body.appendChild(h);
   if (seen) { const w = Math.min(280, innerWidth - 24), x = Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - 28)); h.style.width = w + 'px'; h.style.left = x + 'px'; h.style.top = (r.bottom + 10) + 'px';
     h.style.setProperty('--arrowX', Math.round(r.left + r.width / 2 - x - 5) + 'px'); h.classList.add('arrow'); sw.classList.add('tourPulse'); }

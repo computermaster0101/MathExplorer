@@ -71,10 +71,10 @@ export const autoCtl = () => (st.mode === 'explore' || st.mode === 'd3') ? { lab
    while it's what's happening; pressing a lit direction only goes on after a pause (Space) */
 const diving = d => (st.dive || st.endlessRun) && Math.sign(st.diveDir) === d;
 const diveWay = (d, id) => () => { if (!diving(d)) document.getElementById(id).click(); st.paused = false; };
-export const stopCtl = () => st.mode !== 'explore' ? null : { label: diving(1) || diving(-1) ? 'Stop the dive' : 'Stopped', on: !diving(1) && !diving(-1),
+export const stopCtl = () => st.mode !== 'explore' ? null : { short: 'Stop', label: diving(1) || diving(-1) ? 'Stop the dive' : 'Stopped', on: !diving(1) && !diving(-1),
   run: () => { st.dive = false; st.endlessRun = false; st.diveDir = 1; st.fly = null; st.steerTo = null; st.paused = false; diveUI(); touch(); } };
-export const reverseCtl = () => st.mode !== 'explore' ? null : { label: diving(-1) ? (st.paused ? 'Go on diving out' : 'Diving out') + ' (Shift + G)' : 'Play backwards: dive out (Shift + G)', on: diving(-1), run: diveWay(-1, 'diveOutBtn') };
-export const forwardCtl = () => st.mode !== 'explore' ? null : { label: diving(1) ? (st.paused ? 'Go on diving in' : 'Diving in') + ' (G)' : 'Play forwards: dive in (G)', on: diving(1), run: diveWay(1, 'diveBtn') };
+export const reverseCtl = () => st.mode !== 'explore' ? null : { short: 'Dive out', label: diving(-1) ? (st.paused ? 'Go on diving out' : 'Diving out') + ' (Shift + G)' : 'Play backwards: dive out (Shift + G)', on: diving(-1), run: diveWay(-1, 'diveOutBtn') };
+export const forwardCtl = () => st.mode !== 'explore' ? null : { short: 'Dive in', label: diving(1) ? (st.paused ? 'Go on diving in' : 'Diving in') + ' (G)' : 'Play forwards: dive in (G)', on: diving(1), run: diveWay(1, 'diveBtn') };
 export const speedCtl = () => ({ explore: 'diveSpd', d3: 'dive3Spd', orbit: { id: 'orbSpd', invert: true } })[st.mode] || null;   /* orbit: seconds per step, so bigger is slower */
 export const going = () => st.mode === 'explore' ? !!(st.dive || st.endlessRun || st.fly) : st.mode === 'd3' ? !!(st.d3.dive || st.d3.warp || st.d3.aim) : false;
 /** Shown under the Music & sound switches while this explorer is on screen. */

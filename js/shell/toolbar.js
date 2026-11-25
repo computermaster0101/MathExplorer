@@ -10,6 +10,7 @@
 // or { label, step(dir) }; null to hide them), whether it can zoom (`canZoom()`), what steers itself (`autoCtl()`) and one
 // button of its own (`extraCtl()`). The buttons press the same keys the keyboard does, or the panel's own buttons.
 import { track } from './analytics.js';
+import { revealGroup } from './sheet.js';
 const $ = id => document.getElementById(id);
 const app = $('app');
 const svg = d => `<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -38,6 +39,9 @@ export const ICON = {
 };
 /** Give a picture button its icon and name (shown on hover, read by screen readers). */
 export function setTip(b, name) { b.setAttribute('aria-label', name); b.dataset.tip = name; }
+/** A picture button's icon with its short label under it (the label is for the eye; the name above is what's read out). */
+function paint(b, icon, label) { if (b.dataset.icon === icon && b.dataset.lbl === label) return; b.dataset.icon = icon; b.dataset.lbl = label; b.innerHTML = (ICON[icon] || '') + `<span class="tbLbl" aria-hidden="true"></span>`; b.lastChild.textContent = label; }
+const relabel = (b, label) => { if (b.dataset.lbl === label) return; b.dataset.lbl = label; const l = b.querySelector('.tbLbl'); if (l) l.textContent = label; };
 
 const key = (k, extra) => document.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true, ...extra }));
 // press one of the explorer's own panel buttons (the Save, share & record group); analytics counts it once, as a toolbar press
@@ -51,14 +55,14 @@ const GKEY = 'mathexplorer.tbGroups', small = () => matchMedia('(pointer: coarse
 let folded = {}; try { folded = JSON.parse(localStorage.getItem(GKEY) || 'null') || {}; } catch (e) { folded = {}; }
 const isFolded = g => g in folded ? folded[g] : small();   // phones start folded, big screens open, until you choose
 const GROUP = {
-  view: { icon: 'view', name: 'View: hide panel, full screen, reset view' },
-  go: { icon: 'open', name: 'More ways to move: steer itself and more' },
-  more: { icon: 'more', name: 'More: music, share, help' },
+  view: { icon: 'view', lbl: 'View', name: 'View: hide panel, full screen, reset view' },
+  go: { icon: 'open', lbl: 'Extras', name: 'More ways to move: steer itself and more' },
+  more: { icon: 'more', lbl: 'More', name: 'More: music and share' },
 };
 function paintGroup(g) {
   const el = document.querySelector(`.tbGroup[data-group="${g}"]`), h = el.querySelector('.tbHandle'), f = isFolded(g);
   el.classList.toggle('folded', f); h.setAttribute('aria-expanded', f ? 'false' : 'true');
-  const want = f ? GROUP[g].icon : 'fold'; if (h.dataset.icon !== want) { h.dataset.icon = want; h.innerHTML = ICON[want]; }
+  paint(h, f ? GROUP[g].icon : 'fold', f ? GROUP[g].lbl : '');
   setTip(h, f ? GROUP[g].name : 'Fold these away');
 }
 /** Open or fold a group (no argument: the other way); `keep` false doesn't remember it (opened for a moment by a key). */
@@ -109,6 +113,15 @@ for (const [id, dir] of [['tbOut', 1], ['tbIn', -1]]) {
   b.addEventListener('click', () => { if (!held) wheelAtMiddle(dir * 240); held = false; });   /* a click (or Enter) is one wheel notch-and-a-half */
 }
 
+// ---------- phones: the groups other than the player fold into one More, which opens them as a row above the player ----------
+const bar = $('stageBtns'), all = $('tbAll');
+export function showAllButtons(open = !bar.classList.contains('allOpen')) {
+  bar.classList.toggle('allOpen', open); all.setAttribute('aria-expanded', open ? 'true' : 'false');
+  paint(all, open ? 'fold' : 'more', open ? 'Less' : 'More'); setTip(all, open ? 'Fewer buttons' : 'More buttons: view, go, music, share');
+}
+all.addEventListener('click', () => showAllButtons());
+showAllButtons(false);
+
 // ---------- go, steer itself, the explorer's own button ----------
 $('tbGo').addEventListener('click', () => { key('g', { code: 'KeyG' }); setTimeout(refresh, 60); });
 $('tbSteer').addEventListener('click', () => { key('t', { code: 'KeyT' }); setTimeout(refresh, 60); });
@@ -133,7 +146,7 @@ const toggleShare = menu('tbShare', 'shareMenu', '.shareWrap');
 // ♫: the Visualizer item is the explorer's own #vizStageBtn, which it shows and names
 $('tbMusicSet').addEventListener('click', () => {
   if (app.classList.contains('nopanel')) $('panelBtn').click();
-  const g = $('g-sound'); if (g) { g.open = true; g.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+  revealGroup($('g-sound'), true);   /* on a phone: the sheet opens on Music */
 });
 // ⇪: copy the link (the address always holds this view, colours included), the system share sheet, and the panel's
 // own Save picture, Record video and 3D print buttons (so their settings stay in the panel)
@@ -151,7 +164,7 @@ $('shRec').addEventListener('click', () => press($('recBtn')));
 $('shPrint').addEventListener('click', () => press(printBtn()));
 
 // ---------- which buttons get used: one event per press, the button's name and the explorer, nothing else ----------
-const NAMES = { panelBtn: 'panel', zenBtn: 'fullscreen', resetBtn: 'reset', tbPlay: 'play_pause', tbRev: 'reverse', tbFwd: 'forward', tbGo: 'go', tbSteer: 'steer', tbExtra: 'explorer_button', tbOut: 'zoom_out', tbIn: 'zoom_in',
+const NAMES = { panelBtn: 'panel', zenBtn: 'fullscreen', resetBtn: 'reset', tbPlay: 'play_pause', tbRev: 'reverse', tbFwd: 'forward', tbAll: 'more_buttons', tbGo: 'go', tbSteer: 'steer', tbExtra: 'explorer_button', tbOut: 'zoom_out', tbIn: 'zoom_in',
   tbSlower: 'slower', tbFaster: 'faster', musicBtn: 'music_menu', tbMusicSet: 'music_settings', vizStageBtn: 'visualizer', tbShare: 'share_menu', shCopy: 'copy_link', shSheet: 'share_sheet',
   shSnap: 'snapshot', shRec: 'record', shPrint: 'print_3d', helpBtn: 'help_menu', tourAgain: 'tour', aboutThis: 'about', keysBtn: 'keys', reportBtn: 'report', privacyBtn: 'privacy', ghMenu: 'github' };
 $('stageBtns').addEventListener('click', e => { const b = e.target.closest('button, a'); if (!b) return;
@@ -165,20 +178,20 @@ $('stageBtns').addEventListener('click', e => { const b = e.target.closest('butt
 function refresh() {
   /* the play icon while paused, and while nothing is moving (the explorer's moving(), where it has one): Space would then start the main motion */
   const paused = stopped(), tr = transport(), sc = tr && ctl('stopCtl'), play = $('tbPlay'), icon = tr ? 'stop' : paused ? 'play' : 'pause';
-  if (play.dataset.state !== icon) { play.dataset.state = icon; play.innerHTML = ICON[icon]; }
+  paint(play, icon, sc ? sc.short || 'Stop' : paused ? 'Play' : 'Pause');
   setTip(play, sc ? sc.label : paused ? 'Play (Space)' : 'Pause (Space)');
   play.classList.toggle('on', !!(sc && sc.on)); if (sc) play.setAttribute('aria-pressed', sc.on ? 'true' : 'false'); else play.removeAttribute('aria-pressed');
   for (const [id, f] of [['tbRev', api.reverseCtl], ['tbFwd', tr && api.forwardCtl]]) {
     const r = f ? f() : null, b = $(id); b.hidden = !r;
-    if (r) { setTip(b, r.label); b.classList.toggle('on', !!r.on); b.setAttribute('aria-pressed', r.on ? 'true' : 'false'); } }
+    if (r) { setTip(b, r.label); relabel(b, r.short || (id === 'tbRev' ? 'Reverse' : 'Play')); b.classList.toggle('on', !!r.on); b.setAttribute('aria-pressed', r.on ? 'true' : 'false'); } }
   const sn = speedName(); $('tbSlower').hidden = $('tbFaster').hidden = !sn;
   if (sn) { setTip($('tbSlower'), `Slower: ${sn}`); setTip($('tbFaster'), `Faster: ${sn}`); }
   const z = !api.canZoom || api.canZoom(); for (const e of document.querySelectorAll('.tbZoom')) e.hidden = !z;
-  const g = api.goLabel ? api.goLabel() : null, go = $('tbGo'); go.hidden = !g; if (g) setTip(go, g + ' (G)');
+  const g = api.goLabel ? api.goLabel() : null, go = $('tbGo'); go.hidden = !g; bar.classList.toggle('goInline', !!g && !tr);   /* phones keep Go beside the player unless ◀ ▶ already do its job */ if (g) { setTip(go, g + ' (G)'); relabel(go, g); }
   const a = api.autoCtl ? api.autoCtl() : null, sb = $('tbSteer'); sb.hidden = !a;
-  if (a) { setTip(sb, a.label + (a.on ? ': on' : a.on === false ? ': off' : '') + ' (T)'); sb.classList.toggle('on', !!a.on); sb.setAttribute('aria-pressed', a.on ? 'true' : 'false'); }
+  if (a) { setTip(sb, a.label + (a.on ? ': on' : a.on === false ? ': off' : '') + ' (T)'); relabel(sb, a.short || 'Steer'); sb.classList.toggle('on', !!a.on); sb.setAttribute('aria-pressed', a.on ? 'true' : 'false'); }
   const x = api.extraCtl ? api.extraCtl() : null, xb = $('tbExtra'); xb.hidden = !x;
-  if (x) { setTip(xb, x.label); xb.classList.toggle('on', !!x.on); xb.setAttribute('aria-pressed', x.on ? 'true' : 'false'); if (xb.dataset.icon !== x.icon) { xb.dataset.icon = x.icon; xb.innerHTML = ICON[x.icon] || ICON.go; } }
+  if (x) { setTip(xb, x.label); xb.classList.toggle('on', !!x.on); xb.setAttribute('aria-pressed', x.on ? 'true' : 'false'); paint(xb, ICON[x.icon] ? x.icon : 'go', x.short || ({ julia: 'Julia', back: 'Back' })[x.icon] || 'More'); }
   // the Go group: its fold handle only when there's something to fold; the whole group only when there's anything at all
   const goGroup = document.querySelector('.tbGroup[data-group="go"]'), extras = !!a || !!x;
   goGroup.querySelector('.tbHandle').hidden = !extras; goGroup.hidden = !g && !extras;
@@ -201,9 +214,9 @@ $('stageBtns').addEventListener('pointercancel', () => clearTimeout(pressT));
 $('stageBtns').addEventListener('click', e => { if (pressed && performance.now() - pressedAt < 700 && e.target.closest('[data-tip]') === pressed) { e.stopImmediatePropagation(); e.preventDefault(); } pressed = null; pressedAt = 0; }, true);
 
 // icons and names
-for (const [id, ic, name] of [['panelBtn', 'panel', 'Hide panel (H)'], ['zenBtn', 'zen', 'Full screen (F)'], ['resetBtn', 'reset', 'Reset view (R)'], ['musicBtn', 'music', 'Music and the Visualizer'],
-  ['tbShare', 'share', 'Share, save or record this view'], ['tbSteer', 'steer', 'Steer'], ['tbGo', 'go', 'Go'], ['tbRev', 'rev', 'Play backwards'], ['tbFwd', 'play', 'Play forwards'], ['tbSlower', 'slower', 'Slower'], ['tbFaster', 'faster', 'Faster'],
-  ['tbOut', 'zoomOut', 'Zoom out: back (−, or the wheel)'], ['tbIn', 'zoomIn', 'Zoom in: forwards (+, or the wheel)']]) { const b = $(id); b.innerHTML = ICON[ic]; setTip(b, name); }
+for (const [id, ic, name, lbl] of [['panelBtn', 'panel', 'Hide panel (H)', 'Panel'], ['zenBtn', 'zen', 'Full screen (F)', 'Full screen'], ['resetBtn', 'reset', 'Reset view (R)', 'Reset'], ['musicBtn', 'music', 'Music and the Visualizer', 'Music'],
+  ['tbShare', 'share', 'Share, save or record this view', 'Share'], ['tbSteer', 'steer', 'Steer', 'Steer'], ['tbGo', 'go', 'Go', 'Go'], ['tbRev', 'rev', 'Play backwards', 'Reverse'], ['tbFwd', 'play', 'Play forwards', 'Play'], ['tbSlower', 'slower', 'Slower', 'Slower'], ['tbFaster', 'faster', 'Faster', 'Faster'],
+  ['tbOut', 'zoomOut', 'Zoom out: back (−, or the wheel)', 'Zoom out'], ['tbIn', 'zoomIn', 'Zoom in: forwards (+, or the wheel)', 'Zoom in']]) { const b = $(id); paint(b, ic, lbl); setTip(b, name); }
 setTip($('helpBtn'), 'Help: the tour, keys, Report a problem (?)');
 for (const g of Object.keys(GROUP)) paintGroup(g);
 refresh();

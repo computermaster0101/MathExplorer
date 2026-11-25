@@ -6,5 +6,5 @@
 .app[data-explorer="life"] .hud h1, .app[data-explorer="life"] .hud .sub, .app[data-explorer="life"] .legend, .app[data-explorer="life"] .hint{background:rgba(8,10,14,.62);backdrop-filter:blur(4px);border-radius:6px;padding:2px 8px;color:#e8eaf0;width:fit-content}
 .app[data-explorer="life"] .hud .sub{margin-top:3px;color:#c4c8d2}
 .app[data-explorer="life"] .legend{padding:4px 8px}
-.app[data-explorer="life"] .hint{bottom:44px}
+.app[data-explorer="life"] .hint{bottom:44px} .app[data-explorer="life"]:not(.zen) .hint{bottom:110px} .frame-card .app[data-explorer="life"]:not(.zen) .hint{bottom:44px}
 .app[data-explorer="life"] #stageCap[style*="block"] ~ .hint{display:none}

@@ -1,4 +1,5 @@
 // Hide panel and full screen ("zen"), shared by every explorer.
+import { revealGroup } from './sheet.js';
 const app = document.getElementById('app');
 const $ = id => document.getElementById(id);
 
@@ -64,7 +65,7 @@ export function showKeys() {
   if (panelHidden()) togglePanel(false);
   exitZen();
   const g = $('g-keys'); if (!g) return;
-  g.open = true; g.scrollIntoView({ block: 'nearest' });
+  revealGroup(g);   /* on a phone: the sheet opens on Settings */
 }
 
 // ---------- touch gestures on the picture (phones and tablets) ----------
