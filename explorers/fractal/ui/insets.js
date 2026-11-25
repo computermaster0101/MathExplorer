@@ -16,11 +16,15 @@ const in1=$('in1'), in2=$('in2'), caches={};
 // Folding (issue #55): a tap on a panel (or a click on its title bar) folds it down to just the title bar, and again opens it.
 // Remembered on this device; each of the two places has its own.
 const FOLD_KEY='mathexplorer.fractal.fold', FOLD_H=26;
-const fold=(()=>{ try { return { in1:false, in2:false, ...JSON.parse(localStorage.getItem(FOLD_KEY)||'{}') }; } catch (e) { return { in1:false, in2:false }; } })();
+// On a phone the panels start folded, and a folded panel shrinks to a small icon (issue #83) so the picture gets the room.
+const phone=()=>matchMedia('(max-width: 600px)').matches, ICON=36;
+const fold=(()=>{ const d=phone(); try { return { in1:d, in2:d, ...JSON.parse(localStorage.getItem(FOLD_KEY)||'{}') }; } catch (e) { return { in1:d, in2:d }; } })();
 export const isFolded=cv=>!!fold[cv.id];
 export function toggleFold(cv){ fold[cv.id]=!fold[cv.id]; try { localStorage.setItem(FOLD_KEY, JSON.stringify(fold)); } catch (e) { /* not remembered */ } drawInsets(); }
 /** True when (x, y), relative to the panel, is on its title bar. */
 export const onTitleBar=(cv,y)=>y<FOLD_H;
+// a folded panel on a phone: one small square with the title's first letter
+function icon(cv, title){ const P=panel(cv); if (!P) return; const g=P.g; g.fillStyle=P.txt; g.font='600 15px Inter, sans-serif'; g.textAlign='center'; g.fillText((title||'?').trim()[0].toUpperCase(), P.W/2, P.H/2+5); g.textAlign='left'; }
 // the folded panel: its title and a mark saying it opens again
 function strip(cv, title){ const P=panel(cv); if (!P) return; const g=P.g; g.fillStyle=P.txt; g.font=`600 ${P.small?10:11}px Inter, sans-serif`;
   g.fillText(title, 9, 17, P.W-30); g.fillStyle=P.mute; g.font='12px Inter, sans-serif'; g.fillText('▾', P.W-18, 17); }
@@ -70,7 +74,7 @@ export function drawInsets(){
   const T=TYPES[st.type], na=notAvail();
   // shown and open: true means draw the panel; a folded one is drawn here as its title bar alone
   const show=(cv,on,title)=>{ cv.style.display=on?'block':'none'; if (!on) return false; const f=isFolded(cv);
-    cv.style.aspectRatio=f?'auto':''; cv.style.height=f?FOLD_H+'px':''; if (f){ strip(cv, title||''); return false; } return true; };
+    const ic=f&&phone(); cv.style.aspectRatio=f?'auto':''; cv.style.height=f?(ic?ICON:FOLD_H)+'px':''; cv.style.width=ic?ICON+'px':''; cv.style.alignSelf=ic?'flex-end':''; cv.setAttribute('aria-label', (title||'Panel')+(f?' (tap to open)':'')); if (f){ ic ? icon(cv, title) : strip(cv, title||''); return false; } return true; };
   if (na){ show(in1,false); show(in2,false); return; }
   if (st.mode==='explore'){
     const jv=st.julia||T.juliaOnly;
