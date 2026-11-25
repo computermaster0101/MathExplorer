@@ -138,7 +138,7 @@ export function explorerShown(name, title, fromLink) {
   if (AUTO) return;
   if (T) return;
   if (inZen()) { clearInterval(waiting); waiting = setInterval(() => { if (!inZen()) { clearInterval(waiting); explorerShown(name, title, false); } }, 1000); return; }   // nothing in full screen: wait until it ends
-  if (store.get(TOUR) !== TOUR_V) {
+  if (!store.get(TOUR)) {   /* the new interface's tour (version 2) counts as seen here too */
     let barDone = false; try { barDone = sessionStorage.getItem('mathexplorer.tourBar') === '1'; } catch (e) { /* fine */ }
     if (fromLink) { if (!barDone) showBar(title); }
     else setTimeout(() => { if (current && current.name === name && !inZen() && !T) startTour('first_visit'); }, 900);

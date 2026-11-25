@@ -35,10 +35,20 @@ import { setKeyHandler, syncKeyPrefs } from './shell/keys.js';
 import { colourFromCode, colourSync } from './common/colours.js';
 import { sleepIn, wakeIn } from './common/gl.js';
 import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
-import { pageView, consentBar, showPrivacy } from './shell/analytics.js';
+import { pageView, consentBar, showPrivacy, track as pageTrack } from './shell/analytics.js';
 import { explorerShown, takeTour, aboutThis } from './shell/tour.js';
 import { openReport } from './shell/report.js';
-import './shell/haptics.js';   // vibration on touch, where the phone can (the setting in Music & sound)
+import './shell/haptics.js';
+// the classic interface's offer to try the new one (the 2026 rerelease): the choice is remembered, ✕ hides it for this visit
+{ const bar = document.getElementById('newUiBar'), ss = k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+  if (ss('mathexplorer.newUiBar') === 'x') bar.hidden = true;
+  document.getElementById('newUiX').addEventListener('click', () => { bar.hidden = true; try { sessionStorage.setItem('mathexplorer.newUiBar', 'x'); } catch (e) { /* fine */ } });
+  document.getElementById('newUiGo').addEventListener('click', () => {
+    let d = '/', q = '?ui=new'; try { localStorage.setItem('mathexplorer.ui', 'new'); d = localStorage.getItem('mathexplorer.newUi') || '/'; q = ''; } catch (e) { /* can't remember it: ask in the address */ }
+    pageTrack('interface', { choice: 'new' });
+    setTimeout(() => location.assign((d === '/' ? '/' : d + 'index.html') + q + location.hash), 150);
+  });
+}   // vibration on touch, where the phone can (the setting in Music & sound)
 
 const EXPLORERS = {
   fractal:   { title: 'Fractals' },
