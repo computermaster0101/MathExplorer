@@ -1,6 +1,7 @@
 // The buttons on the picture, as icons with names on hover (and on a long press on a touch screen), in four groups:
 //   View    hide panel, full screen, reset view                         (folds away)
-//   Player  back (zoom out), slower, reverse (`reverseCtl()`: { label, on, run }, null hides it), play / pause, faster, forward (zoom in), laid out like a music player
+//   Player  back (zoom out), slower, reverse (`reverseCtl()`: { label, on, run }, null hides it), play / pause, play forwards (`forwardCtl()`, the same shape;
+//           with both, play / pause is a plain pause and the three are lit while they're what's happening), faster, forward (zoom in), laid out like a music player
 //   Go      go (dive, fly, ride…), then steer itself and the explorer's own button   (the extras fold away)
 //   More    music (♫ menu), share (⇪ menu), help (?)                    (folds away)
 // Folded groups show one icon; the choice is remembered on this device, and phones start with them folded. The whole row
@@ -64,8 +65,13 @@ export function setFolded(g, f = !isFolded(g), keep = true) { if (keep) { folded
 for (const h of document.querySelectorAll('.tbHandle')) h.addEventListener('click', () => setFolded(h.dataset.group));
 
 // ---------- the player: back (zoom out), slower, play / pause, faster, forward (zoom in) ----------
-$('tbPlay').addEventListener('click', () => { key(' ', { code: 'Space' }); setTimeout(refresh, 60); });
+/* with both reverseCtl() and forwardCtl(), the player is three buttons, backwards / pause / forwards, each lit while it's what's happening;
+   otherwise play / pause is one button that changes its icon. As a plain pause, it never starts anything: it pauses what moves, or goes on after a pause. */
+const transport = () => !!(api.reverseCtl && api.forwardCtl && api.reverseCtl() && api.forwardCtl());
+const isPaused = () => !$('pausedTag').hidden, stopped = () => isPaused() || !!(api.moving && !api.moving());
+$('tbPlay').addEventListener('click', () => { if (!transport() || isPaused() || !stopped()) key(' ', { code: 'Space' }); setTimeout(refresh, 60); });
 $('tbRev').addEventListener('click', () => { const r = api.reverseCtl && api.reverseCtl(); if (r) r.run(); setTimeout(refresh, 60); });
+$('tbFwd').addEventListener('click', () => { const r = api.forwardCtl && api.forwardCtl(); if (r) r.run(); setTimeout(refresh, 60); });
 function speed(dir) {
   const c = api.speedCtl && api.speedCtl(); if (!c) return;
   if (typeof c === 'object' && c.step) { c.step(dir); return; }
@@ -143,7 +149,7 @@ $('shRec').addEventListener('click', () => press($('recBtn')));
 $('shPrint').addEventListener('click', () => press(printBtn()));
 
 // ---------- which buttons get used: one event per press, the button's name and the explorer, nothing else ----------
-const NAMES = { panelBtn: 'panel', zenBtn: 'fullscreen', resetBtn: 'reset', tbPlay: 'play_pause', tbRev: 'reverse', tbGo: 'go', tbSteer: 'steer', tbExtra: 'explorer_button', tbOut: 'zoom_out', tbIn: 'zoom_in',
+const NAMES = { panelBtn: 'panel', zenBtn: 'fullscreen', resetBtn: 'reset', tbPlay: 'play_pause', tbRev: 'reverse', tbFwd: 'forward', tbGo: 'go', tbSteer: 'steer', tbExtra: 'explorer_button', tbOut: 'zoom_out', tbIn: 'zoom_in',
   tbSlower: 'slower', tbFaster: 'faster', musicBtn: 'music_menu', tbMusicSet: 'music_settings', vizStageBtn: 'visualizer', tbShare: 'share_menu', shCopy: 'copy_link', shSheet: 'share_sheet',
   shSnap: 'snapshot', shRec: 'record', shPrint: 'print_3d', helpBtn: 'help_menu', tourAgain: 'tour', aboutThis: 'about', keysBtn: 'keys', reportBtn: 'report', privacyBtn: 'privacy', ghMenu: 'github' };
 $('stageBtns').addEventListener('click', e => { const b = e.target.closest('button, a'); if (!b) return;
@@ -156,11 +162,13 @@ $('stageBtns').addEventListener('click', e => { const b = e.target.closest('butt
 // ---------- keeping the buttons true to what's on screen ----------
 function refresh() {
   /* the play icon while paused, and while nothing is moving (the explorer's moving(), where it has one): Space would then start the main motion */
-  const paused = !$('pausedTag').hidden || !!(api.moving && !api.moving());
-  const play = $('tbPlay'); if (play.dataset.state !== String(paused)) { play.dataset.state = String(paused); play.innerHTML = paused ? ICON.play : ICON.pause; }
-  setTip(play, paused ? 'Play (Space)' : 'Pause (Space)');
-  const rv = api.reverseCtl ? api.reverseCtl() : null, rb = $('tbRev'); rb.hidden = !rv;
-  if (rv) { setTip(rb, rv.label); rb.classList.toggle('on', !!rv.on); rb.setAttribute('aria-pressed', rv.on ? 'true' : 'false'); }
+  const paused = stopped(), tr = transport(), play = $('tbPlay'), icon = tr || !paused ? 'pause' : 'play';
+  if (play.dataset.state !== icon) { play.dataset.state = icon; play.innerHTML = ICON[icon]; }
+  setTip(play, tr ? (isPaused() ? 'Paused: press to go on (Space)' : paused ? 'Stopped' : 'Pause (Space)') : paused ? 'Play (Space)' : 'Pause (Space)');
+  play.classList.toggle('on', tr && paused); if (tr) play.setAttribute('aria-pressed', paused ? 'true' : 'false'); else play.removeAttribute('aria-pressed');
+  for (const [id, f] of [['tbRev', api.reverseCtl], ['tbFwd', tr && api.forwardCtl]]) {
+    const r = f ? f() : null, b = $(id); b.hidden = !r;
+    if (r) { setTip(b, r.label); b.classList.toggle('on', !!r.on); b.setAttribute('aria-pressed', r.on ? 'true' : 'false'); } }
   const sn = speedName(); $('tbSlower').hidden = $('tbFaster').hidden = !sn;
   if (sn) { setTip($('tbSlower'), `Slower: ${sn}`); setTip($('tbFaster'), `Faster: ${sn}`); }
   const z = !api.canZoom || api.canZoom(); for (const e of document.querySelectorAll('.tbZoom')) e.hidden = !z;
@@ -192,7 +200,7 @@ $('stageBtns').addEventListener('click', e => { if (pressed && performance.now()
 
 // icons and names
 for (const [id, ic, name] of [['panelBtn', 'panel', 'Hide panel (H)'], ['zenBtn', 'zen', 'Full screen (F)'], ['resetBtn', 'reset', 'Reset view (R)'], ['musicBtn', 'music', 'Music and the Visualizer'],
-  ['tbShare', 'share', 'Share, save or record this view'], ['tbSteer', 'steer', 'Steer'], ['tbGo', 'go', 'Go'], ['tbRev', 'rev', 'Play backwards'], ['tbSlower', 'slower', 'Slower'], ['tbFaster', 'faster', 'Faster'],
+  ['tbShare', 'share', 'Share, save or record this view'], ['tbSteer', 'steer', 'Steer'], ['tbGo', 'go', 'Go'], ['tbRev', 'rev', 'Play backwards'], ['tbFwd', 'play', 'Play forwards'], ['tbSlower', 'slower', 'Slower'], ['tbFaster', 'faster', 'Faster'],
   ['tbOut', 'zoomOut', 'Zoom out: back (−, or the wheel)'], ['tbIn', 'zoomIn', 'Zoom in: forwards (+, or the wheel)']]) { const b = $(id); b.innerHTML = ICON[ic]; setTip(b, name); }
 setTip($('helpBtn'), 'Help: the tour, keys, Report a problem (?)');
 for (const g of Object.keys(GROUP)) paintGroup(g);

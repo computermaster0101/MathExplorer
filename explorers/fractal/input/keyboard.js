@@ -25,7 +25,7 @@ function spacePause(){
   if (moving()){ st.paused=true; touch(); return; }
   const id={ grow:'growPlay', orbit:'orbPlay', explore:'diveBtn', link:'linkAuto', d3:'dive3Btn' }[st.mode]; if (id) $(id).click(); }
 // starting something by hand ends a pause
-for (const id of ['diveBtn','dive3Btn','growPlay','orbPlay','linkAuto']) $(id).addEventListener('click', ()=>{ st.paused=false; });
+for (const id of ['diveBtn','diveOutBtn','dive3Btn','growPlay','orbPlay','linkAuto']) $(id).addEventListener('click', ()=>{ st.paused=false; });
 export function onKey(e){
   const k=e.key;
   let used=true;
