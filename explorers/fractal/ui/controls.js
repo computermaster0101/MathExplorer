@@ -15,7 +15,7 @@ import { isFolded, onTitleBar, toggleFold } from './insets.js';
 import { d3Bound, drop3, prog3, snapGap, f3Ready, is4, isKifs, knifeVal, nestReset, r4c, setDive3, start3Warp, syncT3 } from '../modes/fractal3d.js';
 import { GROW, GROW_EXT, GROW_HOLD, fern } from '../modes/grow.js';
 import { newOrbit, orbitIdx } from '../modes/orbit.js';
-import { CMODE_NOTE, refreshLegend, updateDynamic, updateLabels } from './learn.js';
+import { CMODE_NOTE, depthNote, refreshLegend, updateDynamic, updateLabels } from './learn.js';
 
 // ---------- UI wiring ----------
 export function setSeg(group, el){ group.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b===el)); }
@@ -225,12 +225,12 @@ function refit3(b0){ const D=st.d3; if (D.target || D.dive) return; const b1=d3B
 $('turn3').addEventListener('input', e=>{ st.d3.turn=+e.target.value; $('turn3o').textContent=st.d3.turn?st.d3.turn.toFixed(1)+'×':'off'; });
 $('cousinChk').addEventListener('change', e=>{ st.cousinInset=e.target.checked; });
 // view
-$('pow').addEventListener('input', e=>{ st.power=+e.target.value; $('powo').textContent=st.power.toFixed(2); for (const v of [st.vE,st.vL,st.vR,st.vO]) if (v && v.scale<minScale(st.type)) v.scale=minScale(st.type); touch(); });
+$('pow').addEventListener('input', e=>{ st.power=+e.target.value; $('powo').textContent=st.power.toFixed(2); depthNote(); for (const v of [st.vE,st.vL,st.vR,st.vO]) if (v && v.scale<minScale(st.type)) v.scale=minScale(st.type); touch(); });
 $('iter').addEventListener('input', e=>{ st.iter=+e.target.value; st.iterAuto=false; $('iterAuto').checked=false; touch(); updateDynamic(); });
 $('iterAuto').addEventListener('change', e=>{ st.iterAuto=e.target.checked; if (!st.iterAuto){ st.iter=effIter(st.vE); $('iter').value=st.iter; } touch(); updateDynamic(); });
 segClick('aa', d=>{ st.aa=+d.a; });
 $('blaChk').addEventListener('change', e=>{ st.bla=e.target.checked; touch(); });
-segClick('prec', d=>{ st.precision=d.pr; const v=st.vE;
+segClick('prec', d=>{ st.precision=d.pr; depthNote(); const v=st.vE;
   if (!isExt()){ const ms=minScale(st.type); if (v.scale<ms) v.scale=ms; if (v.bx!==undefined){ v.cx=fixToNum(v.bx); v.lx=fixToNum(v.bx-dblToFix(v.cx)); v.cy=fixToNum(v.by); v.ly=fixToNum(v.by-dblToFix(v.cy)); } if (st.iter>30000){ st.iter=30000; $('iter').value=st.iter; } }
   st.iterNeed=0; shared.gridJob=null; updateDynamic(); });
 segClick('budMode', d=>{ st.budMode=d.bm; refreshLegend(); });

@@ -68,7 +68,20 @@ export const CMODE_NOTE=['Smooth: how fast each point escapes, blended so there 
 
 function setStats(a,la,b,lb,c,lc){ $('s1').textContent=a; $('s1l').textContent=la; $('s2').textContent=b; $('s2l').textContent=lb; $('s3').textContent=c; $('s3l').textContent=lc; }
 export const curName=()=> st.mode==='grow' ? GROW[st.grow.shape].name : st.mode==='d3' ? S3[st.d3.shape].name : TYPES[st.type].name;
+// How far this fractal can be dived into (issue #74). The detail never runs out in the mathematics; what runs out is
+// digits. The families with a perturbation formula (deepT, marked ∞ in the list) keep going to about ×10²⁸, and those
+// with a full-precision reference too (extT) to about ×10¹⁰⁰ with Extreme precision; the rest stop where ordinary
+// numbers do (minScale in view.js).
+export function depthNote(){ const T=TYPES[st.type], el=$('depthNote'); if (!el) return; const nm=(st.julia&&!T.juliaOnly?T.jname:T.name);
+  let s;
+  if (deepT()) s = extT() ? (isExt() ? `${nm}: dives to about ×10¹⁰⁰ with Extreme precision.` : `${nm}: dives to about ×10²⁸, or about ×10¹⁰⁰ with Extreme precision (View &amp; detail).`)
+                          : `${nm}: dives to about ×10²⁸ (Extreme precision doesn't take this one further).`;
+  else if (st.type===3) s=`With a power that isn't a whole number, the Multibrot stops at about ×10⁵: only whole powers have the deep-zoom shortcut.`;
+  else if (T.cpu) s=`The Buddhabrot is built up from millions of paths, so it only zooms to about ×40.`;
+  else s=`${nm}: stops at about ×10⁵, where ordinary numbers run out of digits. There's no deep-zoom shortcut for this formula.`;
+  el.innerHTML=`<b>∞</b> marks the fractals you can dive into a very long way. ${s} The detail itself never runs out; the endless dive flies back out and starts again when the digits do.`; }
 export function updateLabels(){
+  depthNote();
   $('gv-shapes').textContent=curName(); $('gv-style').textContent=palTitle(st.palette);
   $('g-ctl').querySelector('.gt').textContent={explore:'Explore',grow:'Grow',link:'Julia link',orbit:'Orbit',d3:'3D'}[st.mode]+' controls';
   const T=TYPES[st.type], jv=st.julia||T.juliaOnly; let about='', more='';

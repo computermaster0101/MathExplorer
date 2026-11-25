@@ -1,6 +1,8 @@
 /* Fractal explorer: rules on top of css/app.css */
 .app[data-explorer="fractal"] #gl, .app[data-explorer="fractal"] #ov{position:absolute;inset:0;width:100%;height:100%;display:block}
 .app[data-explorer="fractal"] #gl{touch-action:none;cursor:grab}
+/* issue #74: the fractals with a deep-zoom shortcut (deepT in view.js) are marked with ∞ */
+.app[data-explorer="fractal"] #types button.deep::after{content:" ∞";color:var(--accent);font-weight:600}
 .app[data-explorer="fractal"] #gl:active{cursor:grabbing}
 .app[data-explorer="fractal"] #ov{pointer-events:none}
 /* light backgrounds: darker stage text */
