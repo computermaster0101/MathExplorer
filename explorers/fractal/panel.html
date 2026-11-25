@@ -13,13 +13,14 @@
   <div class="sec" data-show="explore link orbit">
     <div class="lbl">Escape-time sets</div>
     <div class="seg g2" id="types">
-      <button data-t="0" class="on">Mandelbrot</button><button data-t="1">Burning Ship</button>
-      <button data-t="2">Tricorn</button><button data-t="3">Multibrot</button>
-      <button data-t="4">Celtic</button><button data-t="5">Phoenix</button>
+      <button data-t="0" class="on deep">Mandelbrot</button><button data-t="1" class="deep">Burning Ship</button>
+      <button data-t="2" class="deep">Tricorn</button><button data-t="3" class="deep">Multibrot</button>
+      <button data-t="4" class="deep">Celtic</button><button data-t="5" class="deep">Phoenix</button>
       <button data-t="6">Newton</button><button data-t="7">Magnet</button>
       <button data-t="8">Nova</button><button data-t="9">Lyapunov</button>
       <button data-t="10">Buddhabrot</button><button data-t="11">Custom formula…</button>
     </div>
+    <p class="note" id="depthNote"></p>
     <div id="customBox" hidden style="margin-top:12px">
       <div class="lbl">Each step: z →</div>
       <input id="cfInput" spellcheck="false" autocomplete="off" autocapitalize="off" value="z^3 + sin(z) + c" style="width:100%;background:#0e1118;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 9px;font:13px 'JetBrains Mono',monospace">
