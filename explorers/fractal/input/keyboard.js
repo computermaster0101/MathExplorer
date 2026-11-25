@@ -13,7 +13,7 @@ let lastCyc=1;
 // Is anything moving that Space should pause?
 export function moving(){ const D=st.d3;
   if (st.cycleSpeed>0) return true;
-  if (st.mode==='explore') return !!(st.dive||st.endlessRun||st.fly);
+  if (st.mode==='explore') return !!(st.dive||st.endlessRun||st.fly||st.spin2||(st.wander && st.julia && TYPES[st.type].julia));
   if (st.mode==='link') return !!st.link.auto;
   if (st.mode==='orbit') return !!st.orbit.playing;
   if (st.mode==='grow') return !!(st.grow.playing||st.grow.zoom);

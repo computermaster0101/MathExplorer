@@ -3,7 +3,7 @@ import { $, clamp, lerp, smooth } from './util.js';
 import { TYPES } from './fractals/types.js';
 import { isExt, ptrs, qLimits, st } from './state.js';
 import { drive, setPausedTag } from '../../js/shell/keys.js';
-import { hexRGB, minus } from './color/palettes.js';
+import { fmtC, hexRGB, minus } from './color/palettes.js';
 import { ctxLost, gl, glc, octx, refSlots } from './render/webgl.js';
 import { cssH, cssW, deepT, effIter, extT, minScale, moveCentre, ovScale, panBy, runGrid, sizeBuffers, startGrid, touch, viewDescs } from './view.js';
 import { drawBlit, grabFrame, render2DAll } from './render/bla.js';
@@ -15,7 +15,7 @@ import { drawOrbit, newOrbit, orbitIdx } from './modes/orbit.js';
 import { drawCentreMark, drawLink, drawTapMark, pathC } from './modes/julia-link.js';
 import { drawInsets } from './ui/insets.js';
 import { refreshLegend, updateDynamic } from './ui/learn.js';
-import { advanceFly, bsSweep, diveUI, endlessNewSpot, endlessWarp, pwAt, syncR4, syncW, twAmp, topScale } from './ui/controls.js';
+import { wanderStop, advanceFly, bsSweep, diveUI, endlessNewSpot, endlessWarp, pwAt, syncR4, syncW, twAmp, topScale } from './ui/controls.js';
 import { writeHash } from './io/share.js';
 import { BeatGate, Groove, Phase, colourStep, cycleBeats, energyMul, pulseFx as pulse, reacting, voiceFx as voice } from '../../js/shell/audio/react.js';
 import { recFrame } from './io/recorder.js';
@@ -23,7 +23,7 @@ import { LOOP, loopRate, colourPart, TAU } from '../../js/common/seamless.js';
 
 // ---------- loop ----------
 // motion clocks: with the music's tempo locked, periodic motions land their cycles on bar lines and turning surges on each beat
-const clk={ yaw:new Groove(), breathe:new Phase(), box:new Phase(), twist:new Phase(), sweep:new Phase(), spin3:new Groove(), spin4:new Groove(), link:new Phase(), orbit:new Groove(), grow:new Groove(), orbitGate:new BeatGate() };
+const clk={ spin2:new Groove(), wander:new Phase(), yaw:new Groove(), breathe:new Phase(), box:new Phase(), twist:new Phase(), sweep:new Phase(), spin3:new Groove(), spin4:new Groove(), link:new Phase(), orbit:new Groove(), grow:new Groove(), orbitGate:new BeatGate() };
 let tPrev=performance.now(), frameN=0; shared.hqShown = false; let dtAvg=16, lastStill=0;
 // Frame pacing. Uneven frames look worse than slower even ones, so when a moving scene can't keep up with the screen,
 // draw on every other refresh (a steady 30 fps on a 60 Hz screen). Every 8 s try full rate briefly in case it can again.
@@ -127,6 +127,24 @@ function stripReady(now, P){
   return fences.length < (P.slow ? 1 : 2); }
 // What the sharp 2D picture will cost: the moving cost at full scale, times the smoothing's samples (2×2 smoothing: 4).
 function hqCost(){ const aa=effIter(st.vE)>2500 ? 1 : effIter(st.vE)>1200 ? Math.min(2,st.aa) : st.aa; return work.perQ2*aa*aa; }
+// 2D Explore's own motions (issue #75). Turntable: 0.2 rad/s at 1× (about half a minute a turn), surging on each beat
+// like the 3D turntable. Let c wander: on a Julia set, c goes round a small circle through the chosen c (the circle is
+// smaller the deeper the view, so the picture changes about as much at any zoom); one lap every ~25 s, or 4 × "Slow
+// motions take" with the music. The chosen c is kept as the circle's start (shared.wander.base), and is what links save;
+// any other change of c (a preset, the map, a swap) becomes the new start.
+const WANDER_RATE=0.25;
+function advance2D(dt){ let moving=false;
+  if (st.mode!=='explore'){ if (shared.wander) wanderStop(); return false; }
+  if (st.paused || notAvail()) return false;
+  if (st.spin2){ const da=clk.spin2.delta(dt, loopRate(0.2*st.spin2), 0.1*st.spin2); st.vE.rot+=da; st.rotDeg=((st.rotDeg+da*180/Math.PI+180)%360+360)%360-180;
+    if (frameN%6===0){ $('rot').value=Math.round(st.rotDeg); $('roto').textContent=Math.round(st.rotDeg)+'°'; } moving=true; }
+  if (st.wander && st.julia && TYPES[st.type].julia){ let W=shared.wander;
+    if (!W || !W.last || st.jc[0]!==W.last[0] || st.jc[1]!==W.last[1]) W=shared.wander={ base:st.jc.slice(), t:0 };
+    W.t=clk.wander.step(W.t, dt, 2*Math.PI, cycleBeats(4), WANDER_RATE); const r=0.03*Math.min(1, st.vE.scale/2);
+    st.jc=[W.base[0]+r*(Math.cos(W.t)-1), W.base[1]+r*Math.sin(W.t)]; W.last=st.jc.slice(); $('jco').textContent=fmtC(W.base); moving=true; }
+  else if (shared.wander) wanderStop();
+  if (moving) touch();
+  return moving; }
 // the shell starts and stops the loop as this explorer comes on and off screen
 let running=false;
 export function startLoop(){ if (running) return; running=true; tPrev=performance.now(); requestAnimationFrame(loop); }
@@ -150,6 +168,7 @@ export function loopParts(){
     if (D.twAnim) parts.push({ name:'Twist', rate:1, cycle:2*Math.PI/0.25, noun:['time','times'] });
     if (D.sweep) parts.push({ name:'4D slice sweep', rate:1, cycle:2*Math.PI/0.45, noun:['sweep','sweeps'] });
     if (D.spin4) parts.push({ name:'4D spin XW', rate:11, cycle:360 }, { name:'YW', rate:7, cycle:360 }, { name:'ZW', rate:4.5, cycle:360 }); }
+  if (st.mode==='explore' && !notAvail()){ if (st.spin2) parts.push({ name:'Turntable', rate:0.2*st.spin2, cycle:TAU }); if (st.wander && st.julia && TYPES[st.type].julia) parts.push({ name:'c wandering', rate:WANDER_RATE, cycle:TAU, noun:['lap','laps'] }); }
   if (st.mode==='link' && st.link.auto) parts.push({ name:'c going round', rate:0.15, cycle:TAU, noun:['time','times'] });
   if (st.mode==='grow'){ const sh=GROW[st.grow.shape]; if (st.grow.zoom && sh.zoom) parts.push({ name:'Endless zoom', rate:0.35, cycle:1, noun:['step','steps'] }); else if (st.grow.playing) held.push('the growing'); }
   if (st.mode==='orbit' && st.orbit.playing) held.push('the orbit');
@@ -167,6 +186,7 @@ export function loopTick(dt){
   if (go && st.mode==='link' && st.link.auto && !notAvail()){ st.link.t=clk.link.step(st.link.t, dt, 2*Math.PI, cycleBeats(4), 0.15); const c=pathC(st.link.t); st.jc=[c[0], c[1]]; }
   if (go && st.mode==='grow'){ const sh=GROW[st.grow.shape]; if (st.grow.zoom && sh.zoom){ st.grow.zph=(st.grow.zph+dt*loopRate(0.35,1))%1; } }
   if (st.mode==='d3') advance3D(dt);
+  advance2D(dt);
   st.q=1; st.prog=null; sizeBuffers(); shared.dirty=true;
   if (!ctxLost){
     if (notAvail() || st.mode==='grow'){ const b=hexRGB(st.bg); gl.viewport(0,0,glc.width,glc.height); gl.clearColor(b[0],b[1],b[2],1); gl.clear(gl.COLOR_BUFFER_BIT); }
@@ -204,6 +224,7 @@ export function loop(now){
     else if (st.endless && st.insideT>2.2) endlessWarp('inside');
     anim=true; } }
   if (st.mode==='link' && st.link.auto && !notAvail() && !st.paused){ st.link.t=clk.link.step(st.link.t, dt, 2*Math.PI, cycleBeats(4), 0.15); const c=pathC(st.link.t), k=1+0.035*pulse()+0.015*voice(); st.jc=[c[0]*k, c[1]*k]; anim=true; }
+  if (advance2D(dt)) anim=true;
   if (st.mode==='explore' && TYPES[st.type].cpu) budStep();
   if (st.mode==='explore' && deepT() && !(st.dive && st.steer)){ st.probeT-=dt;
     if (st.probeT<=0 && !shared.gridJob){ st.probeT=0.6; if (st.vE.scale<=1e-5 && refSlots[0].d64) startGrid('probe'); else if (st.iterNeed){ st.iterNeed=0; touch(); } }
