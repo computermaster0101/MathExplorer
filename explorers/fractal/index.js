@@ -37,7 +37,7 @@ import { moveCentre, resetViews, sizeBuffers, touch } from './view.js';
 import { auxRender, render2DAll } from './render/bla.js';
 import { drop3, nestIn, nestOut, nestReset, render3D } from './modes/fractal3d.js';
 import { newOrbit } from './modes/orbit.js';
-import { buildPlaces, d3Rows, flyTo, juliaAvail, juliaSwap, resetView, setMode, typeChanged } from './ui/controls.js';
+import { buildPlaces, d3Rows, diveUI, flyTo, juliaAvail, juliaSwap, resetView, setMode, typeChanged } from './ui/controls.js';
 import { TYPES } from './fractals/types.js';
 import { applyState, applyView, decodeState, encodeState, getState, parseView, readView, showView, viewCode, writeHash } from './io/share.js';
 import { pace, startLoop, stopLoop, loopParts, loopTick, loopBegin, loopEnd } from './loop.js';
@@ -67,10 +67,12 @@ export const extraCtl = () => st.mode==='link' ? { label: 'Open this Julia set f
   : !juliaAvail() ? null : st.julia ? { label: 'Back to the ' + TYPES[st.type].name + ' (J)', icon: 'back', run: juliaSwap }
   : { label: 'Swap with the Julia set in the panel (J)', icon: 'julia', run: juliaSwap };
 export const autoCtl = () => (st.mode === 'explore' || st.mode === 'd3') ? { label: 'Steer toward detail', on: st.steer } : null;
-/* the picture's backwards / pause / forwards buttons, in Explore: dive out and dive in, at the same pace (Shift + G, G). Each is lit while the dive goes
-   its way, paused or not; pressing the lit one only goes on after a pause (stopping is the pause button's job, or the panel's buttons) */
+/* the picture's backwards / stop / forwards buttons, in Explore: dive out and dive in, at the same pace (Shift + G, G), and stop the dive. Each is lit
+   while it's what's happening; pressing a lit direction only goes on after a pause (Space) */
 const diving = d => (st.dive || st.endlessRun) && Math.sign(st.diveDir) === d;
 const diveWay = (d, id) => () => { if (!diving(d)) document.getElementById(id).click(); st.paused = false; };
+export const stopCtl = () => st.mode !== 'explore' ? null : { label: diving(1) || diving(-1) ? 'Stop the dive' : 'Stopped', on: !diving(1) && !diving(-1),
+  run: () => { st.dive = false; st.endlessRun = false; st.diveDir = 1; st.fly = null; st.steerTo = null; st.paused = false; diveUI(); touch(); } };
 export const reverseCtl = () => st.mode !== 'explore' ? null : { label: diving(-1) ? (st.paused ? 'Go on diving out' : 'Diving out') + ' (Shift + G)' : 'Play backwards: dive out (Shift + G)', on: diving(-1), run: diveWay(-1, 'diveOutBtn') };
 export const forwardCtl = () => st.mode !== 'explore' ? null : { label: diving(1) ? (st.paused ? 'Go on diving in' : 'Diving in') + ' (G)' : 'Play forwards: dive in (G)', on: diving(1), run: diveWay(1, 'diveBtn') };
 export const speedCtl = () => ({ explore: 'diveSpd', d3: 'dive3Spd', orbit: { id: 'orbSpd', invert: true } })[st.mode] || null;   /* orbit: seconds per step, so bigger is slower */

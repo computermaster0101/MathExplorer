@@ -1,7 +1,7 @@
 // The buttons on the picture, as icons with names on hover (and on a long press on a touch screen), in four groups:
 //   View    hide panel, full screen, reset view                         (folds away)
 //   Player  back (zoom out), slower, reverse (`reverseCtl()`: { label, on, run }, null hides it), play / pause, play forwards (`forwardCtl()`, the same shape;
-//           with both, play / pause is a plain pause and the three are lit while they're what's happening), faster, forward (zoom in), laid out like a music player
+//           with those two and `stopCtl()`, play / pause becomes stop and the three are lit while they're what's happening), faster, forward (zoom in), laid out like a music player
 //   Go      go (dive, fly, ride…), then steer itself and the explorer's own button   (the extras fold away)
 //   More    music (♫ menu), share (⇪ menu), help (?)                    (folds away)
 // Folded groups show one icon; the choice is remembered on this device, and phones start with them folded. The whole row
@@ -20,6 +20,7 @@ export const ICON = {
   view: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 19v2M16 19v2M7 10h4M7 14h7"/>'),
   rev: svg('<path d="M17 4L4 12l13 8z" fill="currentColor"/>'),
   play: svg('<path d="M7 4l13 8-13 8z" fill="currentColor"/>'),
+  stop: svg('<rect x="5" y="5" width="14" height="14" rx="1.5" fill="currentColor"/>'),
   pause: svg('<rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/>'),
   slower: svg('<path d="M11 6l-7 6 7 6z" fill="currentColor"/><path d="M20 6l-7 6 7 6z" fill="currentColor"/>'),
   faster: svg('<path d="M13 6l7 6-7 6z" fill="currentColor"/><path d="M4 6l7 6-7 6z" fill="currentColor"/>'),
@@ -65,13 +66,14 @@ export function setFolded(g, f = !isFolded(g), keep = true) { if (keep) { folded
 for (const h of document.querySelectorAll('.tbHandle')) h.addEventListener('click', () => setFolded(h.dataset.group));
 
 // ---------- the player: back (zoom out), slower, play / pause, faster, forward (zoom in) ----------
-/* with both reverseCtl() and forwardCtl(), the player is three buttons, backwards / pause / forwards, each lit while it's what's happening;
-   otherwise play / pause is one button that changes its icon. As a plain pause, it never starts anything: it pauses what moves, or goes on after a pause. */
-const transport = () => !!(api.reverseCtl && api.forwardCtl && api.reverseCtl() && api.forwardCtl());
-const isPaused = () => !$('pausedTag').hidden, stopped = () => isPaused() || !!(api.moving && !api.moving());
-$('tbPlay').addEventListener('click', () => { if (!transport() || isPaused() || !stopped()) key(' ', { code: 'Space' }); setTimeout(refresh, 60); });
-$('tbRev').addEventListener('click', () => { const r = api.reverseCtl && api.reverseCtl(); if (r) r.run(); setTimeout(refresh, 60); });
-$('tbFwd').addEventListener('click', () => { const r = api.forwardCtl && api.forwardCtl(); if (r) r.run(); setTimeout(refresh, 60); });
+/* with reverseCtl(), stopCtl() and forwardCtl(), the player is three buttons, backwards / stop / forwards, each lit while it's what's happening
+   (stop: while neither way runs); otherwise play / pause is one button that changes its icon. Space still pauses either way. */
+const ctl = n => (api[n] && api[n]()) || null;
+const transport = () => !!(ctl('reverseCtl') && ctl('stopCtl') && ctl('forwardCtl'));
+const stopped = () => !$('pausedTag').hidden || !!(api.moving && !api.moving());
+$('tbPlay').addEventListener('click', () => { const s = transport() && ctl('stopCtl'); if (s) s.run(); else key(' ', { code: 'Space' }); setTimeout(refresh, 60); });
+$('tbRev').addEventListener('click', () => { const r = ctl('reverseCtl'); if (r) r.run(); setTimeout(refresh, 60); });
+$('tbFwd').addEventListener('click', () => { const r = ctl('forwardCtl'); if (r) r.run(); setTimeout(refresh, 60); });
 function speed(dir) {
   const c = api.speedCtl && api.speedCtl(); if (!c) return;
   if (typeof c === 'object' && c.step) { c.step(dir); return; }
@@ -162,10 +164,10 @@ $('stageBtns').addEventListener('click', e => { const b = e.target.closest('butt
 // ---------- keeping the buttons true to what's on screen ----------
 function refresh() {
   /* the play icon while paused, and while nothing is moving (the explorer's moving(), where it has one): Space would then start the main motion */
-  const paused = stopped(), tr = transport(), play = $('tbPlay'), icon = tr || !paused ? 'pause' : 'play';
+  const paused = stopped(), tr = transport(), sc = tr && ctl('stopCtl'), play = $('tbPlay'), icon = tr ? 'stop' : paused ? 'play' : 'pause';
   if (play.dataset.state !== icon) { play.dataset.state = icon; play.innerHTML = ICON[icon]; }
-  setTip(play, tr ? (isPaused() ? 'Paused: press to go on (Space)' : paused ? 'Stopped' : 'Pause (Space)') : paused ? 'Play (Space)' : 'Pause (Space)');
-  play.classList.toggle('on', tr && paused); if (tr) play.setAttribute('aria-pressed', paused ? 'true' : 'false'); else play.removeAttribute('aria-pressed');
+  setTip(play, sc ? sc.label : paused ? 'Play (Space)' : 'Pause (Space)');
+  play.classList.toggle('on', !!(sc && sc.on)); if (sc) play.setAttribute('aria-pressed', sc.on ? 'true' : 'false'); else play.removeAttribute('aria-pressed');
   for (const [id, f] of [['tbRev', api.reverseCtl], ['tbFwd', tr && api.forwardCtl]]) {
     const r = f ? f() : null, b = $(id); b.hidden = !r;
     if (r) { setTip(b, r.label); b.classList.toggle('on', !!r.on); b.setAttribute('aria-pressed', r.on ? 'true' : 'false'); } }
