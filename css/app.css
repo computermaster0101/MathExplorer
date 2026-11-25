@@ -269,6 +269,8 @@ body.galOpen{overflow:hidden}
   #stageBtns.allOpen .tbPlayer{order:1} #stageBtns.allOpen #tbAll{order:2}
   .tbGroup + .tbGroup{margin-left:0;padding-left:2px}
   #stageBtns.allOpen .tbGroup{border-left:0;padding-left:0}
+  #stageBtns #panelBtn{display:none}   /* on a phone the panel is the sheet, folded to its tabs; Full screen hides everything */
+  #stageBtns.allOpen .tbGroup:not(.tbPlayer){gap:0} #stageBtns.allOpen .tbGroup:not(.tbPlayer) .ibtn{min-width:39px;padding:0 1px}
   .tbPlayer + .tbGroup, #tbAll{border-left:1px solid var(--line)} #tbAll{margin-left:2px;border-radius:0 11px 11px 0}
 }
 @media (max-width:400px){ .topBtn span{display:none} .topBtn{width:38px;padding:0;justify-content:center} #stageBtns .ibtn{min-width:40px;padding:0 1px} .tbLbl{font-size:9.5px} }
@@ -340,3 +342,8 @@ details.grp .gb{padding:0 0 12px}
 .app.light:not(.zen) #topBar{background:linear-gradient(rgba(244,240,232,.9),rgba(244,240,232,.45) 70%,transparent)}
 .app.light #topBar .tbBrand b{color:#1a2130} .app.light #topBar .tbBrand small,.app.light #topBar .ghLink{color:#4d5b70}
 .frame-card .app.light:not(.zen) #topBar{background:#101827} .frame-card .app.light #topBar .tbBrand b{color:var(--text)} .frame-card .app.light #topBar .tbBrand small{color:var(--mute)}
+/* the analytics question on a phone: above the sheet's tabs, never over them */
+@media (max-width:820px), (max-height:500px) and (pointer:coarse){ #consentBar{bottom:calc(var(--sheet) + 10px + env(safe-area-inset-bottom, 0px))} }
+#consentBar{border-color:#3a4a64}
+@media (max-width:375px){ #stageBtns.allOpen .tbGroup:not(.tbPlayer) .tbLbl,#stageBtns.allOpen #tbAll .tbLbl{display:none} #stageBtns.allOpen .tbGroup:not(.tbPlayer) .ibtn,#stageBtns.allOpen #tbAll{height:40px;min-width:34px} #stageBtns.allOpen #tbAll{order:-1;border-left:0;margin:0} }   /* narrow phones: the extra row's names on a long press */
+@media (max-width:350px){ #stageBtns.allOpen .tbGroup:not(.tbPlayer) .ibtn,#stageBtns.allOpen #tbAll{min-width:31px} }

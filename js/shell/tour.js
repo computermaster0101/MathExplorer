@@ -6,8 +6,9 @@
 import { inZen, panelHidden, togglePanel } from './layout.js';
 import { track } from './analytics.js';
 import { revealGroup, showSheet, sheetMode } from './sheet.js';
+import { showAllButtons, isFolded, setFolded } from './toolbar.js';
 
-const TOUR = 'mathexplorer.tour', TOUR_V = '1', CARD = 'mathexplorer.card.';
+const TOUR = 'mathexplorer.tour', TOUR_V = '2', CARD = 'mathexplorer.card.';
 const mem = {}, store = {
   get: k => { try { return localStorage.getItem(k); } catch (e) { try { return sessionStorage.getItem(k); } catch (e2) { return mem[k] || null; } } },
   set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { try { sessionStorage.setItem(k, v); } catch (e2) { mem[k] = v; } } } };
@@ -29,42 +30,85 @@ const CARDS = {
   life: ['Patterns that grow by themselves, from simple rules about each cell\'s neighbours.', ['Paint on the picture with the brush to start new life', 'Try <b>Lenia</b>: smooth cells that move like creatures']],
 };
 
-// ---------- the tour: a step for each thing every explorer shares, each pointing at the real thing ----------
-// Steps on a panel group open it while they're shown (and close it again after, if it was closed); a group an explorer
-// hides in its current mode is left out.
-const STEPS = () => [
-  { el: '#switcher', title: 'Welcome to Math Explorer', text: 'Twelve ways to see mathematics, all running live in your browser. Pick an explorer here, or press <b>All 12</b> to see them all as pictures. Play freely: you can\'t break anything.' },
-  { el: '#stage', title: 'The picture', text: touch()
-      ? 'Drag to move or turn it, pinch to zoom. Tap to dive in (tap again to pause or play), press and hold to start afresh.'
-      : 'Drag to move or turn it, scroll to zoom. On the keyboard the arrows and W A S D move you, G dives or flies, Space pauses and R starts afresh.' },
-  { el: '#stageBtns', title: 'Buttons on the picture', text: touch()
-      ? 'Each one is named underneath; press and hold for more. Like a music player: zoom out, slower, play or pause, faster, zoom in, then go (dive, fly, ride…). <b>More</b> opens the rest: the panel, full screen (nothing but the picture, ready for a screenshot), reset, music, and sharing and saving. <b>Help</b> at the top has this tour and more.'
-      : 'Each one is named underneath; point at it for its key. In the middle, like a music player: zoom out, slower, play or pause (Space), faster, zoom in; then go: dive, fly, ride… (G) and, where something can, steer itself (T). On the left, hide the panel (H), full screen (F) and reset (R); on the right, music and the Visualizer, and share, save or record. The small arrows fold groups away. <b>Help</b> at the top has this tour and more.' },
-  { el: '#panel', title: 'The panel', text: () => (sheetMode() ? 'Its tabs along the bottom: <b>Shapes</b> to choose what you see, <b>Colours</b>, <b>Music</b>, and <b>Settings</b> for how it moves and how it\'s drawn. Tap the open tab again to fold it away.' : 'Choose a shape at the top, then open any group to change how it moves, how it looks and its colours.') + ' Every explorer\'s panel is laid out in the same order.' },
-  { el: '#g-sound', open: true, title: 'Music', text: 'Play a song from your device, use the microphone, or listen to another tab. Every explorer moves with the beat; ♫ Visualizer changes the picture with the song as well.' },
-  { el: '#g-share', open: true, title: 'Save and share', text: 'Save a picture of exactly what you see, or record a video with the music. <b>Copy link</b> gives a link that reopens this very view (shape, colours and angle) for anyone you send it to; paste one under <b>Load a view</b> to open it here.' },
-  { el: '#g-print', open: true, title: '3D print', text: 'Download what you\'re looking at as an STL file, ready for a 3D printer, at the size you choose.' },
-  { el: '#g-keys', open: true, title: 'Keys and help', text: (touch() ? 'With a keyboard, every key for this explorer is listed here. ' : 'Every key for this explorer is listed here; Keyboard shortcuts in the <b>Help</b> menu opens it any time. ')
-      + '<b>Navigation speed</b> sets how fast you move. To see this tour again, read about the explorer you\'re in, or report a problem, press <b>Help</b> at the top.' },
-].filter(s => { if (!s.open) return true; const el = document.querySelector(s.el); return el && !el.closest('[hidden]'); });   /* (on a phone a group can sit in a folded sheet: still there) */
+// ---------- the tour of the 2026 interface: every part of it, each step pointing at the real thing ----------
+// A step is { el, title, text (or a function), group?, prep?, show? }. A group step opens that panel group while it's shown
+// (on a phone the sheet opens on its tab). prep() gets the part ready (opens the More row on a phone, unfolds a folded group
+// of buttons, opens the sheet on a tab) and returns what undoes it, run before the next step and at the end. Steps whose part
+// isn't in this explorer or mode (hidden) are left out, so the count is this explorer's own.
+const visible = sel => { const el = document.querySelector(sel); return !!el && !el.closest('[hidden]'); };
+const phone = () => sheetMode();
+/** Make a group of the picture's buttons visible for a step: on a phone the More row, on a big screen unfold the group. */
+const showBtns = g => () => {
+  if (phone()) { const was = $('stageBtns').classList.contains('allOpen'); showAllButtons(true); return () => showAllButtons(was); }
+  if (!g || !isFolded(g)) return null; setFolded(g, false, false); return () => setFolded(g, true, false);
+};
+const sheetOn = t => () => { showSheet(true, t); return () => showSheet(false); };
+const speedWord = () => { const b = $('tbSlower'), t = b && b.dataset.tip; return t && t.includes(': ') ? t.split(': ')[1].toLowerCase() : 'the speed'; };
+const TOUR_STEPS = () => [
+  { el: '#topBar', title: 'Welcome to Math Explorer', text: 'Twelve ways to see mathematics, all running live in your browser. This tour shows you round every part of it: the buttons, the panel and the shortcuts. Play freely: you can\'t break anything. Skip any time; <b>Help</b> brings the tour back.' },
+  { el: '#switcher', title: 'Choose an explorer', text: 'This shows the explorer on screen. Open it to pick another: fractals, 4D shapes, surfaces, knots, labyrinths, foams, complex functions, chaos, tilings, waves, drawing machines and growing patterns.' },
+  { el: '#galleryBtn', title: 'All 12, as pictures', text: 'See every explorer as a picture and open whichever catches your eye.' },
+  { el: '#helpBtn', title: 'Help', text: 'This tour, <b>About this explorer</b>, <b>Keyboard shortcuts</b>, <b>Report a problem</b>, privacy, the source code, the picture\'s frame, and the classic interface if you\'d rather have it back.' },
+  { el: '#stage', title: 'The picture', text: () => touch()
+      ? 'Drag to move or turn it, pinch to zoom, twist two fingers to turn a flat picture. Tap to go (dive, fly, ride…), tap again to pause; double-tap for full screen; press and hold to start afresh. In full screen, swipe left or right for colours, up or down for the next shape.'
+      : 'Drag to move or turn it, scroll to zoom. On the keyboard the arrows and W A S D move you (Shift for faster), + and − zoom, G goes (dive, fly, ride…), Space pauses and R starts afresh.' },
+  { el: '#stageBtns', title: 'The picture\'s buttons', text: () => 'Each button is named underneath. ' + (touch() ? 'Press and hold one to see its full name without pressing it.' : 'Point at one to see its full name and its key.') + ' In the middle they work like a music player.' },
+  { el: '#tbOut', show: () => visible('#tbOut'), title: 'Zoom out and in', text: 'The magnifying glass at this end zooms out, the one at the other end zooms in. A press is one step; hold it to keep zooming.' },
+  { el: '#tbSlower', show: () => visible('#tbSlower'), title: 'Slower and faster', text: () => 'These change ' + speedWord() + ': the one on the left slows it, the one on the right speeds it up.' },
+  { el: '#tbPlay', title: () => visible('#tbRev') && visible('#tbFwd') ? 'Stop' : 'Play and pause', text: () => visible('#tbRev') && visible('#tbFwd')
+      ? 'Stops the dive. It\'s lit while nothing is diving. Space still pauses everything that moves, and starts it again.'
+      : 'Pauses everything that\'s moving, and starts it again (Space). With nothing moving it starts the main motion.' },
+  { el: '#tbRev', show: () => visible('#tbRev') && visible('#tbFwd'), title: 'Backwards and forwards', text: '◀ dives out and ▶ dives in, at the same pace (Shift + G and G). The way it\'s going is lit; pressing it again after a pause carries on.' },
+  { el: '#tbGo', show: () => visible('#tbGo'), prep: () => phone() && !$('stageBtns').classList.contains('goInline') ? showBtns('go')() : null, title: 'Go', text: () => 'Starts this explorer\'s own journey (G). Here it says <b>' + ($('tbGo').dataset.lbl || 'Go') + '</b>; in other explorers it flies, rides, walks or glides.' },
+  { el: '#tbAll', show: phone, title: 'More buttons', text: 'The rest of the picture\'s buttons. It opens them as a row above the player; <b>Less</b> folds them away again.' },
+  { el: '.tbGroup[data-group="view"]', prep: showBtns('view'), title: 'The view', text: () => '<b>Panel</b> hides or shows the panel (H). <b>Full screen</b> leaves nothing but the picture (F; ' + (touch() ? 'double-tap' : 'Escape') + ' to come back). <b>Reset</b> puts the view back where it started (R). <b>Frame</b> switches the picture between a frame and the full width.' },
+  { el: '#tbSteer', show: () => visible('#tbSteer'), prep: showBtns('go'), title: 'Steer itself', text: 'Lets the explorer choose where to go, toward the most detail (T). It\'s lit while it\'s on.' },
+  { el: '#tbExtra', show: () => visible('#tbExtra'), prep: showBtns('go'), title: 'This explorer\'s own button', text: () => 'Something only this explorer does. Here: ' + ($('tbExtra').dataset.tip || '').replace(/ \(.\)$/, '') + '.' },
+  { el: '#musicBtn', prep: showBtns('more'), title: 'Music', text: 'Opens the music settings, and the <b>Visualizer</b>: full screen, the picture changing with the song.' },
+  { el: '#tbShare', prep: showBtns('more'), title: 'Share, save and record', text: 'Copy a link that reopens exactly this view, share it, save a picture, record a video (as it plays, or a seamless loop), or download a 3D print.' },
+  { el: '#panel', title: 'The panel', text: () => phone()
+      ? 'Its four tabs along the bottom open it on one part: <b>Shapes</b>, <b>Colours</b>, <b>Music</b> and <b>Settings</b>. Tap the open tab again, or the picture, to fold it away.'
+      : 'Everything you can change, in groups. Every explorer\'s panel is laid out in the same order: open any group to see inside.' },
+  { el: '#panel', show: phone, prep: sheetOn('shapes'), title: 'Shapes', text: 'What you\'re looking at: choose a shape, and change the numbers that make it. Fractals and 4D Polytopes have their modes here too.' },
+  { el: '#panel', show: phone, prep: sheetOn('colours'), title: 'Colours', text: 'Palettes and how the colours are laid on, plus Hue, Saturation and Light, and your own palette. Every explorer shares them.' },
+  { el: '#panel', show: phone, prep: sheetOn('music'), title: 'Music', text: 'Play a song from your phone, use the microphone, and choose what reacts to it: beats, tempo, vocals, colour and energy.' },
+  { el: '#panel', show: phone, prep: sheetOn('settings'), title: 'Settings', text: 'Everything else, in groups: the controls, how it moves by itself, how it\'s drawn, saving and sharing, numbers, Learn, 3D print and keys.' },
+  { el: '#g-shapes', group: true, show: () => !phone(), title: 'Shapes', text: 'What you\'re looking at: choose a shape, and change the numbers that make it.' },
+  { el: '#g-ctl', group: true, show: () => !phone() && visible('#g-ctl'), title: 'Controls', text: 'Things to do and play with: start, step, ride, fly, solve, paint, presets.' },
+  { el: '#g-motion, #g-rot', group: true, show: () => !phone() && visible('#g-motion, #g-rot'), title: 'Motion', text: 'Everything that moves by itself: keep turning, glide, drift, zoom, and slowly changing the shape.' },
+  { el: '#g-view', group: true, show: () => !phone() && visible('#g-view'), title: 'View & detail', text: 'How it\'s drawn: detail, quality, what\'s shown and how.' },
+  { el: '#g-style', group: true, show: () => !phone(), title: 'Colour & style', text: 'Palettes and how the colours are laid on, plus Hue, Saturation and Light, and your own palette.' },
+  { el: '#g-sound', group: true, show: () => !phone(), title: 'Music & sound', text: 'Play a song from your computer, use the microphone, or listen to another tab (YouTube, Spotify…). Choose what reacts: beats, tempo, vocals, colour and energy.' },
+  { el: '#g-share', group: true, show: () => visible('#g-share'), title: 'Save, share & record', text: 'Save a picture of exactly what you see, record a video with the music, or a seamless loop. <b>Copy link</b> reopens this very view for anyone you send it to; paste one under <b>Load a view</b>.' },
+  { el: '#g-info', group: true, show: () => visible('#g-info'), title: 'Numbers', text: 'Live numbers about what\'s on screen.' },
+  { el: '#g-learn', group: true, show: () => visible('#g-learn'), title: 'Learn', text: 'The mathematics in plain English, with buttons that show you each idea.' },
+  { el: '#g-print', group: true, show: () => visible('#g-print'), title: '3D print', text: 'Download what you\'re looking at as an STL file, ready for a 3D printer, at the size you choose.' },
+  { el: '#g-keys', group: true, show: () => visible('#g-keys'), title: 'Keyboard shortcuts', text: () => (touch() ? 'With a keyboard, every key for this explorer is listed here. ' : 'Every key for this explorer is listed here. ') + '<b>Navigation speed</b> sets how fast you move, and <b>Invert up / down</b> flips the arrows.' },
+  { el: '#helpBtn', title: 'That\'s everything', text: 'Each explorer also shows a card the first time you open it, with two things to try. <b>Help</b> brings this tour back, and <b>Report a problem</b> tells us when something\'s wrong. Enjoy exploring!' },
+].filter(s => !s.show || s.show());
+const STEPS = TOUR_STEPS;
 let T = null;   // the open tour: { i, root, spot, tip }
 function startTour(from) {
   if (T) return; hideBar(); hideCard();
   if (panelHidden()) togglePanel(false);
   const root = document.createElement('div'); root.id = 'tour'; root.innerHTML = '<div id="tourSpot"></div><div id="tourTip" role="dialog" aria-live="polite"></div>'; document.body.appendChild(root);
-  T = { i: 0, root, spot: root.querySelector('#tourSpot'), tip: root.querySelector('#tourTip') }; document.body.classList.add('touring');   /* the consent bar stays on top; the tour keeps clear of it (see room()) */
+  T = { i: 0, undo: [], root, spot: root.querySelector('#tourSpot'), tip: root.querySelector('#tourTip') }; document.body.classList.add('touring');   /* the consent bar stays on top; the tour keeps clear of it (see room()) */
   track('tour_start', { from }); window.addEventListener('keydown', tourKey, true); window.addEventListener('resize', place); step(0);
 }
 function step(i) {
-  const S = STEPS(); T.i = i; const s = S[i], el = document.querySelector(s.el);
-  shut(); if (s.open && el && !el.open) { el.open = true; T.opened = el; }   // open this step's group (shut() closes the last one again)
-  if (sheetMode()) { if (s.open && el) revealGroup(el); else showSheet(s.el === '#panel', 'shapes'); }   // phones: the sheet opens on the step's tab, and folds for the picture's steps
-  if (el) { const r = el.getBoundingClientRect(); if (r.top < 0 || r.bottom > room()) el.scrollIntoView({ block: r.height > innerHeight * 0.8 ? 'start' : 'center' }); }   // bring it into view (on a phone the panel is below the picture)
-  T.tip.innerHTML = `<div class="ttStep">${i + 1} of ${S.length}</div><h3>${s.title}</h3><p>${typeof s.text === 'function' ? s.text() : s.text}</p>
+  const S = STEPS(); T.i = Math.max(0, Math.min(i, S.length - 1)); i = T.i; const s = S[i];
+  shut();   // undo the last step's preparations (a group opened, the More row, the sheet)
+  if (s.prep) { const u = s.prep(); if (u) T.undo.push(u); }
+  const el = document.querySelector(s.el);
+  if (s.group && el) { if (!el.open) { el.open = true; T.undo.push(() => { el.open = false; }); } if (phone()) { revealGroup(el); T.undo.push(() => showSheet(false)); } }
+  else if (phone() && !s.prep && s.el !== '#panel') showSheet(false);   // the picture's steps: the sheet folded out of the way
+  if (el && !phone()) { const r = el.getBoundingClientRect(); if (r.top < 0 || r.bottom > room()) el.scrollIntoView({ block: r.height > innerHeight * 0.8 ? 'start' : 'center' }); }
+  const title = typeof s.title === 'function' ? s.title() : s.title, text = typeof s.text === 'function' ? s.text() : s.text;
+  T.tip.innerHTML = `<div class="ttStep">${i + 1} of ${S.length}</div><h3>${title}</h3><p>${text}</p>
     <div class="ttBtns"><button class="sbtn" id="ttSkip">${i === S.length - 1 ? 'Close' : 'Skip'}</button><span></span>${i ? '<button class="sbtn" id="ttBack">Back</button>' : ''}<button class="sbtn on" id="ttNext">${i === S.length - 1 ? 'Done' : 'Next'}</button></div>`;
   T.tip.querySelector('#ttNext').onclick = next; T.tip.querySelector('#ttSkip').onclick = () => endTour(i === S.length - 1 ? 'tour_complete' : 'tour_skip');
   const b = T.tip.querySelector('#ttBack'); if (b) b.onclick = () => step(i - 1);
-  track('tour_step', { step: i + 1 }); setTimeout(place, 60); setTimeout(place, 400); T.tip.querySelector('#ttNext').focus();
+  track('tour_step', { step: i + 1 }); setTimeout(place, 60); setTimeout(place, 320); T.tip.querySelector('#ttNext').focus();
 }
 // the height the tour may use: above the consent bar while it's waiting for an answer
 const room = () => { const b = $('consentBar'), r = b && !b.hidden ? b.getBoundingClientRect() : null; return r && r.height ? Math.max(200, r.top - 6) : innerHeight; };   /* (a fixed bar has no offsetParent) */
@@ -85,9 +129,9 @@ function place() {
 }
 // while the tour is open it has the keyboard (the explorer underneath ignores keys): Esc skips, Enter or → goes on, ← back, Tab moves round its buttons
 function tourKey(e) { if (!T || e.key === 'Tab' || (e.target.closest && e.target.closest('#consentBar,.modalBack'))) return;   /* the consent bar and privacy note keep their own keys */ if (e.key === 'Escape') endTour('tour_skip'); else if (e.key === 'Enter' || e.key === 'ArrowRight') next(); else if (e.key === 'ArrowLeft' && T.i) step(T.i - 1); e.preventDefault(); e.stopPropagation(); }
-const shut = () => { if (T && T.opened) { T.opened.open = false; T.opened = null; } };
+const shut = () => { if (!T) return; while (T.undo.length) { try { T.undo.pop()(); } catch (e) { /* already undone */ } } };
 function endTour(how) {
-  if (!T) return; track(how, { step: T.i + 1 }); store.set(TOUR, TOUR_V); shut(); showSheet(false);
+  if (!T) return; track(how, { step: T.i + 1 }); store.set(TOUR, TOUR_V); shut(); showSheet(false); showAllButtons(false);
   const pn = $('panel'); if (pn) pn.scrollTop = 0; scrollTo(0, 0);   // back to the top, where the shapes are
   window.removeEventListener('keydown', tourKey, true); window.removeEventListener('resize', place); T.root.remove(); T = null; document.body.classList.remove('touring');
   if (current && !store.get(CARD + current.name)) showCard(current.name, current.title);   // then this explorer's own card
@@ -130,6 +174,9 @@ function showBar(title) {
 }
 const hideBar = () => { const b = $('tourBar'); if (b) b.remove(); };
 
+// the analytics question comes first: a first visit's tour waits until the consent bar is answered
+function afterConsent(fn) { const bar = () => { const b = $('consentBar'); return b && !b.hidden; }; if (!bar()) { fn(); return; } const t = setInterval(() => { if (!bar()) { clearInterval(t); setTimeout(fn, 400); } }, 300); }
+
 // ---------- called by main.js each time an explorer comes on screen ----------
 let current = null, waiting = null;
 /** name, its title, and whether the address held a view (a shared link) */
@@ -142,8 +189,8 @@ export function explorerShown(name, title, fromLink) {
   if (inZen()) { clearInterval(waiting); waiting = setInterval(() => { if (!inZen()) { clearInterval(waiting); explorerShown(name, title, false); } }, 1000); return; }   // nothing in full screen: wait until it ends
   if (store.get(TOUR) !== TOUR_V) {
     let barDone = false; try { barDone = sessionStorage.getItem('mathexplorer.tourBar') === '1'; } catch (e) { /* fine */ }
-    if (fromLink) { if (!barDone) showBar(title); }
-    else setTimeout(() => { if (current && current.name === name && !inZen() && !T) startTour('first_visit'); }, 900);
+    if (fromLink && store.get(TOUR) !== '1') { if (!barDone) showBar(title); }   /* someone who saw the classic interface's tour gets this one in full, even on a link (they've just switched) */
+    else setTimeout(() => afterConsent(() => { if (current && current.name === name && !inZen() && !T) startTour('first_visit'); }), 900);
     return;
   }
   if (!store.get(CARD + name)) setTimeout(() => { if (current && current.name === name && !T && !inZen()) showCard(name, title); }, 700);
