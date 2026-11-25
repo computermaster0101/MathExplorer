@@ -21,7 +21,7 @@ function b32dec(str){ const out=[]; let bits=0, val=0; for (const ch of str){ co
 function fixToDec(b, digits){ const neg=b<0n; let a=neg?-b:b; const ip=a>>FIXN, fr=a-(ip<<FIXN); let f=((fr*(10n**BigInt(digits)))>>FIXN).toString().padStart(digits,'0').replace(/0+$/,''); return (neg?'-':'')+ip.toString()+(f?'.'+f:''); }
 const r6=x=>+(+x).toPrecision(12);
 export function getState(){ const v=st.vE, dg=clamp(Math.ceil(-Math.log10(v.scale))+8,17,125), D=st.d3, sh=st.grow, S={
-  m:st.mode, t:st.type, j:st.julia?1:0, c:[r6(st.jc[0]),r6(st.jc[1])], pw:r6(st.power), pr:isExt()?1:0,
+  m:st.mode, t:st.type, j:st.julia?1:0, c:(shared.wander&&shared.wander.base||st.jc).map(r6), e2:[r6(st.spin2), st.wander?1:0], pw:r6(st.power), pr:isExt()?1:0,
   v:[fixToDec(v.bx??dblToFix(v.cx),dg), fixToDec(v.by??dblToFix(v.cy),dg), +v.scale.toPrecision(8), r6(st.rotDeg)],
   p:st.palette, rv:st.palRev?1:0, cm:st.cmode, dn:r6(st.density), cy:r6(st.cycleSpeed), in:st.inside, bg:st.bg.slice(1), it:st.iterAuto?0:st.iter, aa:st.aa,
   ly:st.lyaSeq, bm:st.budMode, bl:st.bla?1:0, ed:st.endless?1:0, sd:st.steer?1:0,
@@ -44,6 +44,7 @@ export function applyState(S){ if (!S) return;
     if (S.t!=null && TYPES[S.t]) clickIn('types','t',S.t);
     if (S.ly) st.lyaSeq=S.ly; if (S.bm) clickIn('budMode','bm',S.bm);
     if (S.pw!=null) setRange('pow',S.pw);
+    { const e2=S.e2||[0,0]; setRange('spin2',+e2[0]||0); setCheck('wanderChk',e2[1]?1:0); }   /* before c: switching wander off puts back the old c */
     if (S.c) st.jc=S.c.slice(); if (S.j!=null && TYPES[st.type].julia && !!S.j!==st.julia){ $('juliaChk').checked=!!S.j; $('juliaChk').dispatchEvent(new Event('change')); }
     if (S.c) st.jc=S.c.slice();
     clickIn('prec','pr',S.pr?'extreme':'standard');
@@ -75,6 +76,7 @@ export function viewCode(){ const S=getState(), P=new URLSearchParams(), on2D=['
     if (S.j) P.set('j','1'); if (S.j || S.m==='link' || TYPES[S.t].noBounded) P.set('c',_j(S.c));
     if (S.t===3) P.set('pw',n6(S.pw)); if (S.pr) P.set('pr','extreme'); if (S.t===9) P.set('ly',S.ly); if (S.t===10) P.set('bm',S.bm);
     if (S.t===11 && S.f){ P.set('f',S.f[0]); if (S.f[1]!=='0') P.set('z0',S.f[1]); P.set('bail',String(S.f[2])); if (S.f[3]) P.set('fv',_j(S.f[3])); }
+    if (S.m==='explore'){ if (S.e2[0]) P.set('spin',n6(S.e2[0])); if (S.e2[1] && S.j) P.set('wander','1'); }
     if (S.cm) P.set('cm',String(S.cm)); if (S.in) P.set('in','1'); if (S.it) P.set('it',String(S.it)); if (S.aa!==2) P.set('aa',String(S.aa));
     if (!S.bl) P.set('bla','0'); if (!S.ed) P.set('endless','0'); if (!S.sd) P.set('steer','0');
     if (S.m==='link'){ P.set('auto',b01(S.l[0])); P.set('path',S.l[1]); }
@@ -102,7 +104,7 @@ export function parseView(code){
     S.j=g('j')==='1'?1:0; if (has('c')){ const c=nums('c'); if (c.length===2 && c.every(isFinite)) S.c=c; }
     S.pw=num('pw',3); S.pr=g('pr')==='extreme'?1:0; S.cm=num('cm',0); S.in=num('in',0); S.it=num('it',0); S.aa=num('aa',2);
     S.ly=/^[AB]{1,16}$/.test(g('ly')||'')?g('ly'):'AB'; S.bm=['buddha','nebula','anti'].includes(g('bm'))?g('bm'):'buddha';
-    S.bl=g('bla')==='0'?0:1; S.sd=g('steer')==='0'?0:1;
+    S.bl=g('bla')==='0'?0:1; S.sd=g('steer')==='0'?0:1; S.e2=[m==='explore'?Math.max(-2,Math.min(2,num('spin',0))):0, m==='explore'&&g('wander')==='1'?1:0];
     if (t===11 && has('f')){ const fv=has('fv')?nums('fv'):null; S.f=[g('f'), g('z0')||'0', num('bail',100), fv&&fv.length===3&&fv.every(isFinite)?fv:null]; }
     if (m==='link') S.l=[g('auto')==='0'?0:1, g('path')==='edge'?'edge':'circle'];
     if (m==='orbit' && has('o')){ const o=nums('o'); if (o.length===2 && o.every(isFinite)) S.o=[o[0],o[1],g('oauto')==='0'?0:1]; } }

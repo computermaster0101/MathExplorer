@@ -114,6 +114,11 @@ export function juliaSwap(){ if (!juliaAvail()) return; if (st.julia){ juliaBack
 // Julia link → the Julia set for the c chosen, on its own in Explore (where it can dive and drive), full screen
 $('linkOpen').addEventListener('click', ()=>{ st.link.auto=false; $('linkAuto').checked=false; setMode('explore');
   if (!st.julia) setCheck('juliaChk', 1); else { resetViews(); touch(); updateLabels(); } if (!inZen()) toggleZen(); });
+// 2D motions (issue #75): Turntable spins the picture about the middle; Let c wander moves the Julia constant round a
+// small circle that starts and ends at the chosen c, so the Julia set keeps changing shape (see advance2D in loop.js)
+$('spin2').addEventListener('input', e=>{ st.spin2=+e.target.value; $('spin2o').textContent=st.spin2?(st.spin2<0?'−':'')+Math.abs(st.spin2).toFixed(1)+'×':'off'; if (st.spin2) st.paused=false; });
+export function wanderStop(){ const W=shared.wander; shared.wander=null; if (W && W.base){ st.jc=W.base.slice(); $('jco').textContent=fmtC(st.jc); touch(); } }
+$('wanderChk').addEventListener('change', e=>{ st.wander=e.target.checked; if (st.wander) st.paused=false; else wanderStop(); });
 $('juliaChk').addEventListener('change', e=>{ st.julia=e.target.checked; if (st.julia && TYPES[st.type].noBounded) st.jc=toMath(st.type,[st.vE.cx,st.vE.cy]); $('jcBox').hidden=!st.julia; $('jco').textContent=fmtC(st.jc); resetViews(); touch(); updateLabels(); });
 // "Steer toward detail" is one setting for 2D and 3D dives, with a box in each mode's controls (and T)
 export function setSteer(on){ st.steer=!!on; st.steerTo=null; $('steerChk').checked=st.steer; $('steer3Chk').checked=st.steer; }
@@ -138,7 +143,7 @@ function resetSettings(){ const m=st.mode;
     setRange('w3',0); setCheck('sweep3',0); Object.assign(D,{axw:0,ayw:0,azw:0,spin4:false}); $('spin4').checked=false; syncR4(); r4c.key='';
     setRange('lvl3',5); setRange('turn3',0); clickIn('drag3','dm','move'); D.aim=null; D.needAim=false; D.floating=false; shared.vel3={x:0,y:0}; }
   else if (m==='grow'){ st.grow.angle={pyth:45, tree:28}; const sh=GROW[st.grow.shape]; if (sh.angle){ $('ang').value=st.grow.angle[sh.angle]; $('ango').textContent=st.grow.angle[sh.angle]+'°'; } }
-  else setRange('rot',0);
+  else { setRange('rot',0); if (m==='explore'){ setRange('spin2',0); setCheck('wanderChk',0); } }
   touch(); }
 /* while an endless dive is going, reset flies back out and keeps diving; a paused one (a tap paused it) is stopped instead (issue #54) */
 export function resetView(){ const wasPaused=st.paused; st.paused=false; resetSettings();
