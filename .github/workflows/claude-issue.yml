@@ -1,6 +1,6 @@
 # Fix new issues as they arrive: when an issue is opened (by the owner or a collaborator, which includes the site's
 # Report a problem form, since the Lambda opens those with the owner's token), Claude reads it, works out the cause,
-# fixes it on its own branch, opens a pull request and leaves a report on the issue. Nothing reaches main without the
+# fixes it on its own branch and reports on the issue; a last step opens the pull request. Nothing reaches main without the
 # owner merging: main requires a pull request (branch protection), and main deploys the live site.
 #
 # Reports from the site are written by anonymous visitors, so the issue text is treated as data, never as instructions,
@@ -36,6 +36,7 @@ jobs:
           fetch-depth: 1
 
       - name: Run Claude Code
+        id: claude
         uses: anthropics/claude-code-action@acfe7992852970efb4fee683d63d628e3e52df67 # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -51,17 +52,44 @@ jobs:
 
             1. Read CLAUDE.md and the code involved, and find the cause. If the report is unclear, not a real problem,
                a duplicate, or needs a decision from the owner, don't change code: say so in the report (step 4).
-            2. Otherwise fix it on a new branch named `fix/issue-${{ github.event.issue.number }}-<short-name>`, in the
-               repository's own style (no build step, no npm dependencies, three.js stays vendored). Check JavaScript
-               you touched with `node --check`. Keep CLAUDE.md and the explore/ pages true if behaviour changes.
-            3. Commit, push the branch and open a pull request whose body says `Fixes #${{ github.event.issue.number }}`,
-               what was wrong, what changed, and exactly how to check it in the browser (explorer, mode, steps).
-            4. Post the report as a comment on the issue: what you found, the cause, what you changed (with the PR
-               link) or why you didn't, how confident you are, and what you couldn't verify (you have no browser here,
-               so say what needs checking by eye).
+            2. Otherwise fix it in the repository's own style (no build step, no npm dependencies, three.js stays
+               vendored). Check JavaScript you touched with `node --check`. Keep CLAUDE.md and the explore/ pages true
+               if behaviour changes. You are already on a branch made for this issue: commit there, with a commit
+               message whose body says what was wrong and what changed. A pull request is opened from that branch for
+               you after you finish, so don't open one.
+            3. Your progress comment on the issue is the report: what you found, the cause, what you changed or why you
+               didn't, how confident you are, exactly how to check it in the browser (explorer, mode, steps), and what
+               you couldn't verify (you have no browser here, so say what needs checking by eye).
 
             Never push to, merge into or rebase main, and never merge a pull request: the owner reviews and merges,
             because main deploys the live site.
           claude_args: |
-            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue list:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git checkout -b:*),Bash(git switch -c:*),Bash(git add:*),Bash(git commit:*),Bash(git push -u origin fix/:*),Bash(git push origin fix/:*),Bash(node --check:*),Bash(ls:*),Bash(grep:*)"
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue list:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git checkout -b:*),Bash(git switch -c:*),Bash(git add:*),Bash(git commit:*),Bash(git push -u origin fix/:*),Bash(git push origin fix/:*),Bash(node --check:*),Bash(ls:*),Bash(grep:*)"
             --disallowedTools "WebFetch,WebSearch,Bash(gh pr merge:*),Bash(git push origin main:*),Bash(git push -u origin main:*),Bash(curl:*),Bash(wget:*)"
+
+      # The action leaves its branch and a "Create PR" link, so open the pull request here. The Claude app's token is
+      # used when it is still valid, so the PR runs claude-code-review.yml (a PR opened with GITHUB_TOKEN starts no
+      # workflows); otherwise the job's own token. The issue title goes in through env, never into the script text.
+      - name: Open the pull request
+        if: always() && steps.claude.outputs.branch_name != ''
+        env:
+          APP_TOKEN: ${{ steps.claude.outputs.github_token }}
+          JOB_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.claude.outputs.branch_name }}
+          N: ${{ github.event.issue.number }}
+          TITLE: ${{ github.event.issue.title }}
+          REPO: ${{ github.repository }}
+        run: |
+          export GH_TOKEN="$APP_TOKEN"
+          gh api "repos/$REPO" --jq .id >/dev/null 2>&1 || export GH_TOKEN="$JOB_TOKEN"
+          ahead=$(gh api "repos/$REPO/compare/main...$BRANCH" --jq .ahead_by 2>/dev/null || echo 0)
+          if [ "${ahead:-0}" -eq 0 ]; then echo "No changes on $BRANCH, so no pull request."; exit 0; fi
+          if [ -n "$(gh pr list --repo "$REPO" --head "$BRANCH" --state all --json number --jq '.[].number')" ]; then echo "A pull request already exists."; exit 0; fi
+          {
+            echo "Fixes #$N."; echo
+            echo "Claude's report, with how to check it in the browser, is on the issue."; echo
+            echo "### Commits"; echo
+            gh api "repos/$REPO/compare/main...$BRANCH" --jq '.commits[].commit.message' | sed 's/^/> /'
+            echo; echo "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+          } > "$RUNNER_TEMP/body.md"
+          gh pr create --repo "$REPO" --base main --head "$BRANCH" --title "Fix #$N: $TITLE" --body-file "$RUNNER_TEMP/body.md"
