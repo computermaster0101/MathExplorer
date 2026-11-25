@@ -1,3 +1,4 @@
+# Math Explorer: every page may be crawled
 User-agent: *
 Allow: /
 
