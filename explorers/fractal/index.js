@@ -67,6 +67,8 @@ export const extraCtl = () => st.mode==='link' ? { label: 'Open this Julia set f
   : !juliaAvail() ? null : st.julia ? { label: 'Back to the ' + TYPES[st.type].name + ' (J)', icon: 'back', run: juliaSwap }
   : { label: 'Swap with the Julia set in the panel (J)', icon: 'julia', run: juliaSwap };
 export const autoCtl = () => (st.mode === 'explore' || st.mode === 'd3') ? { label: 'Steer toward detail', on: st.steer } : null;
+/* the picture's play-backwards button: dive out, the same pace as diving in (Shift + G) */
+export const reverseCtl = () => { if (st.mode !== 'explore') return null; const out = (st.dive || st.endlessRun) && st.diveDir < 0; return { label: out ? 'Stop diving out (Shift + G)' : 'Play backwards: dive out (Shift + G)', on: out, run: () => document.getElementById('diveOutBtn').click() }; };
 export const speedCtl = () => ({ explore: 'diveSpd', d3: 'dive3Spd', orbit: { id: 'orbSpd', invert: true } })[st.mode] || null;   /* orbit: seconds per step, so bigger is slower */
 export const going = () => st.mode === 'explore' ? !!(st.dive || st.endlessRun || st.fly) : st.mode === 'd3' ? !!(st.d3.dive || st.d3.warp || st.d3.aim) : false;
 /** Shown under the Music & sound switches while this explorer is on screen. */

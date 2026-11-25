@@ -1,6 +1,6 @@
 // The buttons on the picture, as icons with names on hover (and on a long press on a touch screen), in four groups:
 //   View    hide panel, full screen, reset view                         (folds away)
-//   Player  back (zoom out), slower, play / pause, faster, forward (zoom in), laid out like a music player
+//   Player  back (zoom out), slower, reverse (`reverseCtl()`: { label, on, run }, null hides it), play / pause, faster, forward (zoom in), laid out like a music player
 //   Go      go (dive, fly, ride…), then steer itself and the explorer's own button   (the extras fold away)
 //   More    music (♫ menu), share (⇪ menu), help (?)                    (folds away)
 // Folded groups show one icon; the choice is remembered on this device, and phones start with them folded. The whole row
@@ -17,6 +17,7 @@ export const ICON = {
   zen: svg('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>'),
   reset: svg('<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>'),
   view: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 19v2M16 19v2M7 10h4M7 14h7"/>'),
+  rev: svg('<path d="M17 4L4 12l13 8z" fill="currentColor"/>'),
   play: svg('<path d="M7 4l13 8-13 8z" fill="currentColor"/>'),
   pause: svg('<rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/>'),
   slower: svg('<path d="M11 6l-7 6 7 6z" fill="currentColor"/><path d="M20 6l-7 6 7 6z" fill="currentColor"/>'),
@@ -64,6 +65,7 @@ for (const h of document.querySelectorAll('.tbHandle')) h.addEventListener('clic
 
 // ---------- the player: back (zoom out), slower, play / pause, faster, forward (zoom in) ----------
 $('tbPlay').addEventListener('click', () => { key(' ', { code: 'Space' }); setTimeout(refresh, 60); });
+$('tbRev').addEventListener('click', () => { const r = api.reverseCtl && api.reverseCtl(); if (r) r.run(); setTimeout(refresh, 60); });
 function speed(dir) {
   const c = api.speedCtl && api.speedCtl(); if (!c) return;
   if (typeof c === 'object' && c.step) { c.step(dir); return; }
@@ -141,7 +143,7 @@ $('shRec').addEventListener('click', () => press($('recBtn')));
 $('shPrint').addEventListener('click', () => press(printBtn()));
 
 // ---------- which buttons get used: one event per press, the button's name and the explorer, nothing else ----------
-const NAMES = { panelBtn: 'panel', zenBtn: 'fullscreen', resetBtn: 'reset', tbPlay: 'play_pause', tbGo: 'go', tbSteer: 'steer', tbExtra: 'explorer_button', tbOut: 'zoom_out', tbIn: 'zoom_in',
+const NAMES = { panelBtn: 'panel', zenBtn: 'fullscreen', resetBtn: 'reset', tbPlay: 'play_pause', tbRev: 'reverse', tbGo: 'go', tbSteer: 'steer', tbExtra: 'explorer_button', tbOut: 'zoom_out', tbIn: 'zoom_in',
   tbSlower: 'slower', tbFaster: 'faster', musicBtn: 'music_menu', tbMusicSet: 'music_settings', vizStageBtn: 'visualizer', tbShare: 'share_menu', shCopy: 'copy_link', shSheet: 'share_sheet',
   shSnap: 'snapshot', shRec: 'record', shPrint: 'print_3d', helpBtn: 'help_menu', tourAgain: 'tour', aboutThis: 'about', keysBtn: 'keys', reportBtn: 'report', privacyBtn: 'privacy', ghMenu: 'github' };
 $('stageBtns').addEventListener('click', e => { const b = e.target.closest('button, a'); if (!b) return;
@@ -157,6 +159,8 @@ function refresh() {
   const paused = !$('pausedTag').hidden || !!(api.moving && !api.moving());
   const play = $('tbPlay'); if (play.dataset.state !== String(paused)) { play.dataset.state = String(paused); play.innerHTML = paused ? ICON.play : ICON.pause; }
   setTip(play, paused ? 'Play (Space)' : 'Pause (Space)');
+  const rv = api.reverseCtl ? api.reverseCtl() : null, rb = $('tbRev'); rb.hidden = !rv;
+  if (rv) { setTip(rb, rv.label); rb.classList.toggle('on', !!rv.on); rb.setAttribute('aria-pressed', rv.on ? 'true' : 'false'); }
   const sn = speedName(); $('tbSlower').hidden = $('tbFaster').hidden = !sn;
   if (sn) { setTip($('tbSlower'), `Slower: ${sn}`); setTip($('tbFaster'), `Faster: ${sn}`); }
   const z = !api.canZoom || api.canZoom(); for (const e of document.querySelectorAll('.tbZoom')) e.hidden = !z;
@@ -188,7 +192,7 @@ $('stageBtns').addEventListener('click', e => { if (pressed && performance.now()
 
 // icons and names
 for (const [id, ic, name] of [['panelBtn', 'panel', 'Hide panel (H)'], ['zenBtn', 'zen', 'Full screen (F)'], ['resetBtn', 'reset', 'Reset view (R)'], ['musicBtn', 'music', 'Music and the Visualizer'],
-  ['tbShare', 'share', 'Share, save or record this view'], ['tbSteer', 'steer', 'Steer'], ['tbGo', 'go', 'Go'], ['tbSlower', 'slower', 'Slower'], ['tbFaster', 'faster', 'Faster'],
+  ['tbShare', 'share', 'Share, save or record this view'], ['tbSteer', 'steer', 'Steer'], ['tbGo', 'go', 'Go'], ['tbRev', 'rev', 'Play backwards'], ['tbSlower', 'slower', 'Slower'], ['tbFaster', 'faster', 'Faster'],
   ['tbOut', 'zoomOut', 'Zoom out: back (−, or the wheel)'], ['tbIn', 'zoomIn', 'Zoom in: forwards (+, or the wheel)']]) { const b = $(id); b.innerHTML = ICON[ic]; setTip(b, name); }
 setTip($('helpBtn'), 'Help: the tour, keys, Report a problem (?)');
 for (const g of Object.keys(GROUP)) paintGroup(g);

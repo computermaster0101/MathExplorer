@@ -20,6 +20,7 @@
 //   autoCtl()           optional: the target button, what steers itself here: { label, on } (T toggles it); null hides it
 //   canZoom()           optional: false hides the zoom buttons (they send the wheel to the middle of the picture)
 //   speedCtl()          optional: what its slower / faster buttons move: a range input's id, { id, invert }, or { label, step(dir) }; null hides them
+//   reverseCtl()        optional: the play-backwards button next to play: { label, on, run } (Fractals: dive out); null hides it
 //
 // Only one explorer is attached to the page at a time: the others' DOM is kept, detached, so their
 // element ids never clash and their own document queries only ever see their own controls.
