@@ -34,6 +34,10 @@
     </div>
     <div id="powRow" hidden class="row" style="margin-top:8px"><span style="width:74px">Power d</span><input type="range" id="pow" min="2" max="16" step="0.05" value="3"><output id="powo">3.00</output></div>
   </div>
+  <div class="sec" data-show="explore">
+    <div class="lbl">Famous places</div>
+    <div class="seg g2" id="places"></div>
+  </div>
   <div class="sec" data-show="grow">
     <div class="lbl">Built by a rule</div>
     <div class="seg g2" id="growShapes">
@@ -71,9 +75,7 @@
 
 <details class="grp" id="g-ctl"><summary><span class="gt">Controls</span><span class="gv" id="gv-ctl"></span></summary><div class="gb">
   <div class="sec" data-show="explore">
-    <div class="lbl">Famous places</div>
-    <div class="seg g2" id="places"></div>
-    <div id="budRow" hidden style="margin-top:12px">
+    <div id="budRow" hidden>
       <div class="lbl">Style</div>
       <div class="seg" id="budMode"><button data-bm="buddha" class="on">Buddhabrot</button><button data-bm="nebula">Nebulabrot</button><button data-bm="anti">Anti</button></div>
       <p class="note" id="budNote">It keeps sharpening the longer you watch. Moving or zooming starts the count again.</p>
