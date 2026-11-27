@@ -39,6 +39,14 @@ export function setViewCode(explorer, code) {
   if (location.hash !== h) try { history.replaceState(null, '', h); } catch (e) { /* sandboxed frames may refuse */ }
 }
 
+/** Undo after a reset (js/shell/undo.js): this address holds the view again; its explorer part (less the shell's colour keys)
+ *  becomes the last code, so refreshView doesn't write the reset view back. */
+export function restoreHash(h) {
+  const r = parseRoute(h); if (r.explorer !== active) return;
+  lastCode[active] = r.code.replace(/(^|&)(hue|sat|lit|mine)=[^&]*/g, '').replace(/^&/, '');
+  try { history.replaceState(null, '', h); } catch (e) { /* sandboxed frames may refuse */ }
+}
+
 /** A full link that opens this explorer at this view. */
 export const shareLink = (explorer, code) => location.href.split('#')[0] + hashFor(explorer, code);
 /** The shell's part changed: rewrite the address and the explorer's link box with the explorer's last code. */

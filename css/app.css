@@ -146,7 +146,7 @@ details.sub p{margin:0 0 10px;line-height:1.55}
 .app.zen aside, .app.zen .hud, .app.zen .legend, .app.zen .hint, .app.zen #stageCap, .app.zen #insets, .app.zen #stageBtns{display:none !important}
 .app.zen #zenExit{display:block} .app.zen #zenExit.fade{opacity:0;pointer-events:none}
 /* full screen on a touch screen: nothing but the picture, for clean screenshots (tap pauses, double tap leaves) */
-.app.zen.touch #zenExit, .app.zen.touch #pausedTag, .app.zen.touch #compass, .app.zen.touch #na{display:none !important}
+.app.zen.touch #pausedTag, .app.zen.touch #compass, .app.zen.touch #na{display:none !important}
 #zenTip{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:7;padding:9px 14px;border-radius:999px;background:rgba(11,16,25,.74);color:#e8ecf4;font-size:13px;pointer-events:none;opacity:0;transition:opacity .4s;white-space:nowrap}
 #zenTip.on{opacity:1}
 /* ---------- first visits: the tour, the explorer cards, the shared-link bar; analytics consent and the privacy note ---------- */
@@ -347,3 +347,12 @@ details.grp .gb{padding:0 0 12px}
 #consentBar{border-color:#3a4a64}
 @media (max-width:375px){ #stageBtns.allOpen .tbGroup:not(.tbPlayer) .tbLbl,#stageBtns.allOpen #tbAll .tbLbl{display:none} #stageBtns.allOpen .tbGroup:not(.tbPlayer) .ibtn,#stageBtns.allOpen #tbAll{height:40px;min-width:34px} #stageBtns.allOpen #tbAll{order:-1;border-left:0;margin:0} }   /* narrow phones: the extra row's names on a long press */
 @media (max-width:350px){ #stageBtns.allOpen .tbGroup:not(.tbPlayer) .ibtn,#stageBtns.allOpen #tbAll{min-width:31px} }
+/* Undo after a reset (js/shell/undo.js): a bar at the top of the picture, where the tour bar sits */
+#undoBar{position:absolute;left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 24px);top:calc(var(--top) + 6px);z-index:9;display:flex;gap:8px;align-items:center;background:var(--glass2);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 16px;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+#undoBar[hidden]{display:none} #undoBar .sbtn{min-height:36px}
+.frame-card .app:not(.zen) #undoBar{top:26px} .app.zen #undoBar{top:auto;bottom:calc(84px + env(safe-area-inset-bottom))}   /* clear of the Exit button and the tip */
+#zenTip{white-space:normal;width:max-content;max-width:calc(100% - 32px);text-align:center;border-radius:18px}
+/* full screen on a touch screen: the Exit button stays (design pack U05), big enough for a finger, fading until touched */
+.app.zen.touch #zenExit{min-height:44px;padding:0 16px;font-size:15px;top:calc(12px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right))}
+/* Calm motion (js/shell/calm.js): none of the interface's own animations */
+html.calm *, html.calm *::before, html.calm *::after{transition:none !important;animation:none !important;scroll-behavior:auto !important}

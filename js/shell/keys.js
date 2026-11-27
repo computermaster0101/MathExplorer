@@ -4,6 +4,7 @@
 import { togglePanel, toggleZen, exitZen, toggleHelp } from './layout.js';
 import { toggle as toggleMusic } from './audio/engine.js';
 import { modalOpen } from './a11y.js';
+import { resetWithUndo } from './undo.js';
 
 let handler = () => false;
 /** The active explorer's key handler: gets the keydown event, returns true when it used the key. */
@@ -108,7 +109,7 @@ document.addEventListener('keydown', e => {
   if (tag === 'input' && t.type === 'range' && e.key !== ' ') return;
   if ((k === ' ' || k === 'g') && e.repeat) { e.preventDefault(); return; }   // holding Space (or G) mustn't flip it on and off
   const shared = SHARED[k];
-  const used = shared ? (shared(), true) : handler(e);
+  const used = shared ? (shared(), true) : k === 'r' && !e.shiftKey ? resetWithUndo(() => handler(e)) : handler(e);   // R (the Reset button, a long press) offers Undo
   if (used) e.preventDefault();
   if (k === ' ') spaceUsed = used;
 });

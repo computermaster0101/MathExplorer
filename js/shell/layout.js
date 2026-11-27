@@ -2,6 +2,7 @@
 import { revealGroup } from './sheet.js';
 import { track } from './analytics.js';
 import { menuKeys, focusFirst } from './a11y.js';
+import { calm, setCalm } from './calm.js';
 const app = document.getElementById('app');
 const $ = id => document.getElementById(id);
 
@@ -24,7 +25,7 @@ function zenWake() {
   if (!inZen()) return;
   $('zenExit').classList.remove('fade'); app.classList.add('awake');
   clearTimeout(zenTimer);
-  zenTimer = setTimeout(() => { $('zenExit').classList.add('fade'); app.classList.remove('awake'); }, 2500);
+  zenTimer = setTimeout(() => { $('zenExit').classList.add('fade'); app.classList.remove('awake'); }, app.classList.contains('touch') ? 3500 : 2500);   /* a finger gets a little longer to reach it */
 }
 
 export function enterZen() {
@@ -71,10 +72,11 @@ export function showKeys() {
 // A tap goes (as G does: dive, fly, ride, walk); during that, taps pause and resume it (as Space does), and where there is
 // nothing to go on, a tap is Space. A double tap turns full screen on or off. Where tapping is the
 // explorer's own way to play (a canvas marked data-own-taps: Growing Patterns' brush, Waves' splashes, a maze's step forward,
-// drawing your own epicycles), its taps stay its own outside full screen; in full screen a tap is always the shell's. Pressing and holding still for a moment resets the view (as R does), anywhere. In full screen a
+// drawing your own epicycles), its taps stay its own outside full screen; in full screen a tap is always the shell's. Pressing and holding still for a moment resets the view (as R does, with Undo), except on such a canvas outside full screen. In full screen a
 // quick swipe changes things: left / right the next / previous palette (V / C), up / down the next / previous shape (X / Z). Only quick, still, one-finger taps on the picture itself count: drags, pinches, buttons and
-// the mouse are untouched. While a touch screen is in use, full screen shows nothing but the picture (no exit button, no
-// Paused tag), so screenshots come out clean; a tip says how to get out, for a moment, on the way in.
+// the mouse are untouched. While a touch screen is in use, full screen shows nothing but the picture and an Exit button
+// (design pack U05) that fades after a few seconds and comes back with any touch, so screenshots still come out clean; no
+// Paused tag; a tip says what the gestures do, for a moment, on the way in.
 let going = () => false;
 /** The active explorer's "is it diving / flying / riding / walking now?" (main.js sets it), so a tap knows whether to go or to pause. */
 export const setGoing = fn => { going = fn || (() => false); };
@@ -95,7 +97,8 @@ stage.addEventListener('pointerdown', e => {
   app.classList.add('touch'); T.touch = performance.now();
   T.n++; if (T.n > 1) T.multi = true;
   if (T.n === 1) { T.multi = false; T.down = onPicture(e) ? { x: e.clientX, y: e.clientY, t: performance.now() } : null; T.start = T.down && { ...T.down }; }
-  clearTimeout(T.hold); if (T.down && !T.multi) T.hold = setTimeout(() => { if (!T.down || T.multi) return; T.down = null; clearTimeout(T.timer); T.last = 0;   // press and hold: reset
+  const ownTaps = !inZen() && e.target.closest && e.target.closest('[data-own-taps]');   /* painting, splashing, drawing: holding still is part of it, never a reset */
+  clearTimeout(T.hold); if (T.down && !T.multi && !ownTaps) T.hold = setTimeout(() => { if (!T.down || T.multi) return; T.down = null; clearTimeout(T.timer); T.last = 0;   // press and hold: reset
     try { navigator.vibrate && navigator.vibrate(15); } catch (er) { /* no buzz here */ } document.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', code: 'KeyR', bubbles: true })); }, 600);
 }, true);
 stage.addEventListener('pointermove', e => { if (e.pointerType === 'touch' && T.down && Math.hypot(e.clientX - T.down.x, e.clientY - T.down.y) > 10) { clearTimeout(T.hold); T.down = null; } }, true);   // moving: a drag, not a press
@@ -119,7 +122,7 @@ const lift = e => {
 };
 stage.addEventListener('pointerup', lift, true); stage.addEventListener('pointercancel', lift, true);
 // the tip, shown for a moment on going full screen by touch
-const tip = document.createElement('div'); tip.id = 'zenTip'; tip.textContent = 'Tap: go / pause · double-tap: leave full screen · hold: start afresh · swipe ↔ colours, ↕ shape'; stage.appendChild(tip);
+const tip = document.createElement('div'); tip.id = 'zenTip'; tip.textContent = 'Tap: go / pause · Exit or double-tap: leave full screen · hold: start afresh · swipe ↔ colours, ↕ shape'; stage.appendChild(tip);
 let tipT = null;
 const showTip = () => { if (!app.classList.contains('touch')) return; tip.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => tip.classList.remove('on'), 2200); };
 // the picture in a frame (the default) or the full width: html.frame-card, remembered (see the script at the top of index.html)
@@ -136,6 +139,10 @@ export function paintFrame() {
 }
 $('frameBtn').addEventListener('click', () => toggleFrame());
 $('frameItem').addEventListener('click', () => toggleFrame());
+// Calm motion (js/shell/calm.js): the item says what pressing it does
+const paintCalm = () => { $('calmItem').textContent = calm() ? 'Calm motion is on: turn it off' : 'Calm motion: pictures open still, no flashing'; };
+$('calmItem').addEventListener('click', () => { setCalm(); paintCalm(); track('calm', { choice: calm() ? 'on' : 'off' }); });
+helpBtn.addEventListener('click', paintCalm, true); paintCalm();
 // back to the classic interface (a frozen copy at /classic/, while it lasts); its "Try the new interface" comes back here
 $('classicBtn').addEventListener('click', () => {
   try { localStorage.setItem('mathexplorer.ui', 'classic'); } catch (e) { /* it asks again next time */ }
