@@ -3,6 +3,7 @@
 // asks for nothing personal: what happened, and optionally the link to the view on screen. It also sends the explorer,
 // the browser and screen size, and the last few error messages from this page, which is what usually finds the bug.
 import { track } from './analytics.js';
+import { openModal, closeModal } from './a11y.js';
 
 const ENDPOINT = 'https://tyk356jjsyekfyuiobmqp7pq5u0flqzt.lambda-url.us-east-1.on.aws/';
 const $ = id => document.getElementById(id);
@@ -35,7 +36,7 @@ export function openReport() {
   let d = $('reportForm'); if (!d) d = build();
   $('rpShot').checked = false; $('rpShotRow').hidden = !shot; $('rpShotImg').hidden = true; if (shot) $('rpShotImg').src = shot;
   $('rpWhat').value = ''; $('rpStatus').textContent = ''; $('rpSend').disabled = false; $('rpSend').hidden = false; $('rpCancel').textContent = 'Cancel';
-  d.hidden = false; $('rpWhat').focus();
+  openModal(d, $('rpWhat'));
 }
 function build() {
   const d = document.createElement('div'); d.id = 'reportForm'; d.className = 'modalBack';
@@ -50,10 +51,9 @@ function build() {
     <p class="note" id="rpStatus" role="status"></p>
     <div class="btns"><button type="button" class="btn" id="rpCancel">Cancel</button><button type="submit" class="btn primary" id="rpSend">Send</button></div></form>`;
   document.body.appendChild(d);
-  const close = () => { d.hidden = true; };
+  const close = () => closeModal(d);
   $('rpShot').addEventListener('change', () => { $('rpShotImg').hidden = !$('rpShot').checked; });
   d.addEventListener('click', e => { if (e.target === d || e.target.id === 'rpCancel') close(); });
-  d.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
   d.querySelector('form').addEventListener('submit', async e => {
     e.preventDefault(); const what = $('rpWhat').value.trim(), st = $('rpStatus');
     if (what.length < 5) { st.textContent = 'Please say what happened.'; $('rpWhat').focus(); return; }

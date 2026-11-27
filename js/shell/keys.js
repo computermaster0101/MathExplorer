@@ -3,6 +3,7 @@
 // drive() every frame, so movement is smooth for as long as a key is down instead of stepping at the keyboard's repeat rate.
 import { togglePanel, toggleZen, exitZen, toggleHelp } from './layout.js';
 import { toggle as toggleMusic } from './audio/engine.js';
+import { modalOpen } from './a11y.js';
 
 let handler = () => false;
 /** The active explorer's key handler: gets the keydown event, returns true when it used the key. */
@@ -26,6 +27,7 @@ let lastDrive = -1e9;
 const release = () => held.clear();
 window.addEventListener('blur', release);
 document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
+window.addEventListener('hashchange', release);   // a new explorer or view starts with nothing held
 
 /**
  * Shared keyboard settings, remembered in this browser. invertY: ↑ ↓ work like an aeroplane (up tips the view down).
@@ -82,16 +84,25 @@ const typing = t => {
   const tag = (t.tagName || '').toLowerCase();
   return tag === 'textarea' || tag === 'select' || t.isContentEditable || (tag === 'input' && !['checkbox', 'range', 'radio', 'button'].includes(t.type));
 };
+// a control the keyboard is on keeps its own keys (design pack U02): Space and Enter press a focused button, tick a box,
+// open a group; arrow keys move within radio buttons, menus, tab rows and lists. Keys the toolbar and the touch gestures
+// send are dispatched on the document itself (no element), so they always reach the explorer. Mouse and touch clicks let
+// go of focus (below), so for them Space still pauses.
+const ACTIVATES = 'button, a[href], summary, input[type=checkbox], input[type=radio], [role=button], [role=tab], [role=menuitem], [role=option], [role=switch], [role=checkbox], [role=radio]';
+const ARROWS_OWN = 'input[type=radio], [role=menu], [role=tablist], [role=listbox], [role=radiogroup], #xList, #gallery';
+const on = (t, sel) => !!(t.closest && t.closest(sel));
 let spaceUsed = false;
 document.addEventListener('keydown', e => {
   if (e.key === 'Shift') { held.add('Shift'); return; }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   const t = e.target, tag = (t.tagName || '').toLowerCase();
   if (typing(t)) return;   // leave keys alone while the user types
+  if (modalOpen()) return;   // a dialog (Report a problem, Privacy) has the keyboard
   const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if ((k === ' ' || k === 'Enter') && on(t, ACTIVATES)) return;
   if (DRIVE.has(k)) {
-    // a focused slider keeps its arrow keys (tab to it to use them); everywhere else they drive
-    if (tag === 'input' && t.type === 'range' && k.startsWith('Arrow')) return;
+    // a focused slider keeps its arrow keys (tab to it to use them), as do radio buttons, menus and tab rows; elsewhere they drive
+    if (k.startsWith('Arrow') && ((tag === 'input' && t.type === 'range') || on(t, ARROWS_OWN))) return;
     held.add(k); e.preventDefault(); return;
   }
   if (tag === 'input' && t.type === 'range' && e.key !== ' ') return;
@@ -111,6 +122,6 @@ document.addEventListener('keyup', e => {
 // after a mouse or touch click, buttons, checkboxes and sliders let go of keyboard focus, so Space and the driving keys
 // reach the explorer instead of pressing the last thing clicked (keyboard users who tab to a control keep its focus)
 document.addEventListener('pointerup', e => {
-  if (!e.target.closest || !e.target.closest('button, label, input[type=checkbox], input[type=radio], input[type=range]')) return;
-  setTimeout(() => { const a = document.activeElement; if (a && a !== document.body && a.matches('button, input[type=checkbox], input[type=radio], input[type=range]')) a.blur(); }, 0);
+  if (!e.target.closest || !e.target.closest('button, label, summary, input[type=checkbox], input[type=radio], input[type=range]')) return;
+  setTimeout(() => { const a = document.activeElement; if (a && a !== document.body && a.matches('button, summary, input[type=checkbox], input[type=radio], input[type=range]')) a.blur(); }, 0);
 });

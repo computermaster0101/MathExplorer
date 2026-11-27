@@ -12,6 +12,7 @@
 import { track } from './analytics.js';
 import { revealGroup } from './sheet.js';
 import { paintFrame } from './layout.js';
+import { menuKeys, focusFirst } from './a11y.js';
 const $ = id => document.getElementById(id);
 const app = $('app');
 const svg = d => `<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -137,10 +138,10 @@ function menu(btnId, menuId, wrapSel) {
     m.hidden = !open; btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     if (open) { m.style.left = '0px'; const r = m.getBoundingClientRect(); if (r.right > innerWidth - 8) m.style.left = Math.round(innerWidth - 8 - r.right) + 'px'; }
   };
-  btn.addEventListener('click', () => toggle());
+  btn.addEventListener('click', e => { toggle(); if (!m.hidden && e.detail === 0) focusFirst(m); });   /* opened from the keyboard: focus the first item */
   m.addEventListener('click', e => { if (e.target.closest('[role=menuitem]')) toggle(false); });
   document.addEventListener('pointerdown', e => { if (!m.hidden && !e.target.closest(wrapSel)) toggle(false); });
-  m.addEventListener('keydown', e => { if (e.key === 'Escape') { toggle(false); btn.focus(); e.stopPropagation(); e.preventDefault(); } }, true);
+  menuKeys(m, btn, () => toggle(false));   /* ↑ ↓ Home End, Escape back to the button, Tab closes (a11y.js) */
   return toggle;
 }
 export const toggleMusic = menu('musicBtn', 'musicMenu', '.musicWrap');
