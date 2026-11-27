@@ -38,6 +38,8 @@ import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
 import { pageView, consentBar, showPrivacy } from './shell/analytics.js';
 import { explorerShown, takeTour, aboutThis } from './shell/tour.js';
 import { openReport } from './shell/report.js';
+import './shell/gallery.js';
+import './shell/sheet.js';   // phones: the panel as a bottom sheet with four tabs   // every explorer as a picture (the top bar's All 12)
 import './shell/haptics.js';   // vibration on touch, where the phone can (the setting in Music & sound)
 
 const EXPLORERS = {

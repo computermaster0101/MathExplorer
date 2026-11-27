@@ -2,6 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>/* Which interface (the 2026 rerelease). New visitors get this one; visitors who came before it keep the classic interface
+   (a frozen copy at /classic/) until they press "Try the new interface" there, and can go back from Help here. The choice is
+   localStorage mathexplorer.ui ('new' or 'classic'); a returning visitor is one whose browser already holds Math Explorer's
+   settings. mathexplorer.newUi remembers where this interface lives, for the classic copy's link back. ?ui=new skips the move. */
+(function () {
+  var s = null; try { s = window.localStorage; s.length; } catch (e) { s = null; } if (!s) return;
+  var ui = s.getItem('mathexplorer.ui');
+  if (!ui) { var back = false; for (var i = 0; i < s.length; i++) { var k = s.key(i); if (k && k.indexOf('mathexplorer.') === 0 && k !== 'mathexplorer.newUi') { back = true; break; } }
+    ui = back ? 'classic' : 'new'; try { s.setItem('mathexplorer.ui', ui); } catch (e) { /* not remembered */ } }
+  try { s.setItem('mathexplorer.newUi', location.pathname.slice(0, location.pathname.lastIndexOf('/') + 1)); } catch (e) { /* default: / */ }
+  if (ui === 'classic' && !/[?&]ui=new/.test(location.search)) location.replace('/classic/index.html' + location.search + location.hash);
+})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Math Explorer: fractals, 4D shapes, knots and more, live in your browser</title>
 <meta name="description" content="Explore mathematics live in your browser: fractals with deep zoom, 4D shapes, knots, surfaces, tilings, strange attractors, waves and more. Free, works on phones, reacts to music.">
@@ -33,42 +45,58 @@
 <link rel="stylesheet" href="explorers/tiling/style.css">
 <link rel="stylesheet" href="explorers/wave/style.css">
 <link rel="stylesheet" href="explorers/life/style.css">
+<script>/* The picture: in a frame (the default) or the full width, from the Frame button (localStorage mathexplorer.frame), or ?frame=card / ?frame=full in the address. */
+(function () { var f = (location.search.match(/[?&]frame=(card|full)/) || [])[1]; if (!f) try { f = localStorage.getItem('mathexplorer.frame'); } catch (e) { /* default */ }
+  if (f !== 'full') document.documentElement.classList.add('frame-card'); })();</script>
 <script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js" } }</script>
 </head>
 <body>
 <noscript><div style="max-width:720px;margin:40px auto;padding:0 16px;color:#e8ebf2;font:16px/1.6 sans-serif"><h1>Math Explorer</h1><p>Explore mathematics live in your browser: fractals with deep zoom, 4D shapes, knots, surfaces, tilings, strange attractors, waves and more. Free, works on phones, reacts to music. It needs JavaScript and WebGL to run. Read about each explorer:</p><ul><li><a href="explore/fractals.html">Fractals</a></li><li><a href="explore/4d-polytopes.html">4D Polytopes</a></li><li><a href="explore/surfaces.html">Surfaces</a></li><li><a href="explore/knots.html">Knots &amp; Links</a></li><li><a href="explore/labyrinths.html">Labyrinths</a></li><li><a href="explore/foams.html">Foams</a></li><li><a href="explore/complex-functions.html">Complex Functions</a></li><li><a href="explore/strange-attractors.html">Strange Attractors</a></li><li><a href="explore/tilings.html">Tilings</a></li><li><a href="explore/waves.html">Waves &amp; Cymatics</a></li><li><a href="explore/drawing-machines.html">Drawing Machines</a></li><li><a href="explore/growing-patterns.html">Growing Patterns</a></li></ul></div></noscript>
 <div class="app" id="app">
+  <header id="topBar">
+    <div class="tbBrand"><b>Math Explorer</b><small>Mathematics you can explore</small><a id="ghLink" class="ghLink" href="https://github.com/computermaster0101/MathExplorer" target="_blank" rel="noopener" title="Math Explorer is open source: see the code on GitHub" aria-label="Source code on GitHub"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></div>
+    <div class="topR">
+      <div class="xmenu" id="switcher">
+        <button class="xbtn" id="xBtn" aria-haspopup="true" aria-expanded="false"><span id="xName">Fractals</span><span class="xcaret">▾</span></button>
+        <nav class="xlist" id="xList" hidden>
+          <a href="#/fractal" data-explorer="fractal"><b>Fractals</b><small>Mandelbrot, Julia sets, 3D fractals</small></a>
+          <a href="#/polytope" data-explorer="polytope"><b>4D Polytopes</b><small>shapes from the fourth dimension</small></a>
+          <a href="#/surface" data-explorer="surface"><b>Surfaces</b><small>one-sided surfaces, soap films, curvature</small></a>
+          <a href="#/knot" data-explorer="knot"><b>Knots &amp; Links</b><small>knots, links, and a ride along them</small></a>
+          <a href="#/labyrinth" data-explorer="labyrinth"><b>Labyrinths</b><small>endless labyrinths, foams, mazes to solve</small></a>
+          <a href="#/foam" data-explorer="foam"><b>Foams</b><small>bubbles that fill space: Kelvin, Weaire–Phelan and more</small></a>
+          <a href="#/complex" data-explorer="complex"><b>Complex Functions</b><small>colour the plane by where each point goes</small></a>
+          <a href="#/attractor" data-explorer="attractor"><b>Strange Attractors</b><small>chaos traced through time</small></a>
+          <a href="#/tiling" data-explorer="tiling"><b>Tilings</b><small>hyperbolic, kaleidoscope, never repeating</small></a>
+          <a href="#/wave" data-explorer="wave"><b>Waves &amp; Cymatics</b><small>ripples, Chladni plates, music you can see</small></a>
+          <a href="#/draw" data-explorer="draw"><b>Drawing Machines</b><small>epicycles, spirograph, harmonograph and more</small></a>
+          <a href="#/life" data-explorer="life"><b>Growing Patterns</b><small>Life, Lenia, reaction–diffusion</small></a>
+        </nav>
+      </div>
+      <button class="sbtn topBtn" id="galleryBtn" aria-haspopup="dialog" aria-controls="gallery"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>All 12</span></button>
+      <span class="helpWrap"><button class="sbtn topBtn helpBtn" id="helpBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="helpMenu" title="Help: the tour, keys, Report a problem (?)" aria-label="Help"><b aria-hidden="true">?</b><span>Help</span></button><div id="helpMenu" role="menu" hidden><button type="button" role="menuitem" id="tourAgain">Take the tour</button><button type="button" role="menuitem" id="aboutThis">About this explorer</button><button type="button" role="menuitem" id="keysBtn">Keyboard shortcuts</button><button type="button" role="menuitem" id="reportBtn">Report a problem</button><hr><button type="button" role="menuitem" id="frameItem">Show the picture full width</button><button type="button" role="menuitem" id="classicBtn">Back to the classic interface</button><hr><button type="button" role="menuitem" id="privacyBtn">Privacy</button><a role="menuitem" id="ghMenu" href="https://github.com/computermaster0101/MathExplorer" target="_blank" rel="noopener">Source code on GitHub ↗</a></div></span>
+    </div>
+  </header>
   <div class="stage" id="stage">
     <!-- each explorer's canvases, title and legend are mounted here (explorers/<name>/stage.html) -->
     <div class="loading" id="loading">Loading…</div>
-    <div id="stageBtns" role="toolbar" aria-label="Picture controls"><div class="tbGroup" data-group="view"><button class="sbtn ibtn tbHandle" data-group="view" aria-expanded="true">view</button><span class="tbBody"><button class="sbtn ibtn" id="panelBtn">Hide panel</button><button class="sbtn ibtn" id="zenBtn">Full screen</button><button class="sbtn ibtn" id="resetBtn">Reset view</button></span></div><div class="tbGroup tbPlayer"><button class="sbtn ibtn tbZoom" id="tbOut">Zoom out</button><button class="sbtn ibtn" id="tbSlower" hidden>Slower</button><button class="sbtn ibtn" id="tbRev" hidden>Play backwards</button><button class="sbtn ibtn" id="tbPlay">Pause</button><button class="sbtn ibtn" id="tbFwd" hidden>Play forwards</button><button class="sbtn ibtn" id="tbFaster" hidden>Faster</button><button class="sbtn ibtn tbZoom" id="tbIn">Zoom in</button></div><div class="tbGroup" data-group="go"><button class="sbtn ibtn" id="tbGo" hidden>Go</button><span class="tbBody"><button class="sbtn ibtn" id="tbSteer" hidden aria-pressed="false">Steer</button><button class="sbtn ibtn" id="tbExtra" hidden aria-pressed="false">More</button></span><button class="sbtn ibtn tbHandle" data-group="go" aria-expanded="true">go</button></div><div class="tbGroup" data-group="more"><button class="sbtn ibtn tbHandle" data-group="more" aria-expanded="true">more</button><span class="tbBody"><span class="musicWrap"><button class="sbtn ibtn" id="musicBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="musicMenu">Music</button><div id="musicMenu" class="popMenu" role="menu" hidden><button type="button" role="menuitem" id="tbMusicSet">Music settings</button><button type="button" role="menuitem" id="vizStageBtn" hidden>Start the Visualizer</button></div></span><span class="shareWrap"><button class="sbtn ibtn" id="tbShare" aria-haspopup="menu" aria-expanded="false" aria-controls="shareMenu">Share</button><div id="shareMenu" role="menu" hidden><button type="button" role="menuitem" id="shCopy">Copy link to this view</button><button type="button" role="menuitem" id="shSheet" hidden>Share…</button><hr><button type="button" role="menuitem" id="shSnap">Save picture (PNG)</button><button type="button" role="menuitem" id="shRec">● Record video</button><button type="button" role="menuitem" id="shPrint" hidden>Download 3D print (STL)</button></div></span><span class="helpWrap"><button class="sbtn helpBtn" id="helpBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="helpMenu" title="Help: the tour, keys, Report a problem (?)" aria-label="Help">?</button><div id="helpMenu" role="menu" hidden><button type="button" role="menuitem" id="tourAgain">Take the tour</button><button type="button" role="menuitem" id="aboutThis">About this explorer</button><button type="button" role="menuitem" id="keysBtn">Keyboard shortcuts</button><button type="button" role="menuitem" id="reportBtn">Report a problem</button><hr><button type="button" role="menuitem" id="privacyBtn">Privacy</button><a role="menuitem" id="ghMenu" href="https://github.com/computermaster0101/MathExplorer" target="_blank" rel="noopener">Source code on GitHub ↗</a></div></span></span></div></div>
+    <div id="stageBtns" role="toolbar" aria-label="Picture controls"><div class="tbGroup" data-group="view"><button class="sbtn ibtn tbHandle" data-group="view" aria-expanded="true">view</button><span class="tbBody"><button class="sbtn ibtn" id="panelBtn">Hide panel</button><button class="sbtn ibtn" id="zenBtn">Full screen</button><button class="sbtn ibtn" id="resetBtn">Reset view</button><button class="sbtn ibtn" id="frameBtn" aria-pressed="true">Frame</button></span></div><div class="tbGroup tbPlayer"><button class="sbtn ibtn tbZoom" id="tbOut">Zoom out</button><button class="sbtn ibtn" id="tbSlower" hidden>Slower</button><button class="sbtn ibtn" id="tbRev" hidden>Play backwards</button><button class="sbtn ibtn" id="tbPlay">Pause</button><button class="sbtn ibtn" id="tbFwd" hidden>Play forwards</button><button class="sbtn ibtn" id="tbFaster" hidden>Faster</button><button class="sbtn ibtn tbZoom" id="tbIn">Zoom in</button></div><div class="tbGroup" data-group="go"><button class="sbtn ibtn" id="tbGo" hidden>Go</button><span class="tbBody"><button class="sbtn ibtn" id="tbSteer" hidden aria-pressed="false">Steer</button><button class="sbtn ibtn" id="tbExtra" hidden aria-pressed="false">More</button></span><button class="sbtn ibtn tbHandle" data-group="go" aria-expanded="true">go</button></div><div class="tbGroup" data-group="more"><button class="sbtn ibtn tbHandle" data-group="more" aria-expanded="true">more</button><span class="tbBody"><span class="musicWrap"><button class="sbtn ibtn" id="musicBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="musicMenu">Music</button><div id="musicMenu" class="popMenu" role="menu" hidden><button type="button" role="menuitem" id="tbMusicSet">Music settings</button><button type="button" role="menuitem" id="vizStageBtn" hidden>Start the Visualizer</button></div></span><span class="shareWrap"><button class="sbtn ibtn" id="tbShare" aria-haspopup="menu" aria-expanded="false" aria-controls="shareMenu">Share</button><div id="shareMenu" role="menu" hidden><button type="button" role="menuitem" id="shCopy">Copy link to this view</button><button type="button" role="menuitem" id="shSheet" hidden>Share…</button><hr><button type="button" role="menuitem" id="shSnap">Save picture (PNG)</button><button type="button" role="menuitem" id="shRec">● Record video</button><button type="button" role="menuitem" id="shPrint" hidden>Download 3D print (STL)</button></div></span></span></div><button class="sbtn ibtn" id="tbAll" aria-expanded="false" aria-controls="stageBtns">More buttons</button></div>
     <button class="sbtn" id="zenExit">Exit full screen ✕</button>
     <div id="pausedTag" hidden>Paused · Space to resume</div>
   </div>
 
   <aside id="panel">
-    <div class="brand"><b>Math Explorer</b><span class="brandR"><small>pick an explorer</small><a id="ghLink" class="ghLink" href="https://github.com/computermaster0101/MathExplorer" target="_blank" rel="noopener" title="Math Explorer is open source: see the code on GitHub" aria-label="Source code on GitHub"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></span></div>
-    <div class="xmenu" id="switcher">
-      <button class="xbtn" id="xBtn" aria-haspopup="true" aria-expanded="false"><span id="xName">Fractals</span><span class="xcaret">▾</span></button>
-      <nav class="xlist" id="xList" hidden>
-        <a href="#/fractal" data-explorer="fractal"><b>Fractals</b><small>Mandelbrot, Julia sets, 3D fractals</small></a>
-        <a href="#/polytope" data-explorer="polytope"><b>4D Polytopes</b><small>shapes from the fourth dimension</small></a>
-        <a href="#/surface" data-explorer="surface"><b>Surfaces</b><small>one-sided surfaces, soap films, curvature</small></a>
-        <a href="#/knot" data-explorer="knot"><b>Knots &amp; Links</b><small>knots, links, and a ride along them</small></a>
-        <a href="#/labyrinth" data-explorer="labyrinth"><b>Labyrinths</b><small>endless labyrinths, foams, mazes to solve</small></a>
-        <a href="#/foam" data-explorer="foam"><b>Foams</b><small>bubbles that fill space: Kelvin, Weaire–Phelan and more</small></a>
-        <a href="#/complex" data-explorer="complex"><b>Complex Functions</b><small>colour the plane by where each point goes</small></a>
-        <a href="#/attractor" data-explorer="attractor"><b>Strange Attractors</b><small>chaos traced through time</small></a>
-        <a href="#/tiling" data-explorer="tiling"><b>Tilings</b><small>hyperbolic, kaleidoscope, never repeating</small></a>
-        <a href="#/wave" data-explorer="wave"><b>Waves &amp; Cymatics</b><small>ripples, Chladni plates, music you can see</small></a>
-        <a href="#/draw" data-explorer="draw"><b>Drawing Machines</b><small>epicycles, spirograph, harmonograph and more</small></a>
-        <a href="#/life" data-explorer="life"><b>Growing Patterns</b><small>Life, Lenia, reaction–diffusion</small></a>
-      </nav>
-    </div>
     <!-- each explorer's controls are mounted here (explorers/<name>/panel.html) -->
   </aside>
 </div>
 
+<!-- every explorer as a picture (js/shell/gallery.js builds the cards from the menu above) -->
+<div id="gallery" role="dialog" aria-modal="true" aria-labelledby="galT" hidden>
+  <div class="galIn">
+    <div class="galHead"><div><div class="eyebrow">Pick your next adventure</div><h2 id="galT">Twelve worlds of mathematics</h2><p>Find a picture that makes you curious. Open it and start exploring.</p></div><button class="btn" id="galClose">← Back to the picture</button></div>
+    <div class="galGrid" id="galGrid"></div>
+  </div>
+</div>
 <!-- Shared panel groups. The shell moves each into the active explorer's panel (after its Colour &amp; style group). -->
 <div id="shellParts" hidden>
   <details class="grp" id="g-sound"><summary><span class="gt">Music &amp; sound</span><span class="gv" id="gv-sound"></span></summary><div class="gb">

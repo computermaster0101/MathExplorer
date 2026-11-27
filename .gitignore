@@ -7,3 +7,6 @@
 *.flac
 *.webm
 *.mp4
+
+# design briefs and mockups dropped in for reference (deploy.sh would publish them)
+math-explorer-usability/

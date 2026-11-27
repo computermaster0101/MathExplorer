@@ -9,5 +9,5 @@
 .app[data-explorer="complex"] .hud h1, .app[data-explorer="complex"] .hud .sub, .app[data-explorer="complex"] .legend, .app[data-explorer="complex"] .hint{background:rgba(8,10,14,.62);backdrop-filter:blur(4px);border-radius:6px;padding:2px 8px;color:#e8eaf0;width:fit-content}
 .app[data-explorer="complex"] .hud .sub{margin-top:3px;color:#c4c8d2}
 .app[data-explorer="complex"] .legend{padding:4px 8px}
-.app[data-explorer="complex"] .hint{bottom:44px}
+.app[data-explorer="complex"] .hint{bottom:44px} .app[data-explorer="complex"]:not(.zen) .hint{bottom:110px} .frame-card .app[data-explorer="complex"]:not(.zen) .hint{bottom:44px}
 .app[data-explorer="complex"] #stageCap[style*="block"] ~ .hint{display:none}

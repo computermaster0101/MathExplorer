@@ -1,4 +1,6 @@
 // Hide panel and full screen ("zen"), shared by every explorer.
+import { revealGroup } from './sheet.js';
+import { track } from './analytics.js';
 const app = document.getElementById('app');
 const $ = id => document.getElementById(id);
 
@@ -64,7 +66,7 @@ export function showKeys() {
   if (panelHidden()) togglePanel(false);
   exitZen();
   const g = $('g-keys'); if (!g) return;
-  g.open = true; g.scrollIntoView({ block: 'nearest' });
+  revealGroup(g);   /* on a phone: the sheet opens on Settings */
 }
 
 // ---------- touch gestures on the picture (phones and tablets) ----------
@@ -122,8 +124,29 @@ stage.addEventListener('pointerup', lift, true); stage.addEventListener('pointer
 const tip = document.createElement('div'); tip.id = 'zenTip'; tip.textContent = 'Tap: go / pause · double-tap: leave full screen · hold: start afresh · swipe ↔ colours, ↕ shape'; stage.appendChild(tip);
 let tipT = null;
 const showTip = () => { if (!app.classList.contains('touch')) return; tip.classList.add('on'); clearTimeout(tipT); tipT = setTimeout(() => tip.classList.remove('on'), 2200); };
+// the picture in a frame (the default) or the full width: html.frame-card, remembered (see the script at the top of index.html)
+export const framed = () => document.documentElement.classList.contains('frame-card');
+export function toggleFrame(on = !framed()) {
+  document.documentElement.classList.toggle('frame-card', on);
+  try { localStorage.setItem('mathexplorer.frame', on ? 'card' : 'full'); } catch (e) { /* this visit only */ }
+  paintFrame(); onChange();
+}
+export function paintFrame() {
+  const b = $('frameBtn'), on = framed(); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.classList.toggle('on', on);
+  b.setAttribute('aria-label', on ? 'Picture in a frame: press for the full width' : 'Picture full width: press for a frame'); b.dataset.tip = b.getAttribute('aria-label');
+  $('frameItem').textContent = on ? 'Show the picture full width' : 'Show the picture in a frame';
+}
+$('frameBtn').addEventListener('click', () => toggleFrame());
+$('frameItem').addEventListener('click', () => toggleFrame());
+// back to the classic interface (a frozen copy at /classic/, while it lasts); its "Try the new interface" comes back here
+$('classicBtn').addEventListener('click', () => {
+  try { localStorage.setItem('mathexplorer.ui', 'classic'); } catch (e) { /* it asks again next time */ }
+  track('interface', { choice: 'classic' });
+  setTimeout(() => location.assign('/classic/index.html' + location.search.replace(/[?&]ui=new/, '') + location.hash), 150);
+});
 $('panelBtn').addEventListener('click', () => togglePanel());
 $('zenBtn').addEventListener('click', enterZen);
 $('zenExit').addEventListener('click', exitZen);
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && zenFS) exitZen(); });
 for (const ev of ['pointermove', 'pointerdown', 'touchstart']) document.addEventListener(ev, zenWake, { passive: true });
+paintFrame();

@@ -1,9 +1,12 @@
 /* Shared look and layout for every explorer: the stage on the left, the control panel on the right.
    Explorer-specific rules live in explorers/<name>/style.css, scoped with .app[data-explorer="<name>"]. */
-:root{ --bg:#0b0d12; --panel:#13161e; --line:#232836; --text:#e8ebf2; --mute:#8a93a8; --accent:#7aa2ff; --warn:#ffb86b; }
+:root{ --bg:#0b1019; --panel:#151e2d; --line:#2d3a50; --text:#ecf1f8; --mute:#aab9cc; --accent:#76d8df; --warn:#ffb86b;
+  /* surfaces: fields (inputs, segmented controls), raised buttons, a selected choice, hover borders, glass over the picture, text on the accent */
+  --field:#101827; --raised:#1c283b; --sel:#26364f; --hover:#4a5d7c; --glass:rgba(16,24,39,.84); --glass2:rgba(16,24,39,.95); --onAccent:#09222b; --soft:#c9d4e3; --dim:#7f8fa6;
+  --r:12px; --top:56px; }
 *{box-sizing:border-box}
 [hidden]{display:none !important}
-html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,sans-serif}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
 
 /* ---------- layout ---------- */
 .app{display:grid;grid-template-columns:1fr 340px;height:100vh}
@@ -18,14 +21,14 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 .brandR{display:flex;align-items:center;gap:8px} .ghLink{color:var(--mute);display:inline-flex;align-self:center;opacity:.8} .ghLink:hover,.ghLink:focus-visible{color:var(--text);opacity:1}
 /* the explorer menu: a button showing the explorer on screen, opening a list of all of them */
 .xmenu{position:relative;margin-bottom:18px}
-.xbtn{width:100%;display:flex;align-items:center;justify-content:space-between;background:#0e1118;border:1px solid var(--line);border-radius:10px;color:var(--text);font:600 14px Inter,sans-serif;padding:10px 12px;cursor:pointer}
-.xbtn:hover{border-color:#36405a} .xbtn .xcaret{color:var(--mute);transition:transform .15s} .xbtn[aria-expanded="true"] .xcaret{transform:rotate(180deg)}
-.xlist{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:20;background:#11141c;border:1px solid var(--line);border-radius:12px;padding:5px;box-shadow:0 12px 30px rgba(0,0,0,.45);max-height:70vh;overflow-y:auto}
+.xbtn{width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--field);border:1px solid var(--line);border-radius:10px;color:var(--text);font:600 14px Inter,sans-serif;padding:10px 12px;cursor:pointer}
+.xbtn:hover{border-color:var(--hover)} .xbtn .xcaret{color:var(--mute);transition:transform .15s} .xbtn[aria-expanded="true"] .xcaret{transform:rotate(180deg)}
+.xlist{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px;box-shadow:0 12px 30px rgba(0,0,0,.45);max-height:70vh;overflow-y:auto}
 .xlist a{display:block;text-decoration:none;color:var(--text);padding:8px 10px;border-radius:8px}
 .xlist a b{display:block;font:500 13px Inter,sans-serif} .xlist a small{display:block;color:var(--mute);font-size:11.5px;margin-top:1px}
-.xlist a:hover, .xlist a:focus-visible{background:#1b2030;outline:none} .xlist a.on{background:#222839} .xlist a.on b::after{content:' ✓';color:var(--accent)}
+.xlist a:hover, .xlist a:focus-visible{background:var(--raised);outline:none} .xlist a.on{background:var(--sel)} .xlist a.on b::after{content:' ✓';color:var(--accent)}
 .switcher a{display:block;text-align:center;text-decoration:none;color:var(--mute);font:500 13px Inter,sans-serif;padding:8px 4px;border-radius:7px}
-.switcher a.on{background:#222839;color:var(--text)}
+.switcher a.on{background:var(--sel);color:var(--text)}
 .switcher a:hover{color:var(--text)}
 .switcher a:focus{outline:none} .switcher a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:13px;pointer-events:none}
@@ -38,21 +41,19 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 .legend .bar{width:120px;height:8px;border-radius:4px}
 .hint{position:absolute;right:14px;bottom:14px;color:var(--mute);font-size:12px;pointer-events:none}
 #insets{position:absolute;right:10px;top:10px;width:min(30%,210px);display:flex;flex-direction:column;gap:8px;pointer-events:none}
-#insets canvas{width:100%;height:auto;aspect-ratio:1/1;border-radius:12px;background:rgba(14,17,24,.72);border:1px solid var(--line);cursor:default} .app[data-explorer="fractal"] #in1, .app[data-explorer="fractal"] #in2{pointer-events:auto;cursor:pointer}   /* the Julia panel swaps with the main view; a tap on either panel folds it (issue #55) */
-#stageCap{position:absolute;left:12px;right:12px;bottom:38px;display:none;font-size:13px;line-height:1.45;color:#d9deea;background:rgba(11,13,18,.82);border:1px solid var(--line);border-radius:10px;padding:8px 11px;pointer-events:none}
+#insets canvas{width:100%;height:auto;aspect-ratio:1/1;border-radius:12px;background:rgba(16,24,39,.72);border:1px solid var(--line);cursor:default} .app[data-explorer="fractal"] #in1, .app[data-explorer="fractal"] #in2{pointer-events:auto;cursor:pointer}   /* the Julia panel swaps with the main view; a tap on either panel folds it (issue #55) */
+#stageCap{position:absolute;left:12px;right:12px;bottom:38px;display:none;font-size:13px;line-height:1.45;color:#d9deea;background:var(--glass);border:1px solid var(--line);border-radius:10px;padding:8px 11px;pointer-events:none}
 #stageCap b{color:#fff;font-weight:600}
 #na{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;pointer-events:none;z-index:4}
 #na .naT{font:600 18px Inter,sans-serif;color:#fff;margin-bottom:8px}
-#na .naB{font-size:13px;line-height:1.5;color:#aab3c5;max-width:380px}
-#stageBtns{position:absolute;left:12px;top:62px;display:flex;gap:6px;z-index:5}
-.sbtn{background:rgba(19,22,30,.82);border:1px solid var(--line);color:var(--text);font:500 12px Inter,sans-serif;padding:6px 10px;border-radius:8px;cursor:pointer}
-.sbtn:hover{border-color:#36405a}
+#na .naB{font-size:13px;line-height:1.5;color:var(--mute);max-width:380px}
+.sbtn{background:var(--glass);border:1px solid var(--line);color:var(--text);font:500 12px Inter,sans-serif;padding:6px 10px;border-radius:8px;cursor:pointer}
+.sbtn:hover{border-color:var(--hover)}
 /* the buttons on the picture: icons with their names on hover (or a long press), in groups */
 #stageBtns{align-items:center} .ibtn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:30px;padding:0;position:relative}
 .ibtn svg{display:block} .ibtn[hidden]{display:none} .tbSep{width:1px;height:18px;background:var(--line);margin:0 2px} .tbSep[hidden]{display:none}
-#stageBtns [data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:500 12px Inter,sans-serif;pointer-events:none;opacity:0;transition:opacity .15s .35s;z-index:31}
+#stageBtns [data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);white-space:nowrap;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:500 12px Inter,sans-serif;pointer-events:none;opacity:0;transition:opacity .15s .35s;z-index:31}
 #stageBtns [data-tip]:hover::after,#stageBtns [data-tip]:focus-visible::after,#stageBtns [data-tip].tipShow::after{opacity:1} #stageBtns [aria-expanded="true"]::after{display:none}
-#stageBtns > :first-child[data-tip]::after{left:0;transform:none}
 .musicWrap{position:relative;display:inline-flex}
 /* the button row's groups (View, Player, Go, More): a fold handle shows one icon when folded, a narrow arrow when open */
 .tbGroup{display:inline-flex;align-items:center;gap:6px} .tbGroup[hidden]{display:none} .tbGroup + .tbGroup{margin-left:4px;padding-left:8px;border-left:1px solid var(--line)}
@@ -60,23 +61,22 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 .tbGroup:not(.folded) .tbHandle{width:18px;border-color:transparent;background:transparent;opacity:.75} .tbGroup:not(.folded) .tbHandle:hover{opacity:1}
 .shareWrap{position:relative;display:inline-flex} #tbShare.rec::before{content:'';position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:#ff4d4f} .ibtn.on{color:var(--accent);border-color:var(--accent)} .app[data-explorer="fractal"] canvas.picking{cursor:crosshair !important}
 /* slow graphics (js/shell/perf.js): the notice, once a device */
-#slowNotice{position:fixed;left:50%;top:104px;transform:translateX(-50%);z-index:66;display:flex;gap:12px;align-items:center;max-width:min(680px,calc(100% - 24px));background:rgba(19,22,30,.97);border:1px solid #c9a227;border-radius:12px;padding:10px 12px;color:var(--text);font-size:13px;line-height:1.45;box-shadow:0 10px 30px rgba(0,0,0,.45)} #slowNotice .sbtn{flex:none}
+#slowNotice{position:fixed;left:50%;top:104px;transform:translateX(-50%);z-index:66;display:flex;gap:12px;align-items:center;max-width:min(680px,calc(100% - 24px));background:var(--glass2);border:1px solid #c9a227;border-radius:12px;padding:10px 12px;color:var(--text);font-size:13px;line-height:1.45;box-shadow:0 10px 30px rgba(0,0,0,.45)} #slowNotice .sbtn{flex:none}
 /* the ? help menu, at the end of the buttons on the picture */
 .helpWrap{position:relative;display:inline-flex} .helpBtn{min-width:30px;font-weight:600}
 #helpMenu,#musicMenu,#shareMenu{position:absolute;top:calc(100% + 6px);left:0;min-width:210px;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.45);z-index:30}
 #helpMenu[hidden],#musicMenu[hidden],#shareMenu[hidden]{display:none} #helpMenu button,#helpMenu a,#musicMenu button,#shareMenu button{background:none;border:0;color:var(--text);font:13px Inter,sans-serif;text-align:left;padding:8px 10px;border-radius:7px;cursor:pointer;text-decoration:none;white-space:nowrap}
 #helpMenu button:hover,#helpMenu a:hover,#helpMenu button:focus-visible,#helpMenu a:focus-visible,#musicMenu button:hover,#musicMenu button:focus-visible,#shareMenu button:hover,#shareMenu button:focus-visible{background:rgba(255,255,255,.07);outline:none} #helpMenu hr,#shareMenu hr{border:0;border-top:1px solid var(--line);margin:4px 2px} #shareMenu button[hidden]{display:none}
-@media (max-width:460px){ #stageBtns{gap:2px;flex-wrap:wrap;max-width:calc(100% - 16px)} .ibtn{width:29px} .tbGroup,.tbBody{gap:2px} .tbGroup + .tbGroup{margin-left:2px;padding-left:4px} #insets{top:104px} }   /* phones: tighter, without the dividers, so the row fits */   /* the narrowest phones wrap the ? onto a second row rather than off the screen */
 #zenExit{position:absolute;top:12px;right:12px;display:none;z-index:6;transition:opacity .5s}
-#pausedTag{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:6;padding:5px 12px;border-radius:999px;background:rgba(10,12,18,.72);border:1px solid rgba(255,255,255,.14);color:#e8ecf4;font-size:12px;letter-spacing:.02em;pointer-events:none}
+#pausedTag{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:6;padding:5px 12px;border-radius:999px;background:rgba(11,16,25,.74);border:1px solid rgba(255,255,255,.14);color:#e8ecf4;font-size:12px;letter-spacing:.02em;pointer-events:none}
 
 /* ---------- panel controls ---------- */
 .sec{margin-bottom:18px}
 .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.9px;color:var(--mute);margin-bottom:8px;display:flex;justify-content:space-between;gap:8px}
 .lbl b{font:500 11px 'JetBrains Mono',monospace;color:var(--text);letter-spacing:0;text-transform:none;text-align:right}
-.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:#0e1118;border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
 .seg button{background:none;border:0;color:var(--mute);font:500 13px Inter,sans-serif;padding:8px 4px;border-radius:7px;cursor:pointer}
-.seg button.on{background:#222839;color:var(--text)}
+.seg button.on{background:var(--sel);color:var(--text)}
 .seg.g2{grid-auto-flow:row;grid-template-columns:repeat(2,1fr)}
 .seg.g3{grid-auto-flow:row;grid-template-columns:repeat(3,1fr)}
 .seg.g4{grid-auto-flow:row;grid-template-columns:repeat(4,1fr)}
@@ -85,17 +85,17 @@ aside{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;
 .row span{width:30px;font:500 12px 'JetBrains Mono',monospace;color:var(--mute)}
 .row output{width:48px;text-align:right;font:500 12px 'JetBrains Mono',monospace}
 input[type=range]{flex:1;accent-color:var(--accent)}
-input.txt,select.txt,textarea.txt{width:100%;box-sizing:border-box;background:#0e1118;border:1px solid var(--line);border-radius:8px;color:var(--text);font:12px 'JetBrains Mono',monospace;padding:7px 8px}
+input.txt,select.txt,textarea.txt{width:100%;box-sizing:border-box;background:var(--field);border:1px solid var(--line);border-radius:8px;color:var(--text);font:12px 'JetBrains Mono',monospace;padding:7px 8px}
 .btns{display:flex;gap:8px}
-.btn{flex:1;background:#1c2130;border:1px solid var(--line);color:var(--text);font:500 13px Inter,sans-serif;padding:9px 10px;border-radius:9px;cursor:pointer}
-.btn:hover{border-color:#36405a}
-.btn.on, .btn.primary{background:var(--accent);border-color:var(--accent);color:#0b0d12;font-weight:600}
+.btn{flex:1;background:var(--raised);border:1px solid var(--line);color:var(--text);font:500 13px Inter,sans-serif;padding:9px 10px;border-radius:9px;cursor:pointer}
+.btn:hover{border-color:var(--hover)}
+.btn.on, .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--onAccent);font-weight:600}
 .btn:disabled{opacity:.45;cursor:default}
 .btn.try{font-size:12px;padding:6px 9px}
 .check{display:flex;align-items:center;gap:8px;color:var(--text);margin-top:8px;cursor:pointer;font-size:13px}
 .check input{accent-color:var(--accent)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.stat{background:#0e1118;border:1px solid var(--line);border-radius:9px;padding:8px 4px;text-align:center;min-width:0}
+.stat{background:var(--field);border:1px solid var(--line);border-radius:9px;padding:8px 4px;text-align:center;min-width:0}
 .stat b{display:block;font:600 15px 'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .stat small{color:var(--mute);font-size:11px}
 .note{color:var(--mute);font-size:12.5px;margin:8px 0 0}
@@ -111,31 +111,31 @@ input.txt,select.txt,textarea.txt{width:100%;box-sizing:border-box;background:#0
 .explain p{margin:0 0 9px}
 .explain strong{color:var(--text);font-weight:500}
 .explain .live{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--text);font-variant-numeric:tabular-nums}
-table.keys{width:100%;border-collapse:collapse;font-size:12.5px;color:#c6ccda} table.keys td{padding:4px 0;vertical-align:top} table.keys td:first-child{width:62px}
-kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;font:500 11px Inter,sans-serif;color:#e4e8f1;background:#171b25}
+table.keys{width:100%;border-collapse:collapse;font-size:12.5px;color:var(--soft)} table.keys td{padding:4px 0;vertical-align:top} table.keys td:first-child{width:62px}
+kbd{display:inline-block;min-width:18px;text-align:center;padding:1px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;font:500 11px Inter,sans-serif;color:#e4e8f1;background:var(--raised)}
 
 /* music meter: level, a light that flashes on each beat, and the tempo */
 .meter{display:flex;align-items:center;gap:10px;margin-top:10px}
-.meterBar{flex:1;height:6px;border-radius:3px;background:#0e1118;border:1px solid var(--line);overflow:hidden}
+.meterBar{flex:1;height:6px;border-radius:3px;background:var(--field);border:1px solid var(--line);overflow:hidden}
 .meterBar > div{height:100%;width:0;background:var(--accent)}
-.beatDot{width:10px;height:10px;border-radius:50%;background:#2a3042;flex:none}
+.beatDot{width:10px;height:10px;border-radius:50%;background:var(--sel);flex:none}
 .bpm{font:500 11px 'JetBrains Mono',monospace;color:var(--mute);min-width:96px;text-align:right}
 
 /* collapsible groups in the panel */
 details.grp{border-bottom:1px solid var(--line)}
 details.grp > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:12px 2px;font:600 13px Inter,sans-serif;color:var(--text);user-select:none}
 details.grp > summary::-webkit-details-marker{display:none}
-details.grp > summary::before{content:'▸';color:#7d879c;transition:transform .15s;display:inline-block;width:10px}
+details.grp > summary::before{content:'▸';color:var(--dim);transition:transform .15s;display:inline-block;width:10px}
 details.grp[open] > summary::before{transform:rotate(90deg)}
 details.grp > summary:hover{background:rgba(255,255,255,.03)}
-details.grp .gv{margin-left:auto;font-weight:400;font-size:12px;color:#8a93a8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}
+details.grp .gv{margin-left:auto;font-weight:400;font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}
 details.grp .gb{padding:2px 0 8px}
 details.grp:first-of-type{border-top:1px solid var(--line)}
 /* smaller +/− topics inside a group (Learn) */
 details.topic, details.sub{border-top:1px solid var(--line);padding:2px 0}
 details.topic > summary, details.sub > summary{list-style:none;cursor:pointer;padding:9px 0;color:var(--text);font:500 13px Inter,sans-serif;display:flex;gap:8px;align-items:center}
 details.topic > summary::-webkit-details-marker, details.sub > summary::-webkit-details-marker{display:none}
-details.topic > summary::before, details.sub > summary::before{content:'+';color:#7d879c;width:10px;display:inline-block;font-weight:600}
+details.topic > summary::before, details.sub > summary::before{content:'+';color:var(--dim);width:10px;display:inline-block;font-weight:600}
 details.topic[open] > summary::before, details.sub[open] > summary::before{content:'−'}
 details.topic .btns{margin:4px 0 10px;flex-wrap:wrap}
 details.sub p{margin:0 0 10px;line-height:1.55}
@@ -147,22 +147,22 @@ details.sub p{margin:0 0 10px;line-height:1.55}
 .app.zen #zenExit{display:block} .app.zen #zenExit.fade{opacity:0;pointer-events:none}
 /* full screen on a touch screen: nothing but the picture, for clean screenshots (tap pauses, double tap leaves) */
 .app.zen.touch #zenExit, .app.zen.touch #pausedTag, .app.zen.touch #compass, .app.zen.touch #na{display:none !important}
-#zenTip{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:7;padding:9px 14px;border-radius:999px;background:rgba(10,12,18,.72);color:#e8ecf4;font-size:13px;pointer-events:none;opacity:0;transition:opacity .4s;white-space:nowrap}
+#zenTip{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:7;padding:9px 14px;border-radius:999px;background:rgba(11,16,25,.74);color:#e8ecf4;font-size:13px;pointer-events:none;opacity:0;transition:opacity .4s;white-space:nowrap}
 #zenTip.on{opacity:1}
 /* ---------- first visits: the tour, the explorer cards, the shared-link bar; analytics consent and the privacy note ---------- */
 #tour{position:fixed;inset:0;z-index:60}
 #tourSpot{position:fixed;border-radius:10px;box-shadow:0 0 0 9999px rgba(4,6,10,.62);outline:2px solid var(--accent);transition:all .3s ease;pointer-events:none}
 #tourTip{position:fixed;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:0 12px 40px rgba(0,0,0,.5);color:var(--text)}
-#tourTip h3{margin:2px 0 6px;font-size:16px} #tourTip p{margin:0 0 12px;color:#c9cfdc;line-height:1.5} .ttStep{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
-.ttBtns{display:flex;gap:8px;align-items:center} .ttBtns span{flex:1} .sbtn.on{background:var(--accent);border-color:var(--accent);color:#0b0d12;font-weight:600}
-#xCard{position:absolute;left:12px;bottom:44px;z-index:8;max-width:340px;background:rgba(19,22,30,.94);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
-#xCard p{margin:6px 0 8px;color:#c9cfdc;line-height:1.45} #xCard ul{margin:4px 0 10px;padding-left:18px;color:#c9cfdc} #xCard li{margin:3px 0}
+#tourTip h3{margin:2px 0 6px;font-size:16px} #tourTip p{margin:0 0 12px;color:var(--soft);line-height:1.5} .ttStep{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+.ttBtns{display:flex;gap:8px;align-items:center} .ttBtns span{flex:1} .sbtn.on{background:var(--accent);border-color:var(--accent);color:var(--onAccent);font-weight:600}
+#xCard{position:absolute;left:12px;bottom:44px;z-index:8;max-width:340px;background:var(--glass2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+#xCard p{margin:6px 0 8px;color:var(--soft);line-height:1.45} #xCard ul{margin:4px 0 10px;padding-left:18px;color:var(--soft)} #xCard li{margin:3px 0}
 .xcHead{display:flex;align-items:center;gap:8px} .xcHead b{flex:1;font-size:15px} .xcX{background:none;border:0;color:var(--mute);cursor:pointer;font-size:14px} .xcTry{font-size:12px;color:var(--mute)} .xcBtns{display:flex;justify-content:flex-end} .xcMore{color:var(--accent);font-size:13px;text-decoration:none;margin-right:auto;align-self:center} .xcMore:hover{text-decoration:underline}
-#tourBar{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:8;display:flex;gap:8px;align-items:center;background:rgba(19,22,30,.94);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 14px;max-width:calc(100% - 24px);font-size:13px}
-#consentBar{position:fixed;left:12px;right:12px;bottom:12px;z-index:70;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;max-width:720px;margin:0 auto;background:rgba(19,22,30,.97);border:1px solid var(--line);border-radius:12px;padding:10px 12px 10px 16px;box-shadow:0 10px 30px rgba(0,0,0,.45);font-size:13px}
+#tourBar{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:8;display:flex;gap:8px;align-items:center;background:var(--glass2);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 14px;max-width:calc(100% - 24px);font-size:13px}
+#consentBar{position:fixed;left:12px;right:12px;bottom:12px;z-index:70;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;max-width:720px;margin:0 auto;background:var(--glass2);border:1px solid var(--line);border-radius:12px;padding:10px 12px 10px 16px;box-shadow:0 10px 30px rgba(0,0,0,.45);font-size:13px}
 .cbBtns{display:flex;gap:8px} body.consentAsk #xCard{bottom:110px}
 .modalBack{position:fixed;inset:0;z-index:80;background:rgba(4,6,10,.6);display:flex;align-items:center;justify-content:center;padding:16px}
-.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;max-width:520px;color:var(--text)} .modal h2{margin:0 0 8px;font-size:18px} .modal p{color:#c9cfdc;line-height:1.5}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;max-width:520px;color:var(--text)} .modal h2{margin:0 0 8px;font-size:18px} .modal p{color:var(--soft);line-height:1.5}
 #reportForm textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:96px;margin:4px 0 6px;font:13px Inter,sans-serif} #reportForm .modal{width:min(520px,100%)} .rpTrap{position:absolute;left:-10000px;width:1px;height:1px;opacity:0}
 #rpShotImg{display:block;max-width:100%;max-height:180px;margin:2px 0 6px;border:1px solid var(--line);border-radius:8px} #rpShotImg[hidden],#rpShotRow[hidden]{display:none}
 .app.zen #xCard, .app.zen #tourBar{display:none !important}
@@ -173,12 +173,7 @@ details.sub p{margin:0 0 10px;line-height:1.55}
 @media (prefers-reduced-motion: reduce){ #tourHint{transition:none} }
 @media (prefers-reduced-motion: reduce){ #tourSpot{transition:none} }
 
-@media (max-width:820px){
-  .app.nopanel, .app.zen{grid-template-rows:100vh}
-  .app{grid-template-columns:1fr;grid-template-rows:62vh auto;height:auto}
-  aside{border-left:0;border-top:1px solid var(--line)}
-  .hint{display:none}
-}
+/* phones: the stage fills the screen above the folded sheet (see the 2026 layout below) */
 /* making a seamless loop (js/common/loopmaker.js): a progress bar over a cover that keeps hands off the picture */
 .loopCover{position:fixed;inset:0;z-index:61;background:transparent;cursor:progress}
 .loopBar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:62;width:min(520px,calc(100vw - 32px));box-sizing:border-box;display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.5);font:500 13px Inter,sans-serif;color:var(--text)}
@@ -189,3 +184,166 @@ details.sub p{margin:0 0 10px;line-height:1.55}
 .loopBar .loopTrack{grid-column:2;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
 .loopBar .loopFill{height:100%;width:0;background:var(--accent);transition:width .2s}
 #stage.framing #stageBtns{display:none}
+
+/* =====================================================================================================================
+   The 2026 layout (mobile rerelease): a top bar (name, explorer menu, All 12 gallery, Help), the picture's buttons as a
+   labelled player along the bottom of the picture, panel groups as cards; on phones a bottom sheet (js/shell/sheet.js).
+   ?frame=card (html.frame-card) puts the picture in a framed card with the buttons beneath it instead of over it.
+   ===================================================================================================================== */
+/* ---------- top bar: over the top of the picture (or a row of its own in the framed card) ---------- */
+#topBar{position:absolute;left:0;top:0;right:340px;height:var(--top);z-index:9;display:flex;align-items:center;gap:12px;padding:0 14px;pointer-events:none;
+  background:linear-gradient(rgba(11,16,25,.78),rgba(11,16,25,.38) 70%,transparent)}
+#topBar > *{pointer-events:auto}
+.app.nopanel #topBar{right:0}
+.tbBrand{display:flex;align-items:baseline;gap:8px;margin-right:auto;min-width:0;white-space:nowrap}
+.tbBrand b{font:700 16px Inter,system-ui,sans-serif;letter-spacing:-.2px}
+.tbBrand small{color:var(--mute);font-size:11.5px;overflow:hidden;text-overflow:ellipsis}
+.tbBrand .ghLink{align-self:center;margin-left:2px}
+.topR{display:flex;align-items:center;gap:8px}
+#topBar .xmenu{margin:0;position:relative}
+#topBar .xbtn{width:auto;min-width:150px;gap:10px;height:38px;padding:0 12px;background:var(--glass);border-radius:10px;font-size:13.5px}
+#topBar .xlist{left:auto;right:0;width:320px;max-height:min(70vh,560px)}
+.topBtn{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;height:38px;padding:0 12px;border-radius:10px;font:600 13px Inter,system-ui,sans-serif;background:var(--glass)}
+.topBtn b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;font-size:11px;line-height:1}
+#topBar .helpWrap{display:inline-flex}
+#topBar #helpMenu{left:auto;right:0}
+/* what sat at the top of the picture moves down below the bar */
+.app:not(.zen) .hud{top:calc(var(--top) + 2px)}
+.app:not(.zen) #insets{top:calc(var(--top) + 4px)}
+.app:not(.zen) #pausedTag{top:calc(var(--top) + 6px)}
+.app:not(.zen) #tourBar{top:calc(var(--top) + 6px)}
+.app.zen #topBar{display:none}
+
+/* ---------- the gallery ---------- */
+#gallery{position:fixed;inset:0;z-index:75;overflow-y:auto;background:rgba(9,13,21,.97);backdrop-filter:blur(6px)}
+body.galOpen{overflow:hidden}
+.galIn{max-width:1180px;margin:0 auto;padding:36px 24px 48px}
+.galHead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px}
+.galHead h2{margin:4px 0 6px;font-size:26px;letter-spacing:-.4px} .galHead p{margin:0;color:var(--mute)}
+.galHead .btn{flex:none;padding:10px 14px}
+.eyebrow{color:var(--accent);font-size:11px;letter-spacing:.13em;text-transform:uppercase;font-weight:700}
+.galGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.galCard{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;color:var(--text);text-decoration:none;transition:border-color .15s,transform .15s}
+.galCard:hover{border-color:var(--hover);transform:translateY(-2px)} .galCard:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.galCard.on{border-color:var(--accent)}
+.galPic{display:block;aspect-ratio:1200/630;background:#060a12;overflow:hidden} .galPic img{display:block;width:100%;height:100%;object-fit:cover}
+.galTxt{display:flex;flex-direction:column;gap:3px;padding:12px 14px 14px}
+.galTxt b{font-size:15px} .galTxt small{color:var(--mute);font-size:12.5px} .galGo{color:var(--accent);font-size:12.5px;margin-top:6px}
+@media (max-width:600px){ .galIn{padding:20px 14px 32px} .galHead{flex-direction:column;align-items:stretch} .galHead h2{font-size:22px} .galGrid{grid-template-columns:1fr 1fr;gap:10px} .galTxt{padding:9px 10px 11px} .galTxt small{display:none} .galTxt b{font-size:13.5px} }
+@media (prefers-reduced-motion: reduce){ .galCard{transition:none} .galCard:hover{transform:none} }
+
+/* ---------- the picture's buttons: a labelled player along the bottom of the picture ---------- */
+#stageBtns{position:absolute;left:0;right:0;margin:0 auto;width:max-content;bottom:14px;display:flex;align-items:center;gap:4px;z-index:5;max-width:calc(100% - 20px);
+  background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:5px 6px;box-shadow:0 8px 28px rgba(0,0,0,.35);backdrop-filter:blur(8px)}
+#stageBtns .ibtn{flex-direction:column;gap:3px;width:auto;min-width:48px;height:48px;padding:0 6px;background:transparent;border-color:transparent;border-radius:11px;color:var(--text)}
+#stageBtns .ibtn:hover{background:rgba(255,255,255,.07);border-color:transparent}
+#stageBtns .ibtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.tbLbl{font:500 10.5px/1 Inter,system-ui,sans-serif;color:var(--mute);white-space:nowrap;letter-spacing:.1px}
+#stageBtns .ibtn.on{background:var(--accent);color:var(--onAccent)} #stageBtns .ibtn.on .tbLbl{color:var(--onAccent);font-weight:600}
+.tbGroup + .tbGroup{margin-left:2px;padding-left:5px}
+.tbGroup:not(.folded) .tbHandle{min-width:22px;width:22px;padding:0;opacity:.7} .tbGroup:not(.folded) .tbHandle .tbLbl{display:none}
+#musicMenu,#shareMenu{top:auto;bottom:calc(100% + 10px)}
+/* the things at the bottom of the picture sit above the player */
+.app:not(.zen) .legend,.app:not(.zen) .hint{bottom:80px}
+.app:not(.zen) #xCard{bottom:80px} body.consentAsk .app:not(.zen) #xCard{bottom:130px}
+.app:not(.zen) #stageCap{bottom:84px}
+@media (max-width:820px), (max-height:500px) and (pointer:coarse){
+  #topBar{right:0;gap:8px;padding:0 10px}
+  .tbBrand small,.tbBrand .ghLink{display:none} .tbBrand b{font-size:15px}
+  #topBar .xbtn{min-width:0;max-width:44vw;padding:0 10px} #topBar .xbtn #xName{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #topBar .xlist{position:fixed;left:10px;right:10px;top:calc(var(--top) - 4px);width:auto}
+  .topBtn{padding:0 10px}
+  #stageBtns{bottom:8px;padding:3px;gap:1px;border-radius:14px;max-width:calc(100% - 8px)}
+  #stageBtns .ibtn{min-width:43px;height:46px;padding:0 2px}
+}
+#tbAll{display:none}
+@media (max-width:820px), (max-height:500px) and (pointer:coarse){
+  #stageBtns .tbHandle{display:none !important} #stageBtns #tbAll{display:inline-flex}
+  #stageBtns .tbGroup.folded .tbBody{display:inline-flex}
+  #stageBtns:not(.allOpen) .tbGroup[data-group="view"], #stageBtns:not(.allOpen) .tbGroup[data-group="more"]{display:none}
+  #stageBtns:not(.allOpen) .tbGroup[data-group="go"] .tbBody{display:none}
+  #stageBtns:not(.allOpen):not(.goInline) .tbGroup[data-group="go"]{display:none}
+  #stageBtns.allOpen{flex-wrap:wrap;justify-content:center;row-gap:4px}
+  #stageBtns.allOpen .tbGroup:not(.tbPlayer){order:-1}
+  #stageBtns.allOpen::before{content:'';flex-basis:100%;order:0;height:1px;background:var(--line)}
+  #stageBtns.allOpen .tbPlayer{order:1} #stageBtns.allOpen #tbAll{order:2}
+  .tbGroup + .tbGroup{margin-left:0;padding-left:2px}
+  #stageBtns.allOpen .tbGroup{border-left:0;padding-left:0}
+  #stageBtns #panelBtn{display:none}   /* on a phone the panel is the sheet, folded to its tabs; Full screen hides everything */
+  #stageBtns.allOpen .tbGroup:not(.tbPlayer){gap:0} #stageBtns.allOpen .tbGroup:not(.tbPlayer) .ibtn{min-width:39px;padding:0 1px}
+  .tbPlayer + .tbGroup, #tbAll{border-left:1px solid var(--line)} #tbAll{margin-left:2px;border-radius:0 11px 11px 0}
+}
+@media (max-width:400px){ .topBtn span{display:none} .topBtn{width:38px;padding:0;justify-content:center} #stageBtns .ibtn{min-width:40px;padding:0 1px} .tbLbl{font-size:9.5px} }
+@media (max-width:350px){ .tbBrand{display:none} #topBar .topR{margin-left:auto} #stageBtns{gap:0;padding:2px} #stageBtns .ibtn{min-width:34px;padding:0 1px} .tbLbl{font-size:8.5px;letter-spacing:-.1px}
+  #stageBtns.allOpen .tbGroup:not(.tbPlayer) .tbLbl,#stageBtns.allOpen #tbAll .tbLbl{display:none} #stageBtns.allOpen .tbGroup:not(.tbPlayer) .ibtn,#stageBtns.allOpen #tbAll{height:40px;min-width:31px} #stageBtns.allOpen #tbAll{order:-1;border-left:0;margin:0} #stageBtns.allOpen .tbGroup{gap:0} }   /* the smallest phones: the extra row's names on a long press only */
+
+/* ---------- panel groups as cards ---------- */
+aside{padding:14px 14px 28px}
+details.grp{background:#121a29;border:1px solid var(--line);border-radius:var(--r);padding:0 12px;margin-bottom:10px}
+details.grp:first-of-type{border-top:1px solid var(--line)}
+details.grp > summary{padding:13px 0;font-size:14px}
+details.grp > summary:hover{background:none} details.grp > summary:hover .gt{color:#fff}
+details.grp[open]{background:var(--panel);border-color:#3a4a64}
+details.grp .gb{padding:0 0 12px}
+#g-shapes{border-color:rgba(118,216,223,.4)}
+.swatches button{height:30px;border-radius:9px}
+.seg{border-radius:11px} .btn{border-radius:10px} input.txt,select.txt,textarea.txt{border-radius:9px}
+
+/* ---------- ?frame=card: the picture in a framed card, the top bar a row of its own, the buttons under the picture ---------- */
+.frame-card .app:not(.zen){grid-template-rows:var(--top) minmax(0,1fr)}
+.frame-card .app:not(.zen) #topBar{position:relative;grid-column:1 / -1;right:auto;background:#101827;border-bottom:1px solid var(--line)}
+.frame-card .app:not(.zen) aside{grid-row:2}
+.frame-card .app:not(.zen) .stage{grid-row:2}
+.frame-card .app:not(.zen) .explorer-stage{inset:16px 16px 86px 16px;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.frame-card .app:not(.zen) .hud{top:12px} .frame-card .app:not(.zen) #insets{top:10px}
+.frame-card .app:not(.zen) .legend,.frame-card .app:not(.zen) .hint{bottom:14px}
+.frame-card .app:not(.zen) #xCard{bottom:100px}
+.frame-card .app:not(.zen) #stageCap{bottom:40px}
+.frame-card .app:not(.zen) #pausedTag{top:26px} .frame-card .app:not(.zen) #tourBar{top:26px}
+.frame-card #stageBtns{bottom:14px;background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none}
+.frame-card #stageBtns .ibtn{background:var(--raised);border-color:var(--line)} .frame-card #stageBtns .ibtn.on{background:var(--accent);border-color:var(--accent)}
+.frame-card .tbGroup:not(.folded) .tbHandle{background:transparent;border-color:transparent}
+.frame-card .stage{background:var(--bg)}
+
+/* ---------- phones: the panel as a bottom sheet (js/shell/sheet.js) ---------- */
+#sheetBar{display:none}
+@media (max-width:820px), (max-height:500px) and (pointer:coarse){
+  :root{--sheet:60px}
+  .app{display:block;position:relative;height:100vh;height:100dvh;overflow:hidden}
+  .stage{position:absolute;left:0;right:0;top:0;bottom:calc(var(--sheet) + env(safe-area-inset-bottom, 0px))}
+  .app.nopanel .stage,.app.zen .stage{bottom:0}
+  aside{position:absolute;left:0;right:0;bottom:0;z-index:12;height:calc(var(--sheet) + env(safe-area-inset-bottom, 0px));padding:0;border-left:0;border-top:1px solid var(--line);
+    border-radius:18px 18px 0 0;overflow:hidden;display:flex;flex-direction:column;transition:height .25s ease;box-shadow:0 -10px 30px rgba(0,0,0,.35)}
+  .app.sheetOpen aside{height:min(64vh, calc(100vh - var(--top) - 60px));height:min(64dvh, calc(100dvh - var(--top) - 60px))}
+  aside .explorer-panel{flex:1;min-height:0;overflow-y:auto;padding:6px 12px calc(24px + env(safe-area-inset-bottom, 0px));overscroll-behavior:contain}
+  .app:not(.sheetOpen) aside .explorer-panel{visibility:hidden}
+  #sheetBar{flex:none;display:flex;align-items:stretch;gap:4px;height:var(--sheet);padding:6px 8px}
+  .shTab{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:0;border-radius:11px;color:var(--mute);font:500 11px Inter,system-ui,sans-serif;cursor:pointer}
+  .shTab:hover{color:var(--text)} .shTab.on{background:var(--sel);color:var(--text)} .shTab.on svg{color:var(--accent)}
+  .shTab:focus-visible,.shFold:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .shFold{flex:none;width:42px;display:grid;place-items:center;background:none;border:0;border-left:1px solid var(--line);color:var(--mute);cursor:pointer}
+  .shFold svg{transition:transform .2s} .app.sheetOpen .shFold svg{transform:rotate(180deg)}
+  /* which groups each tab shows */
+  aside[data-tab="shapes"] .explorer-panel > details.grp:not(#g-shapes){display:none}
+  aside[data-tab="colours"] .explorer-panel > :not(#g-style){display:none}
+  aside[data-tab="music"] .explorer-panel > :not(#g-sound){display:none}
+  aside[data-tab="settings"] .explorer-panel > :is(.sec,#g-shapes,#g-style,#g-sound){display:none}
+  aside:not([data-tab="settings"]) :is(#g-shapes,#g-style,#g-sound) > summary{display:none}
+  aside:not([data-tab="settings"]) :is(#g-shapes,#g-style,#g-sound){background:none;border:0;padding:0;margin:0}
+  aside .explorer-panel > .sec{margin-bottom:12px}
+  .hint{display:none}
+  /* the framed picture on a phone: a card under the top bar, the buttons beneath it */
+  .frame-card .app:not(.zen) .stage{top:var(--top)}
+  .frame-card .app:not(.zen) .explorer-stage{inset:8px 8px 66px 8px;border-radius:14px}
+  .frame-card .app:not(.zen) #stageBtns{bottom:6px}
+}
+@media (prefers-reduced-motion: reduce){ aside,.shFold svg{transition:none} }
+/* the Paper background (explorers put .light on #app): a light top bar with dark writing */
+.app.light:not(.zen) #topBar{background:linear-gradient(rgba(244,240,232,.9),rgba(244,240,232,.45) 70%,transparent)}
+.app.light #topBar .tbBrand b{color:#1a2130} .app.light #topBar .tbBrand small,.app.light #topBar .ghLink{color:#4d5b70}
+.frame-card .app.light:not(.zen) #topBar{background:#101827} .frame-card .app.light #topBar .tbBrand b{color:var(--text)} .frame-card .app.light #topBar .tbBrand small{color:var(--mute)}
+/* the analytics question on a phone: above the sheet's tabs, never over them */
+@media (max-width:820px), (max-height:500px) and (pointer:coarse){ #consentBar{bottom:calc(var(--sheet) + 10px + env(safe-area-inset-bottom, 0px))} }
+#consentBar{border-color:#3a4a64}
+@media (max-width:375px){ #stageBtns.allOpen .tbGroup:not(.tbPlayer) .tbLbl,#stageBtns.allOpen #tbAll .tbLbl{display:none} #stageBtns.allOpen .tbGroup:not(.tbPlayer) .ibtn,#stageBtns.allOpen #tbAll{height:40px;min-width:34px} #stageBtns.allOpen #tbAll{order:-1;border-left:0;margin:0} }   /* narrow phones: the extra row's names on a long press */
+@media (max-width:350px){ #stageBtns.allOpen .tbGroup:not(.tbPlayer) .ibtn,#stageBtns.allOpen #tbAll{min-width:31px} }
