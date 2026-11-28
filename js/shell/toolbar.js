@@ -1,5 +1,5 @@
 // The buttons on the picture, as icons with names on hover (and on a long press on a touch screen), in four groups:
-//   View    hide panel, full screen, reset view                         (folds away)
+//   View    hide panel, full screen, reset view, undo, redo (history.js), frame   (folds away)
 //   Player  back (zoom out), slower, reverse (`reverseCtl()`: { label, on, run }, null hides it), play / pause, play forwards (`forwardCtl()`, the same shape;
 //           with those two and `stopCtl()`, play / pause becomes stop and the three are lit while they're what's happening), faster, forward (zoom in), laid out like a music player
 //   Go      go (dive, fly, ride…), then steer itself and the explorer's own button   (the extras fold away)
@@ -13,6 +13,7 @@ import { track } from './analytics.js';
 import { revealGroup } from './sheet.js';
 import { paintFrame } from './layout.js';
 import { menuKeys, focusFirst } from './a11y.js';
+import { KEYS } from './history.js';
 const $ = id => document.getElementById(id);
 const app = $('app');
 const svg = d => `<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -20,6 +21,8 @@ export const ICON = {
   panel: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/>'),
   zen: svg('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>'),
   reset: svg('<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>'),
+  undo: svg('<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/>'),
+  redo: svg('<path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h4"/>'),
   frame: svg('<rect x="3" y="5" width="18" height="14" rx="2.5"/><rect x="7" y="9" width="10" height="6" rx="1"/>'),
   view: svg('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 19v2M16 19v2M7 10h4M7 14h7"/>'),
   rev: svg('<path d="M17 4L4 12l13 8z" fill="currentColor"/>'),
@@ -58,7 +61,7 @@ const GKEY = 'mathexplorer.tbGroups', small = () => matchMedia('(pointer: coarse
 let folded = {}; try { folded = JSON.parse(localStorage.getItem(GKEY) || 'null') || {}; } catch (e) { folded = {}; }
 export const isFolded = g => g in folded ? folded[g] : small();   // phones start folded, big screens open, until you choose
 const GROUP = {
-  view: { icon: 'view', lbl: 'View', name: 'View: hide panel, full screen, reset view, frame' },
+  view: { icon: 'view', lbl: 'View', name: 'View: hide panel, full screen, reset, undo, redo, frame' },
   go: { icon: 'open', lbl: 'Extras', name: 'More ways to move: steer itself and more' },
   more: { icon: 'more', lbl: 'More', name: 'More: music and share' },
 };
@@ -167,7 +170,7 @@ $('shRec').addEventListener('click', () => press($('recBtn')));
 $('shPrint').addEventListener('click', () => press(printBtn()));
 
 // ---------- which buttons get used: one event per press, the button's name and the explorer, nothing else ----------
-const NAMES = { panelBtn: 'panel', zenBtn: 'fullscreen', resetBtn: 'reset', tbPlay: 'play_pause', tbRev: 'reverse', tbFwd: 'forward', tbAll: 'more_buttons', frameBtn: 'frame', tbGo: 'go', tbSteer: 'steer', tbExtra: 'explorer_button', tbOut: 'zoom_out', tbIn: 'zoom_in',
+const NAMES = { panelBtn: 'panel', zenBtn: 'fullscreen', resetBtn: 'reset', tbUndo: 'undo', tbRedo: 'redo', tbPlay: 'play_pause', tbRev: 'reverse', tbFwd: 'forward', tbAll: 'more_buttons', frameBtn: 'frame', tbGo: 'go', tbSteer: 'steer', tbExtra: 'explorer_button', tbOut: 'zoom_out', tbIn: 'zoom_in',
   tbSlower: 'slower', tbFaster: 'faster', musicBtn: 'music_menu', tbMusicSet: 'music_settings', vizStageBtn: 'visualizer', tbShare: 'share_menu', shCopy: 'copy_link', shSheet: 'share_sheet',
   shSnap: 'snapshot', shRec: 'record', shPrint: 'print_3d', helpBtn: 'help_menu', tourAgain: 'tour', aboutThis: 'about', keysBtn: 'keys', reportBtn: 'report', privacyBtn: 'privacy', ghMenu: 'github' };
 $('stageBtns').addEventListener('click', e => { const b = e.target.closest('button, a'); if (!b) return;
@@ -217,7 +220,7 @@ $('stageBtns').addEventListener('pointercancel', () => clearTimeout(pressT));
 $('stageBtns').addEventListener('click', e => { if (pressed && performance.now() - pressedAt < 700 && e.target.closest('[data-tip]') === pressed) { e.stopImmediatePropagation(); e.preventDefault(); } pressed = null; pressedAt = 0; }, true);
 
 // icons and names
-for (const [id, ic, name, lbl] of [['panelBtn', 'panel', 'Hide panel (H)', 'Panel'], ['zenBtn', 'zen', 'Full screen (F)', 'Full screen'], ['resetBtn', 'reset', 'Reset view (R)', 'Reset'], ['frameBtn', 'frame', 'Picture in a frame', 'Frame'], ['musicBtn', 'music', 'Music and the Visualizer', 'Music'],
+for (const [id, ic, name, lbl] of [['panelBtn', 'panel', 'Hide panel (H)', 'Panel'], ['zenBtn', 'zen', 'Full screen (F)', 'Full screen'], ['resetBtn', 'reset', 'Reset view (R)', 'Reset'], ['tbUndo', 'undo', `Undo: the view before (${KEYS.undo})`, 'Undo'], ['tbRedo', 'redo', `Redo (${KEYS.redo})`, 'Redo'], ['frameBtn', 'frame', 'Picture in a frame', 'Frame'], ['musicBtn', 'music', 'Music and the Visualizer', 'Music'],
   ['tbShare', 'share', 'Share, save or record this view', 'Share'], ['tbSteer', 'steer', 'Steer', 'Steer'], ['tbGo', 'go', 'Go', 'Go'], ['tbRev', 'rev', 'Play backwards', 'Reverse'], ['tbFwd', 'play', 'Play forwards', 'Play'], ['tbSlower', 'slower', 'Slower', 'Slower'], ['tbFaster', 'faster', 'Faster', 'Faster'],
   ['tbOut', 'zoomOut', 'Zoom out: back (−, or the wheel)', 'Zoom out'], ['tbIn', 'zoomIn', 'Zoom in: forwards (+, or the wheel)', 'Zoom in']]) { const b = $(id); paint(b, ic, lbl); setTip(b, name); }
 setTip($('helpBtn'), 'Help: the tour, keys, Report a problem (?)'); paintFrame();
