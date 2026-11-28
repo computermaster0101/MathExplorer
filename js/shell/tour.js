@@ -169,7 +169,8 @@ const PAGE = {"fractal": "fractals", "polytope": "4d-polytopes", "surface": "sur
 // Closing it (✕, Got it), trying the suggestion or taking the tour all count as an answer and are remembered.
 function showCard(name, title, welcome = false) {
   const c = CARDS[name]; if (!c) return; hideCard();
-  const [desc, tries, act] = c, doable = act && (act[1] === 'g' || document.querySelector(act[1]));
+  /* on a touch screen G is a tap on the picture (layout.js), so the cards say so */
+  const [desc, tries0, act] = c, tries = touch() ? tries0.map(t => t.replace(/Press <b>G<\/b>( \(or Dive\))?/, 'Tap the picture')) : tries0, doable = act && (act[1] === 'g' || document.querySelector(act[1]));
   const d = document.createElement('div'); d.id = 'xCard'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-labelledby', 'xcTitle');
   if (welcome) d.classList.add('welcome');
   d.innerHTML = `${welcome ? '<div class="xcHi">Welcome to Math Explorer</div>' : ''}<div class="xcHead"><b id="xcTitle">${title}</b><button class="xcX" aria-label="Close">✕</button></div><p>${desc}</p>`
