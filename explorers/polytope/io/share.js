@@ -57,7 +57,7 @@ if (insideClaude) $('g-share').querySelector('.note').textContent='This view cod
 setInterval(()=>{ if (activeExplorer()!=='polytope') return; const c=viewCode(); if (c===lastCode) return; lastCode=c; $('viewLink').value = insideClaude ? c : shareLink('polytope',c);
   if (!insideClaude) setViewCode('polytope',c); }, 700);
 // the shell calls this when the address changes to a view code (a pasted link, back/forward)
-export function showView(code){ if (code && code!==lastCode){ try { applyView(code); } catch(e){ console.warn('could not load view', e); } } }
+export function showView(code, force){ if (code && (force || code!==lastCode)){   /* force: Undo after a reset (js/shell/undo.js) */ try { applyView(code); } catch(e){ console.warn('could not load view', e); } } }
 $('copyView').addEventListener('click', async ()=>{ const el=$('viewLink'); el.select(); let ok=false;
   try { await navigator.clipboard.writeText(el.value); ok=true; } catch(e){ try { ok=document.execCommand('copy'); } catch(e2){} }
   $('shareNote').textContent = ok ? (insideClaude ? 'Copied. Paste it into "Load a view" to come back to this exact picture.' : 'Copied. Anyone opening this link sees this exact picture.') : 'Select the text above and copy it.'; });

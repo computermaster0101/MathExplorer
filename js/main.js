@@ -12,7 +12,7 @@
 //   reset()             the "Reset view" button
 //   onKey(event)        a keydown the shell didn't use; return true when the explorer used it
 //   layoutChanged()     the panel was hidden or shown, or full screen started or ended
-//   showView(code)      the address changed to a view code (a pasted link, back/forward)
+//   showView(code, force) the address changed to a view code (a pasted link, back/forward); force (Undo after a reset): apply it even if it's the code the explorer last wrote
 //   moving()            optional: true while anything moves that Space would pause; false shows the picture's play icon
 //   going()             optional: true while diving / flying / riding / walking, so a tap on a phone pauses rather than goes
 //   goLabel()           optional: what the picture's Go button (G) is called right now, e.g. 'Dive in'; null hides it
@@ -26,7 +26,7 @@
 //
 // Only one explorer is attached to the page at a time: the others' DOM is kept, detached, so their
 // element ids never clash and their own document queries only ever see their own controls.
-import { parseRoute, DEFAULT_EXPLORER, setActiveExplorer, setBootRoute } from './shell/route.js';
+import { parseRoute, DEFAULT_EXPLORER, setActiveExplorer, setBootRoute, restoreHash } from './shell/route.js';
 const HOME_TITLE = document.title; let bareHome = !location.hash;   // opened at the plain address: keep the home title until the visitor moves on
 import { onLayoutChange, setGoing } from './shell/layout.js';
 import { setToolbarExplorer } from './shell/toolbar.js';
@@ -39,6 +39,8 @@ import { pageView, consentBar, showPrivacy } from './shell/analytics.js';
 import { explorerShown, takeTour, aboutThis } from './shell/tour.js';
 import { openReport } from './shell/report.js';
 import { menuKeys } from './shell/a11y.js';
+import { resetWithUndo } from './shell/undo.js';
+import { calm } from './shell/calm.js';
 import './shell/gallery.js';
 import './shell/sheet.js';   // phones: the panel as a bottom sheet with four tabs   // every explorer as a picture (the top bar's All 12)
 import './shell/haptics.js';   // vibration on touch, where the phone can (the setting in Music & sound)
@@ -154,6 +156,8 @@ async function show(via, hash, gen) {
   if (!first && code) api.showView?.(code);
   setKeyHandler(api.onKey); setGoing(api.going); onLayoutChange(() => api.layoutChanged?.()); setSoundHelp(api.soundHelp);
   api.start?.(); started = name; colourSync(); setToolbarExplorer(api);
+  // Calm motion (js/shell/calm.js): the picture opens still; the Paused tag (and the player's play icon) say how to start it
+  if (calm()) setTimeout(() => { if (current === name && started === name && $('pausedTag').hidden && (!api.moving || api.moving())) document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true, cancelable: true })); }, 500);
   pageView(name, EXPLORERS[name].title, via); explorerShown(name, EXPLORERS[name].title, !!code);   // analytics (names only), and first-visit help
 }
 
@@ -173,7 +177,13 @@ $('aboutThis').addEventListener('click', () => aboutThis());
 $('privacyBtn').addEventListener('click', () => showPrivacy());
 $('reportBtn').addEventListener('click', () => openReport());
 consentBar();
-$('resetBtn').addEventListener('click', async () => { if (current) (await loaded[current].catch(() => null))?.reset?.(); });
+$('resetBtn').addEventListener('click', async () => { if (!current) return; const api = await loaded[current].catch(() => null); if (api && api.reset) resetWithUndo(() => { api.reset(); }); });   // with Undo (js/shell/undo.js)
 // until the new address is shown, no explorer may rewrite it (one still loading would put its own view over the choice)
 window.addEventListener('hashchange', () => { bareHome = false; setActiveExplorer(null); route('menu'); });
+// Undo after a reset (js/shell/undo.js): the view code from just before goes back to the explorer on screen, as a link would
+window.addEventListener('mx:view', async e => {
+  const { explorer: name, code } = parseRoute(e.detail); if (!code || name !== current || started !== name) return;
+  restoreHash(e.detail);
+  colourFromCode(code); (await loaded[name]).showView?.(code, true); colourSync();   // true: even if it's the code the explorer wrote last
+});
 route(bareHome ? 'home' : 'link');

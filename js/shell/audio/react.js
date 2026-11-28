@@ -21,6 +21,7 @@
 //                   when the song changes section, otherwise null: the Visualizer changes the scene on these
 import * as engine from './engine.js';
 import { LOOP, loopRate } from '../../common/seamless.js';
+import { calm } from '../calm.js';   // Calm motion: no flashing on the beat
 const { player } = engine;
 
 const KEY = 'mathexplorer.sound';
@@ -35,7 +36,7 @@ const amt = () => settings.amount;
 
 export const reacting = () => live();
 const beat = () => (live() && settings.beats ? Math.min(1.5, f().beat * amt()) : 0);
-export const flash = () => (settings.beatStyle === 'pulse' ? 0 : beat());
+export const flash = () => (settings.beatStyle === 'pulse' || calm() ? 0 : beat());
 export const pulse = () => (settings.beatStyle === 'pulse' ? beat() : 0);
 export const voice = () => (live() && settings.vocals ? Math.max(-1.5, Math.min(1.5, f().voiceSway * amt())) : 0);
 export const shimmer = () => (live() && settings.colour ? Math.min(1.5, f().treble * amt()) : 0);
@@ -50,7 +51,7 @@ const BOOST = { calm: 1, lively: 1.7, wild: 2.6 };
 /** How much bigger the newer explorers react: 1 at Calm; at Lively and Wild more in loud passages and just after a drop. */
 export const boost = () => { const b = BOOST[settings.intensity] || 1; if (b === 1 || !live()) return 1; return b * (0.75 + 0.5 * f().energy) * (1 + 0.4 * f().lift); };
 const breath = () => (live() && settings.beats && settings.intensity !== 'calm' ? (boost() - 1) * f().bass * amt() : 0);   // the bass level itself, between the hits
-export const flashFx = () => (settings.beatStyle === 'pulse' ? 0 : Math.min(2.2, beat() * boost() + 0.18 * breath()));
+export const flashFx = () => (settings.beatStyle === 'pulse' || calm() ? 0 : Math.min(2.2, beat() * boost() + 0.18 * breath()));
 export const pulseFx = () => (settings.beatStyle === 'pulse' ? Math.min(2.2, beat() * boost() + 0.25 * breath()) : 0);
 export const voiceFx = () => Math.max(-2, Math.min(2, voice() * Math.min(1.8, boost())));
 // for a dance (3D fractals): the raw beat and bass, the loudness, and where we are in the beat (null without a steady tempo)

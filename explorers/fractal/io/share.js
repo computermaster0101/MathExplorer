@@ -127,7 +127,7 @@ export function writeHash(force){ if (!force && ptrs.size) return; const c=viewC
   if (document.activeElement!==$('linkBox')) $('linkBox').value=linkFor(c);
   if (!inClaude) setViewCode('fractal',c); }
 // the shell calls this when the address changes to a view code (a pasted link, back/forward)
-export function showView(h){ if (h && h!==shared.lastHash){ const S=readView(h); if (S){ shared.lastHash=h; applyView(S); } } }
+export function showView(h, force){ if (h && (force || h!==shared.lastHash)){   /* force: Undo after a reset (js/shell/undo.js), which may bring back the code last written */ const S=readView(h); if (S){ shared.lastHash=h; applyView(S); } } }
 if (inClaude) $('linkNote').textContent='This view code records the fractal, mode, place and zoom (to the last digit), colours and settings. Inside Claude, paste it into "Load a view" to return to this exact picture; in a saved copy of the page it also works after # at the end of the address.';
 $('copyLink').addEventListener('click', async ()=>{ writeHash(true); const box=$('linkBox'); box.select(); let ok=false;
   try { await navigator.clipboard.writeText(box.value); ok=true; } catch(e){ try { ok=document.execCommand('copy'); } catch(e2){} }
