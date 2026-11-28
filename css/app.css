@@ -91,6 +91,7 @@ input.txt,select.txt,textarea.txt{width:100%;box-sizing:border-box;background:va
 .btn:hover{border-color:var(--hover)}
 .btn.on, .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--onAccent);font-weight:600}
 .btn:disabled{opacity:.45;cursor:default}
+.ibtn:disabled{opacity:.38;cursor:default}
 .btn.try{font-size:12px;padding:6px 9px}
 .check{display:flex;align-items:center;gap:8px;color:var(--text);margin-top:8px;cursor:pointer;font-size:13px}
 .check input{accent-color:var(--accent)}
