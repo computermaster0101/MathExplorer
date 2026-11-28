@@ -1,6 +1,7 @@
-// First visits: an eight-step tour of what every explorer shares (the menu, moving round the picture, the buttons on it, the
-// panel, music, saving and sharing, 3D printing, keys and help), and, the first time in each explorer, a small card saying what you're looking at and two things to try that
-// only that explorer has. Nothing here repeats the tour. Remembered on this device (localStorage; a session's worth when
+// First visits (design pack U09): the first time in each explorer, a small card saying what you're looking at, one thing to
+// try with a button that does it, and one more idea, all only that explorer has. On the very first visit that card is the
+// welcome, offering the tour (every part of the interface, each step pointing at the real thing) rather than starting it;
+// Help → Take the tour has it any time. Nothing here repeats the tour. Remembered on this device (localStorage; a session's worth when
 // storage is blocked). Someone arriving on a shared link sees the picture they were sent, with a small bar offering the tour,
 // rather than the tour on top of it; nothing appears in full screen.
 import { inZen, panelHidden, togglePanel } from './layout.js';
@@ -16,18 +17,18 @@ const $ = id => document.getElementById(id), touch = () => matchMedia('(pointer:
 
 // ---------- what each explorer is, and two things to try there (and only there) ----------
 const CARDS = {
-  fractal: ['Shapes made by repeating one simple rule over and over. Zoom into an edge and the detail never runs out.', ['Press <b>G</b> (or Dive) to zoom in deeper than any microscope', 'Open <b>3D</b> for fractals you can fly round']],
-  polytope: ['Shapes from the fourth dimension, shown the way a cube casts a flat shadow: what you see is their shadow in our space.', ['Try <b>Slice</b>: watch the 4D shape pass through our 3D world', 'Press <b>G</b> to fly inside it']],
-  surface: ['Surfaces with surprises: some have only one side, others are soap films stretched as small as they can be.', ['Press <b>G</b> to walk round the Möbius band and come back upside down', 'Pick the <b>Klein bottle</b>: a bottle with no inside']],
-  knot: ['Knots as mathematicians see them: closed loops that can\'t be untied without cutting, and links of several loops.', ['Press <b>G</b> to ride the knot like a roller coaster', 'Pick the <b>Borromean rings</b>: no two are linked, yet all three hold together']],
-  labyrinth: ['Endless surfaces that split space into two mazes, mazes to solve, and the ancient one-path labyrinths.', ['Press <b>G</b> to fly through an endless labyrinth', 'Pick <b>Race the solver</b> and try to beat the computer']],
-  foam: ['The ways soap bubbles can fill space, from Kelvin\'s 1887 guess to the record-holding Weaire–Phelan foam.', ['Press <b>G</b> to fly through the bubbles', 'Turn up <b>Pull apart</b> to see each bubble\'s shape']],
-  complex: ['Every point here is a number, coloured by where a function sends it. The colours wheel round each zero.', ['Pick <b>Zeros and poles</b> and drag them about', 'Raise <b>Steps</b> to grow a fractal out of the function']],
-  attractor: ['Chaos: a point following simple rules that never repeats, yet never leaves this shape.', ['Try <b>Butterfly effect</b>: two starts a hair apart end up far apart', 'Pick a map such as <b>Clifford</b> and watch millions of points build a picture']],
-  tiling: ['Patterns that cover a surface with no gaps: on a ball, on the flat plane and on the curved hyperbolic plane.', ['Press <b>G</b> to glide through a hyperbolic tiling', 'Pick <b>The hat</b>: one shape that tiles without ever repeating']],
-  wave: ['Waves you can see: ripples adding up, a wave tank, sand on a ringing plate and a plucked string.', ['In the <b>Wave tank</b>, click in the water to splash', 'Try a <b>Chladni plate</b>: the sand gathers where the plate keeps still']],
-  draw: ['Machines that draw: circles spinning on circles, gears rolling in rings, swinging pendulums and threads round a circle.', ['Tick <b>Add the circles one by one</b> and watch a drawing build up', 'Press <b>Draw your own</b>: the circles will copy it']],
-  life: ['Patterns that grow by themselves, from simple rules about each cell\'s neighbours.', ['Paint on the picture with the brush to start new life', 'Try <b>Lenia</b>: smooth cells that move like creatures']],
+  fractal: ['Shapes made by repeating one simple rule over and over. Zoom into an edge and the detail never runs out.', ['Press <b>G</b> (or Dive) to zoom in deeper than any microscope', 'Open <b>3D</b> for fractals you can fly round'], ['Dive in', 'g']],
+  polytope: ['Shapes from the fourth dimension, shown the way a cube casts a flat shadow: what you see is their shadow in our space.', ['Press <b>G</b> to fly inside it', 'Try <b>Slice</b>: watch the 4D shape pass through our 3D world'], ['Fly inside', 'g']],
+  surface: ['Surfaces with surprises: some have only one side, others are soap films stretched as small as they can be.', ['Press <b>G</b> to walk round the Möbius band and come back upside down', 'Pick the <b>Klein bottle</b>: a bottle with no inside'], ['Walk round it', 'g']],
+  knot: ['Knots as mathematicians see them: closed loops that can\'t be untied without cutting, and links of several loops.', ['Press <b>G</b> to ride the knot like a roller coaster', 'Pick the <b>Borromean rings</b>: no two are linked, yet all three hold together'], ['Ride it', 'g']],
+  labyrinth: ['Endless surfaces that split space into two mazes, mazes to solve, and the ancient one-path labyrinths.', ['Press <b>G</b> to fly through an endless labyrinth', 'Pick <b>Race the solver</b> and try to beat the computer'], ['Fly through it', 'g']],
+  foam: ['The ways soap bubbles can fill space, from Kelvin\'s 1887 guess to the record-holding Weaire–Phelan foam.', ['Press <b>G</b> to fly through the bubbles', 'Turn up <b>Pull apart</b> to see each bubble\'s shape'], ['Fly through it', 'g']],
+  complex: ['Every point here is a number, coloured by where a function sends it. The colours wheel round each zero.', ['Place your own <b>zeros and poles</b> and drag them about', 'Raise <b>Steps</b> to grow a fractal out of the function'], ['Place zeros and poles', '[data-try="roots"]']],
+  attractor: ['Chaos: a point following simple rules that never repeats, yet never leaves this shape.', ['Try <b>Butterfly effect</b>: two starts a hair apart end up far apart', 'Pick a map such as <b>Clifford</b> and watch millions of points build a picture'], ['Show the butterfly effect', '#mode button[data-m="butterfly"]']],
+  tiling: ['Patterns that cover a surface with no gaps: on a ball, on the flat plane and on the curved hyperbolic plane.', ['Press <b>G</b> to glide through a hyperbolic tiling', 'Pick <b>The hat</b>: one shape that tiles without ever repeating'], ['Glide', 'g']],
+  wave: ['Waves you can see: ripples adding up, a wave tank, sand on a ringing plate and a plucked string.', ['In the <b>Wave tank</b>, ' + (matchMedia('(pointer: coarse)').matches ? 'tap' : 'click') + ' in the water to splash', 'Try a <b>Chladni plate</b>: the sand gathers where the plate keeps still'], ['Open the wave tank', 'button[data-m="tank"]']],
+  draw: ['Machines that draw: circles spinning on circles, gears rolling in rings, swinging pendulums and threads round a circle.', ['Add the circles <b>one by one</b> and watch a drawing build up', 'Press <b>Draw your own</b>: the circles will copy it'], ['Add them one by one', '#build:not(:checked)']],
+  life: ['Patterns that grow by themselves, from simple rules about each cell\'s neighbours.', ['Try <b>Lenia</b>: smooth cells that move like creatures', 'Paint on the picture with the brush to start new life'], ['Try Lenia', 'button[data-m="lenia"]']],
 };
 
 // ---------- the tour of the 2026 interface: every part of it, each step pointing at the real thing ----------
@@ -163,14 +164,33 @@ function laterHint() {
 // ---------- the explorer's card ----------
 // each explorer's own page (explore/<slug>.html: a fuller explanation, and what search engines find)
 const PAGE = {"fractal": "fractals", "polytope": "4d-polytopes", "surface": "surfaces", "knot": "knots", "labyrinth": "labyrinths", "foam": "foams", "complex": "complex-functions", "attractor": "strange-attractors", "tiling": "tilings", "wave": "waves", "draw": "drawing-machines", "life": "growing-patterns"};
-function showCard(name, title) {
+// The card (design pack U09): what you're looking at, one thing to try with a button that does it, and a second idea.
+// On a first visit it is also the welcome, with Take the tour beside it: the tour is offered, never started by itself.
+// Closing it (✕, Got it), trying the suggestion or taking the tour all count as an answer and are remembered.
+function showCard(name, title, welcome = false) {
   const c = CARDS[name]; if (!c) return; hideCard();
-  const d = document.createElement('div'); d.id = 'xCard'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-label', 'About ' + title);
-  d.innerHTML = `<div class="xcHead"><b>${title}</b><button class="xcX" aria-label="Close">✕</button></div><p>${c[0]}</p><div class="xcTry">Try this:</div><ul>${c[1].map(t => `<li>${t}</li>`).join('')}</ul><div class="xcBtns">${PAGE[name] ? `<a class="xcMore" href="explore/${PAGE[name]}.html" target="_blank" rel="noopener">More about it</a>` : ''}<button class="sbtn on" id="xcOk">Got it</button></div>`;
+  /* on a touch screen G is a tap on the picture (layout.js), so the cards say so */
+  const [desc, tries0, act] = c, tries = touch() ? tries0.map(t => t.replace(/Press <b>G<\/b>( \(or Dive\))?/, 'Tap the picture')) : tries0, doable = act && (act[1] === 'g' || document.querySelector(act[1]));
+  const d = document.createElement('div'); d.id = 'xCard'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-labelledby', 'xcTitle');
+  if (welcome) d.classList.add('welcome');
+  d.innerHTML = `${welcome ? '<div class="xcHi">Welcome to Math Explorer</div>' : ''}<div class="xcHead"><b id="xcTitle">${title}</b><button class="xcX" aria-label="Close">✕</button></div><p>${desc}</p>`
+    + `<div class="xcTry">Try this:</div><div class="xcDo"><span>${tries[0]}</span>${doable ? `<button class="sbtn on" id="xcGo">${act[0]}</button>` : ''}</div>`
+    + (tries[1] ? `<p class="xcAlso">Or: ${tries[1]}</p>` : '')
+    + `<div class="xcBtns">${PAGE[name] ? `<a class="xcMore" href="explore/${PAGE[name]}.html" target="_blank" rel="noopener">More about it</a>` : ''}${welcome ? '<button class="sbtn" id="xcTour">Take the tour</button>' : ''}<button class="sbtn${doable ? '' : ' on'}" id="xcOk">${welcome ? 'Not now' : 'Got it'}</button></div>`;
   $('stage').appendChild(d);
-  const close = () => { store.set(CARD + name, '1'); track('card_dismiss', { explorer: name }); hideCard(); };
+  const answered = how => { store.set(CARD + name, '1'); if (welcome) store.set(TOUR, TOUR_V); track('card_dismiss', { explorer: name, how }); hideCard(); };
+  const close = () => { answered('close'); if (welcome) laterHint(); };
   d.querySelector('#xcOk').onclick = close; d.querySelector('.xcX').onclick = close;
-  track('card_shown', { explorer: name });
+  d.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
+  const go = d.querySelector('#xcGo');
+  if (go) go.onclick = () => {
+    answered('try');
+    if (act[1] === 'g') document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', code: 'KeyG', bubbles: true, cancelable: true }));
+    else { const el = document.querySelector(act[1]); if (el) { const g = el.closest('details.grp'); if (g) g.open = true; el.click(); } }
+    track('card_try', { explorer: name });
+  };
+  const tb = d.querySelector('#xcTour'); if (tb) tb.onclick = () => { answered('tour'); startTour('first_visit'); };
+  track('card_shown', { explorer: name, welcome: welcome ? 1 : 0 });
 }
 const hideCard = () => { const d = $('xCard'); if (d) d.remove(); };
 
@@ -184,8 +204,6 @@ function showBar(title) {
 }
 const hideBar = () => { const b = $('tourBar'); if (b) b.remove(); };
 
-// the analytics question comes first: a first visit's tour waits until the consent bar is answered
-function afterConsent(fn) { const bar = () => { const b = $('consentBar'); return b && !b.hidden; }; if (!bar()) { fn(); return; } const t = setInterval(() => { if (!bar()) { clearInterval(t); setTimeout(fn, 400); } }, 300); }
 
 // ---------- called by main.js each time an explorer comes on screen ----------
 let current = null, waiting = null;
@@ -199,8 +217,8 @@ export function explorerShown(name, title, fromLink) {
   if (inZen()) { clearInterval(waiting); waiting = setInterval(() => { if (!inZen()) { clearInterval(waiting); explorerShown(name, title, false); } }, 1000); return; }   // nothing in full screen: wait until it ends
   if (store.get(TOUR) !== TOUR_V) {
     let barDone = false; try { barDone = sessionStorage.getItem('mathexplorer.tourBar') === '1'; } catch (e) { /* fine */ }
-    if (fromLink && store.get(TOUR) !== '1') { if (!barDone) showBar(title); }   /* someone who saw the classic interface's tour gets this one in full, even on a link (they've just switched) */
-    else setTimeout(() => afterConsent(() => { if (current && current.name === name && !inZen() && !T) startTour('first_visit'); }), 900);
+    if (fromLink) { if (!barDone) showBar(title); }   /* a shared link keeps the picture it was sent with: just a small bar offering the tour */
+    else setTimeout(() => { if (current && current.name === name && !inZen() && !T) showCard(name, title, true); }, 700);   /* the welcome: one suggestion, the tour if they want it; it doesn't wait for the consent bar, and doesn't block anything */
     return;
   }
   if (!store.get(CARD + name)) setTimeout(() => { if (current && current.name === name && !T && !inZen()) showCard(name, title); }, 700);

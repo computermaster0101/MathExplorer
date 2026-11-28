@@ -91,6 +91,11 @@ input.txt,select.txt,textarea.txt{width:100%;box-sizing:border-box;background:va
 .btn:hover{border-color:var(--hover)}
 .btn.on, .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--onAccent);font-weight:600}
 .btn:disabled{opacity:.45;cursor:default}
+/* fewer settings (js/shell/basic.js): the groups past the main ones are hidden until "Show all settings"; the tour and Help open one for the moment (.peek) */
+body:not(.touring) #panel.basic .explorer-panel > details.grp:is(#g-motion,#g-rot,#g-view,#g-share,#g-info,#g-print,#g-keys):not(.peek){display:none}
+.panelMore{margin:14px 0 6px}
+.panelMore .btn{width:100%}
+.panelMore .note{margin-top:6px}
 .ibtn:disabled{opacity:.38;cursor:default}
 .btn.try{font-size:12px;padding:6px 9px}
 .check{display:flex;align-items:center;gap:8px;color:var(--text);margin-top:8px;cursor:pointer;font-size:13px}
@@ -159,6 +164,11 @@ details.sub p{margin:0 0 10px;line-height:1.55}
 #xCard{position:absolute;left:12px;bottom:44px;z-index:8;max-width:340px;background:var(--glass2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
 #xCard p{margin:6px 0 8px;color:var(--soft);line-height:1.45} #xCard ul{margin:4px 0 10px;padding-left:18px;color:var(--soft)} #xCard li{margin:3px 0}
 .xcHead{display:flex;align-items:center;gap:8px} .xcHead b{flex:1;font-size:15px} .xcX{background:none;border:0;color:var(--mute);cursor:pointer;font-size:14px} .xcTry{font-size:12px;color:var(--mute)} .xcBtns{display:flex;justify-content:flex-end} .xcMore{color:var(--accent);font-size:13px;text-decoration:none;margin-right:auto;align-self:center} .xcMore:hover{text-decoration:underline}
+/* the card's one suggestion with its button, the second idea, and the welcome line on a first visit (tour.js, design pack U09) */
+.xcDo{display:flex;align-items:center;gap:10px;margin:4px 0 6px;color:var(--text)} .xcDo span{flex:1;line-height:1.4} .xcDo .sbtn{flex:none;white-space:nowrap}
+#xCard p.xcAlso{font-size:12.5px;margin:2px 0 10px}
+.xcHi{font-size:12px;color:var(--accent);font-weight:600;letter-spacing:.02em;margin-bottom:2px}
+.xcBtns{gap:8px;flex-wrap:wrap}
 #tourBar{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:8;display:flex;gap:8px;align-items:center;background:var(--glass2);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 14px;max-width:calc(100% - 24px);font-size:13px}
 #consentBar{position:fixed;left:12px;right:12px;bottom:12px;z-index:70;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;max-width:720px;margin:0 auto;background:var(--glass2);border:1px solid var(--line);border-radius:12px;padding:10px 12px 10px 16px;box-shadow:0 10px 30px rgba(0,0,0,.45);font-size:13px}
 .cbBtns{display:flex;gap:8px} body.consentAsk #xCard{bottom:110px}
@@ -326,6 +336,7 @@ details.grp .gb{padding:0 0 12px}
   .shFold svg{transition:transform .2s} .app.sheetOpen .shFold svg{transform:rotate(180deg)}
   /* which groups each tab shows */
   aside[data-tab="shapes"] .explorer-panel > details.grp:not(#g-shapes){display:none}
+  aside[data-tab="shapes"] .panelMore{display:none}
   aside[data-tab="colours"] .explorer-panel > :not(#g-style){display:none}
   aside[data-tab="music"] .explorer-panel > :not(#g-sound){display:none}
   aside[data-tab="settings"] .explorer-panel > :is(.sec,#g-shapes,#g-style,#g-sound){display:none}
@@ -357,3 +368,19 @@ details.grp .gb{padding:0 0 12px}
 .app.zen.touch #zenExit{min-height:44px;padding:0 16px;font-size:15px;top:calc(12px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right))}
 /* Calm motion (js/shell/calm.js): none of the interface's own animations */
 html.calm *, html.calm *::before, html.calm *::after{transition:none !important;animation:none !important;scroll-behavior:auto !important}
+/* Phones: the player and the More row each fit on one line at any phone width (320 px and up). The player's buttons close
+   up and its names may shrink; the More row (View, Go's extras, More) is icons only, its names on a long press as elsewhere,
+   each button a tenth of the screen at most, and ‹ stays at the end of the player. While the More row is open, the legend
+   and hint move up above it instead of sitting under it. */
+@media (max-width:820px), (max-height:500px) and (pointer:coarse){
+  #stageBtns .tbGroup,#stageBtns .tbBody{gap:1px}
+  #stageBtns .tbPlayer .ibtn{min-width:0;flex:1 1 auto} #stageBtns .tbPlayer .tbLbl{max-width:100%;overflow:hidden;text-overflow:clip}
+  #stageBtns.allOpen .tbGroup:not(.tbPlayer) .tbLbl{display:none}
+  #stageBtns.allOpen .tbGroup:not(.tbPlayer) .ibtn{height:40px;min-width:clamp(28px,calc((100vw - 36px) / 10),40px);padding:0}
+  #stageBtns.allOpen #tbAll{order:2;border-left:1px solid var(--line);margin-left:2px}
+  #stageBtns.allOpen #tbAll .tbLbl{display:inline}
+  .app:not(.zen):has(#stageBtns.allOpen) .legend,.app:not(.zen):has(#stageBtns.allOpen) .hint{bottom:130px}
+  .frame-card .app:not(.zen):has(#stageBtns.allOpen) .legend,.frame-card .app:not(.zen):has(#stageBtns.allOpen) .hint{bottom:64px}
+}
+@media (max-width:400px){ #stageBtns .tbPlayer .ibtn,#stageBtns #tbAll{min-width:36px} }
+@media (max-width:350px){ #stageBtns .tbPlayer .ibtn,#stageBtns #tbAll{min-width:32px} #stageBtns .tbPlayer .tbLbl{font-size:8px;letter-spacing:-.2px} }
