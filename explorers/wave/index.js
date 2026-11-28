@@ -152,7 +152,7 @@ function tankStep(n) {
 let PL = null, sand = null;   // PL: {A, N, pitch, img}; sand: Float32Array of x, y pairs in -1..1
 function plateSetup() { const shape = st.plate.shape; PL = plateGrid(shape, st.plate.i, 200);
   if (!PL) { PL = { A: new Float32Array(4).fill(NaN), N: 2, pitch: 1, waiting: true }; const el = $('stageCap'); el.innerHTML = '<b>Working out how this plate can ring…</b> (a second or two, once)'; el.style.display = 'block';
-    shapedModes(shape).then(() => { if (st.plate.shape !== shape) return; el.style.display = 'none'; plateSetup(); freshSand(); labels(); }); return; }
+    shapedModes(shape).then(() => { if (st.plate.shape !== shape) return; el.style.display = 'none'; plateSetup(); freshSand(); if (el.isConnected) labels(); }); return; }   /* the visitor may have left Waves while the patterns were worked out: its labels aren't attached then (start() redraws them on the way back) */
   PL.img = null; }
 const insidePlate = (x, y) => { if (st.plate.shape === 'round') return x * x + y * y <= 0.99; if (!isShaped(st.plate.shape)) return Math.abs(x) < 0.995 && Math.abs(y) < 0.995;
   return MASKS[st.plate.shape](x, y); };   // the exact outline, so sand lines up with the smooth edge
@@ -444,7 +444,7 @@ const share = makeShare('wave', encode, apply);
 MO.onChange = () => share.touch();
 progs(); ripPreset('two'); clickData('#tankPre', 'p', 'double'); palLabel();
 if (!apply(parseRoute().code)) pickMode('ripple');
-export function start() { running = true; tPrev = performance.now(); if (st.mode === 'tank') tankSetup(true); dirty = true; requestAnimationFrame(loop); share.write(); }
+export function start() { running = true; tPrev = performance.now(); if (st.mode === 'tank') tankSetup(true); labels(); dirty = true; requestAnimationFrame(loop); share.write(); }
 export function stop() { running = false; REC.stop(); }
 export const reset = resetView;
 

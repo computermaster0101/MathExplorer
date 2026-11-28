@@ -293,9 +293,9 @@
   <label class="check" style="margin-top:0"><input type="checkbox" id="hl"> Highlight one cell</label>
   <div id="cellNav" hidden>
     <div class="btns" style="margin-top:8px;align-items:center">
-      <button class="btn" id="cellPrev" style="flex:0 0 44px">◀</button>
-      <div id="cellLbl" style="flex:1;text-align:center;font-size:13px">–</div>
-      <button class="btn" id="cellNext" style="flex:0 0 44px">▶</button>
+      <button class="btn" id="cellPrev" style="flex:0 0 44px" aria-label="Previous cell">◀</button>
+      <div id="cellLbl" aria-live="polite" style="flex:1;text-align:center;font-size:13px">–</div>
+      <button class="btn" id="cellNext" style="flex:0 0 44px" aria-label="Next cell">▶</button>
     </div>
     <p class="note">Every 4D shape is built from 3D cells glued face to face, the way a cube is built from squares. Step through them and watch one get stretched and squashed as the shape turns.</p>
   </div>

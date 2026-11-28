@@ -41,6 +41,7 @@ import { openReport } from './shell/report.js';
 import { menuKeys } from './shell/a11y.js';
 import { resetWithUndo } from './shell/undo.js';
 import { calm } from './shell/calm.js';
+import './shell/names.js';   // names and chosen states for screen readers in every panel
 import './shell/history.js';   // Undo / Redo for the view (the View group, Ctrl+Z)
 import './shell/gallery.js';
 import './shell/sheet.js';   // phones: the panel as a bottom sheet with four tabs   // every explorer as a picture (the top bar's All 12)
