@@ -38,6 +38,7 @@ import { soundGroup, setSoundHelp } from './shell/audio/panel.js';
 import { pageView, consentBar, showPrivacy } from './shell/analytics.js';
 import { explorerShown, takeTour, aboutThis } from './shell/tour.js';
 import { openReport } from './shell/report.js';
+import { menuKeys } from './shell/a11y.js';
 import './shell/gallery.js';
 import './shell/sheet.js';   // phones: the panel as a bottom sheet with four tabs   // every explorer as a picture (the top bar's All 12)
 import './shell/haptics.js';   // vibration on touch, where the phone can (the setting in Music & sound)
@@ -89,7 +90,7 @@ function attach({ stageEl, panelEl }) {
 function detach({ stageEl, panelEl }) { $('shellParts').append(soundGroup); stageEl.remove(); panelEl.remove(); }
 
 function markSwitcher(name) {
-  for (const a of document.querySelectorAll('#switcher a')) a.classList.toggle('on', a.dataset.explorer === name);
+  for (const a of document.querySelectorAll('#switcher a')) { const on = a.dataset.explorer === name; a.classList.toggle('on', on); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); }
   $('xName').textContent = EXPLORERS[name].title;
   // the bare home page keeps its full, descriptive title (what search results show); an explorer's own address names it
   document.title = bareHome && name === DEFAULT_EXPLORER ? HOME_TITLE : `${EXPLORERS[name].title} · Math Explorer`;
@@ -162,6 +163,7 @@ const setMenu = open => { xList.hidden = !open; xBtn.setAttribute('aria-expanded
 xBtn.addEventListener('click', () => setMenu(xList.hidden));
 document.addEventListener('pointerdown', e => { if (!xList.hidden && !e.target.closest('#switcher')) setMenu(false); });
 document.addEventListener('keydown', e => { if (!xList.hidden && e.key === 'Escape') { setMenu(false); xBtn.focus(); e.stopPropagation(); } }, true);
+menuKeys(xList, xBtn, () => setMenu(false), 'a');   // ↑ ↓ Home End move through the twelve, Tab closes
 // clicking the explorer already on screen would drop its view code from the address
 $('switcher').addEventListener('click', e => { const a = e.target.closest('a'); if (!a) return; setMenu(false); if (a.dataset.explorer === current) e.preventDefault(); });
 // the menu's extras: the tour again, this explorer's card again, and the privacy note

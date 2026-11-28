@@ -91,8 +91,8 @@ let T = null;   // the open tour: { i, root, spot, tip }
 function startTour(from) {
   if (T) return; hideBar(); hideCard();
   if (panelHidden()) togglePanel(false);
-  const root = document.createElement('div'); root.id = 'tour'; root.innerHTML = '<div id="tourSpot"></div><div id="tourTip" role="dialog" aria-live="polite"></div>'; document.body.appendChild(root);
-  T = { i: 0, undo: [], root, spot: root.querySelector('#tourSpot'), tip: root.querySelector('#tourTip') }; document.body.classList.add('touring');   /* the consent bar stays on top; the tour keeps clear of it (see room()) */
+  const root = document.createElement('div'); root.id = 'tour'; root.innerHTML = '<div id="tourSpot"></div><div id="tourTip" role="dialog" aria-labelledby="ttTitle" aria-live="polite"></div>'; document.body.appendChild(root);
+  T = { i: 0, undo: [], from: document.activeElement, root, spot: root.querySelector('#tourSpot'), tip: root.querySelector('#tourTip') }; document.body.classList.add('touring');   /* the consent bar stays on top; the tour keeps clear of it (see room()) */
   track('tour_start', { from }); window.addEventListener('keydown', tourKey, true); window.addEventListener('resize', place); step(0);
 }
 function step(i) {
@@ -104,7 +104,7 @@ function step(i) {
   else if (phone() && !s.prep && s.el !== '#panel') showSheet(false);   // the picture's steps: the sheet folded out of the way
   if (el && !phone()) { const r = el.getBoundingClientRect(); if (r.top < 0 || r.bottom > room()) el.scrollIntoView({ block: r.height > innerHeight * 0.8 ? 'start' : 'center' }); }
   const title = typeof s.title === 'function' ? s.title() : s.title, text = typeof s.text === 'function' ? s.text() : s.text;
-  T.tip.innerHTML = `<div class="ttStep">${i + 1} of ${S.length}</div><h3>${title}</h3><p>${text}</p>
+  T.tip.innerHTML = `<div class="ttStep">${i + 1} of ${S.length}</div><h3 id="ttTitle">${title}</h3><p>${text}</p>
     <div class="ttBtns"><button class="sbtn" id="ttSkip">${i === S.length - 1 ? 'Close' : 'Skip'}</button><span></span>${i ? '<button class="sbtn" id="ttBack">Back</button>' : ''}<button class="sbtn on" id="ttNext">${i === S.length - 1 ? 'Done' : 'Next'}</button></div>`;
   T.tip.querySelector('#ttNext').onclick = next; T.tip.querySelector('#ttSkip').onclick = () => endTour(i === S.length - 1 ? 'tour_complete' : 'tour_skip');
   const b = T.tip.querySelector('#ttBack'); if (b) b.onclick = () => step(i - 1);
@@ -128,12 +128,22 @@ function place() {
   T.tip.style.left = Math.max(12, Math.min(vw - tw - 12, x)) + 'px'; T.tip.style.top = Math.max(12, Math.min(vh - th - 12, y)) + 'px';
 }
 // while the tour is open it has the keyboard (the explorer underneath ignores keys): Esc skips, Enter or → goes on, ← back, Tab moves round its buttons
-function tourKey(e) { if (!T || e.key === 'Tab' || (e.target.closest && e.target.closest('#consentBar,.modalBack'))) return;   /* the consent bar and privacy note keep their own keys */ if (e.key === 'Escape') endTour('tour_skip'); else if (e.key === 'Enter' || e.key === 'ArrowRight') next(); else if (e.key === 'ArrowLeft' && T.i) step(T.i - 1); e.preventDefault(); e.stopPropagation(); }
+// (design pack U03): Enter or Space on Skip, Back or Next presses that button, as buttons do; Tab goes round the card's buttons
+function tourKey(e) {
+  if (!T || (e.target.closest && e.target.closest('#consentBar,.modalBack'))) return;   /* the consent bar and privacy note keep their own keys */
+  const onBtn = e.target.closest && e.target.closest('#tourTip button');
+  if (e.key === 'Tab') { const b = [...T.tip.querySelectorAll('button')], i = b.indexOf(document.activeElement); if (b.length) { b[(i < 0 ? 0 : i + (e.shiftKey ? -1 : 1) + b.length) % b.length].focus(); e.preventDefault(); } e.stopPropagation(); return; }
+  if ((e.key === 'Enter' || e.key === ' ') && onBtn) { e.stopPropagation(); return; }
+  if (e.key === 'Escape') endTour('tour_skip'); else if (e.key === 'Enter' || e.key === 'ArrowRight') next(); else if (e.key === 'ArrowLeft' && T.i) step(T.i - 1);
+  e.preventDefault(); e.stopPropagation();
+}
 const shut = () => { if (!T) return; while (T.undo.length) { try { T.undo.pop()(); } catch (e) { /* already undone */ } } };
 function endTour(how) {
   if (!T) return; track(how, { step: T.i + 1 }); store.set(TOUR, TOUR_V); shut(); showSheet(false); showAllButtons(false);
   const pn = $('panel'); if (pn) pn.scrollTop = 0; scrollTo(0, 0);   // back to the top, where the shapes are
-  window.removeEventListener('keydown', tourKey, true); window.removeEventListener('resize', place); T.root.remove(); T = null; document.body.classList.remove('touring');
+  window.removeEventListener('keydown', tourKey, true); window.removeEventListener('resize', place); T.root.remove(); const from = T.from; T = null; document.body.classList.remove('touring');
+  // focus goes back where it was (Help's item is gone by now: then the Help button), unless the tour opened by itself
+  if (from && from !== document.body) { const to = from.isConnected && from.offsetParent ? from : $('helpBtn'); if (to && to.offsetParent) to.focus(); }
   if (current && !store.get(CARD + current.name)) showCard(current.name, current.title);   // then this explorer's own card
   if (how === 'tour_skip') laterHint();
 }
@@ -167,10 +177,10 @@ const hideCard = () => { const d = $('xCard'); if (d) d.remove(); };
 // ---------- the bar for someone arriving on a shared link ----------
 function showBar(title) {
   if ($('tourBar')) return; const b = document.createElement('div'); b.id = 'tourBar';
-  b.innerHTML = `<span>You're looking at <b>${title}</b>. New here?</span><button class="sbtn on" id="tbGo">Take the tour</button><button class="sbtn" id="tbX" aria-label="Close">✕</button>`;
+  b.innerHTML = `<span>You're looking at <b>${title}</b>. New here?</span><button class="sbtn on" id="tourBarGo">Take the tour</button><button class="sbtn" id="tourBarX" aria-label="Close">✕</button>`;
   $('stage').appendChild(b);
-  b.querySelector('#tbGo').onclick = () => { hideBar(); startTour('shared_link'); };
-  b.querySelector('#tbX').onclick = () => { hideBar(); laterHint(); try { sessionStorage.setItem('mathexplorer.tourBar', '1'); } catch (e) { /* fine */ } };
+  b.querySelector('#tourBarGo').onclick = () => { hideBar(); startTour('shared_link'); };
+  b.querySelector('#tourBarX').onclick = () => { hideBar(); laterHint(); try { sessionStorage.setItem('mathexplorer.tourBar', '1'); } catch (e) { /* fine */ } };
 }
 const hideBar = () => { const b = $('tourBar'); if (b) b.remove(); };
 

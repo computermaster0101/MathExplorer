@@ -2,6 +2,7 @@
 // Until someone presses Allow, Google's Consent Mode keeps it to anonymous, cookie-free pings; Allow lets it count properly.
 // The choice is remembered on this device (localStorage, no cookie of ours). Nothing personal is sent: page views carry only
 // the explorer's name (never the view code after it, which can hold a hand-drawn shape), and events carry names and counts.
+import { openModal } from './a11y.js';
 const GA_ID = 'G-LK5Z3FJD40', LIVE = location.hostname === 'mathexplorer.thedigitalspace.net';
 const TEST = !LIVE && /[?&]analyticsTest/.test(location.search);   // for checking locally: the bar shows and events are logged to window.__trackLog, nothing is sent
 if (TEST) window.__trackLog = [];
@@ -61,7 +62,7 @@ export function showPrivacy() {
     d.querySelector('#pvAllow').addEventListener('click', () => { choose('granted'); d.hidden = true; });
     d.querySelector('#pvDeny').addEventListener('click', () => { choose('denied'); d.hidden = true; });
   }
-  d.hidden = false; d.querySelector('#pvClose').focus();
+  openModal(d, d.querySelector('#pvClose'));   /* Escape, Tab kept inside, focus back after (a11y.js); its buttons hide it */
 }
 function choose(v) { write(v); if (LIVE) gtag('consent', 'update', { analytics_storage: v }); track('consent', { choice: v }); const bar = document.getElementById('consentBar'); if (bar) bar.hidden = true; document.body.classList.remove('consentAsk'); }
 /** The bar, at the bottom, until the visitor chooses (live site only). */

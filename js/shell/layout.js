@@ -1,6 +1,7 @@
 // Hide panel and full screen ("zen"), shared by every explorer.
 import { revealGroup } from './sheet.js';
 import { track } from './analytics.js';
+import { menuKeys, focusFirst } from './a11y.js';
 const app = document.getElementById('app');
 const $ = id => document.getElementById(id);
 
@@ -45,21 +46,18 @@ export const toggleZen = () => (inZen() ? exitZen() : enterZen());
 /** Open the panel's "Keyboard shortcuts" group (id g-keys) and bring it into view. */
 // ---------- the ? help menu (on the picture, with the other buttons; hidden in full screen with them) ----------
 const helpBtn = $('helpBtn'), helpMenu = $('helpMenu');
-const helpItems = () => [...helpMenu.querySelectorAll('[role=menuitem]')];
 /** Open or close the ? menu (no argument: toggle). In full screen it stays shut, like every button on the picture. */
-export function toggleHelp(open = helpMenu.hidden, focusFirst = false) {
+export function toggleHelp(open = helpMenu.hidden, first = false) {
   if (open && inZen()) return;
   const grp = helpBtn.closest('.tbGroup'); if (open && grp && grp.classList.contains('folded')) { grp.classList.remove('folded'); grp.querySelector('.tbHandle')?.setAttribute('aria-expanded', 'true'); }   /* the ? key opens a folded More group for the moment */
   helpMenu.hidden = !open; helpBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
   if (open) { helpMenu.style.left = '0px'; const r = helpMenu.getBoundingClientRect(); if (r.right > innerWidth - 8) helpMenu.style.left = Math.round(innerWidth - 8 - r.right) + 'px'; }   /* keep it on screen */
-  if (open && focusFirst) helpItems()[0].focus();
+  if (open && first) focusFirst(helpMenu);
 }
 helpBtn.addEventListener('click', e => toggleHelp(undefined, e.detail === 0));   /* opened from the keyboard: focus the first item */
 helpMenu.addEventListener('click', e => { if (e.target.closest('[role=menuitem]')) toggleHelp(false); });
 document.addEventListener('pointerdown', e => { if (!helpMenu.hidden && !e.target.closest('.helpWrap')) toggleHelp(false); });
-helpMenu.addEventListener('keydown', e => { const it = helpItems(), i = it.indexOf(document.activeElement);
-  if (e.key === 'Escape') { toggleHelp(false); helpBtn.focus(); e.stopPropagation(); e.preventDefault(); }
-  else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { it[(i + (e.key === 'ArrowDown' ? 1 : -1) + it.length) % it.length].focus(); e.stopPropagation(); e.preventDefault(); } }, true);
+menuKeys(helpMenu, helpBtn, () => toggleHelp(false));   /* ↑ ↓ Home End, Escape back to ?, Tab closes (a11y.js) */
 new MutationObserver(() => { if (inZen() && !helpMenu.hidden) toggleHelp(false); }).observe(app, { attributes: true, attributeFilter: ['class'] });
 $('keysBtn').addEventListener('click', () => showKeys());
 export function showKeys() {
