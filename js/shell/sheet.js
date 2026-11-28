@@ -7,6 +7,7 @@
 // The single-group tabs show their group open with its title hidden. On bigger screens none of this applies and the panel is
 // the side panel as before. revealGroup(g) brings a group into view either way (Keyboard shortcuts, Music settings, the tour).
 import { track } from './analytics.js';
+import { peek } from './basic.js';
 const $ = id => document.getElementById(id);
 const app = $('app'), panel = $('panel');
 const SHEET_Q = '(max-width: 820px), (max-height: 500px) and (pointer: coarse)';   /* phones, upright or sideways (the same query as the CSS) */
@@ -44,6 +45,7 @@ const tabOf = g => Object.keys(ONE).find(k => ONE[k] === g.id) || (g.closest('.e
 /** Open a panel group and bring it into view: on a phone, open the sheet on its tab first. */
 export function revealGroup(g, smooth = false) {
   if (!g) return;
+  peek(g);   /* one of the groups the shorter panel leaves out: shown for now (basic.js) */
   if (sheetMode()) showSheet(true, tabOf(g));
   g.open = true; requestAnimationFrame(() => g.scrollIntoView({ block: ONE[tab] ? 'start' : 'nearest', behavior: smooth ? 'smooth' : 'auto' }));
 }

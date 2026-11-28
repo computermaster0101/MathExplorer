@@ -41,6 +41,7 @@ import { openReport } from './shell/report.js';
 import { menuKeys } from './shell/a11y.js';
 import { resetWithUndo } from './shell/undo.js';
 import { calm } from './shell/calm.js';
+import './shell/basic.js';   // fewer settings / all settings in the panel
 import './shell/names.js';   // names and chosen states for screen readers in every panel
 import './shell/history.js';   // Undo / Redo for the view (the View group, Ctrl+Z)
 import './shell/gallery.js';
